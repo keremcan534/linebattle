@@ -1,0 +1,168 @@
+import { Application, Container } from 'pixi.js';
+import type { GameEngine } from '@core/engine/gameEngine';
+import type { MapData } from '@core/scenario/scenarioLoader';
+import type { ViewStore } from '@app/viewStore';
+import { Camera } from './camera';
+import { MapLayer } from './layers/mapLayer';
+import { OrderLayer } from './layers/orderLayer';
+import { UnitLayer } from './layers/unitLayer';
+import { theme } from './theme';
+
+/** How often the React-facing snapshot is refreshed, in milliseconds. */
+const UI_PUBLISH_INTERVAL_MS = 100;
+
+/**
+ * Owns the PixiJS application and the single frame loop.
+ *
+ * Layer order is the draw order — map underneath, orders above it, counters on
+ * top — and lives in one place so z-fighting can never become an emergent
+ * property of import order.
+ *
+ * This class is the ONLY thing that drives the engine forward. Rendering and
+ * simulation share one clock but not one timestep: `engine.advance` decides
+ * how many fixed ticks the elapsed real time is worth, and the layers
+ * interpolate across whatever fraction of a tick is left over.
+ *
+ * We run our OWN requestAnimationFrame loop rather than Pixi's ticker, and
+ * call `renderer.render()` explicitly. The loop belongs to whoever owns the
+ * simulation clock; borrowing the renderer's heartbeat inverts that and makes
+ * "when does the world advance?" a question about Pixi's internals. Owning it
+ * also makes teardown deterministic — `stop()` cancels one handle we hold.
+ *
+ * Note that rAF does not fire at all in a backgrounded or non-composited tab.
+ * That is correct behaviour (a paused tab should not burn CPU simulating), and
+ * `deltaMS` is clamped below so returning to the tab resumes smoothly rather
+ * than fast-forwarding.
+ */
+export class GameRenderer {
+  readonly camera: Camera;
+  private readonly worldRoot = new Container();
+  private readonly mapLayer: MapLayer;
+  private readonly unitLayer: UnitLayer;
+  private readonly orderLayer: OrderLayer;
+  private resizeObserver: ResizeObserver | null = null;
+  private uiClock = 0;
+  private rafHandle = 0;
+  private lastFrameMs = 0;
+  private running = false;
+
+  private constructor(
+    readonly app: Application,
+    private readonly engine: GameEngine,
+    private readonly store: ViewStore,
+    mapData: MapData,
+  ) {
+    const world = engine.world;
+    this.camera = new Camera(world.bounds);
+
+    this.mapLayer = new MapLayer(mapData, world.projection, world.bounds);
+    this.orderLayer = new OrderLayer(world);
+    this.unitLayer = new UnitLayer(world);
+
+    this.worldRoot.addChild(this.mapLayer.container, this.orderLayer.container, this.unitLayer.container);
+    app.stage.addChild(this.worldRoot);
+  }
+
+  static async create(
+    host: HTMLElement,
+    engine: GameEngine,
+    mapData: MapData,
+    store: ViewStore,
+  ): Promise<GameRenderer> {
+    const app = new Application();
+    await app.init({
+      background: theme.background,
+      antialias: true,
+      resolution: Math.min(window.devicePixelRatio || 1, 2),
+      autoDensity: true,
+      width: host.clientWidth || 800,
+      height: host.clientHeight || 600,
+      preference: 'webgl',
+      // We own the loop; Pixi must neither start one nor share one.
+      autoStart: false,
+      sharedTicker: false,
+    });
+    host.appendChild(app.canvas);
+
+    const renderer = new GameRenderer(app, engine, store, mapData);
+    renderer.observeResize(host);
+    renderer.camera.fitToBounds();
+    renderer.start();
+    return renderer;
+  }
+
+  get canvas(): HTMLCanvasElement {
+    return this.app.canvas;
+  }
+
+  start(): void {
+    if (this.running) return;
+    this.running = true;
+    this.lastFrameMs = performance.now();
+    this.rafHandle = requestAnimationFrame(this.frame);
+  }
+
+  stop(): void {
+    this.running = false;
+    cancelAnimationFrame(this.rafHandle);
+  }
+
+  destroy(): void {
+    this.stop();
+    this.resizeObserver?.disconnect();
+    this.mapLayer.destroy();
+    this.unitLayer.destroy();
+    this.orderLayer.destroy();
+    this.app.destroy(true, { children: true });
+  }
+
+  // ------------------------------------------------------------ frame loop --
+
+  private frame = (nowMs: number): void => {
+    if (!this.running) return;
+    this.rafHandle = requestAnimationFrame(this.frame);
+
+    // Clamped so an alt-tabbed tab does not return with a multi-second delta.
+    const deltaMS = Math.min(250, nowMs - this.lastFrameMs);
+    this.lastFrameMs = nowMs;
+    const dt = deltaMS / 1000;
+
+    // 1. Simulation. Consumes commands, runs whole ticks, emits events.
+    this.engine.advance(dt);
+
+    // 2. Camera transform, once, for every world-space layer.
+    this.camera.applyTo(this.worldRoot);
+
+    // 3. Layers read world state. None of them writes to it.
+    const zoom = this.camera.zoom;
+    const alpha = this.engine.world.clock.subTickAlpha;
+    this.mapLayer.update(zoom);
+    this.orderLayer.update(zoom, this.store.selection, this.store.dragBox);
+    this.unitLayer.update(zoom, alpha, this.store.selection, this.store.hovered);
+
+    // 4. Publish to React on a throttle, never per frame.
+    this.uiClock += deltaMS;
+    if (this.uiClock >= UI_PUBLISH_INTERVAL_MS) {
+      this.uiClock = 0;
+      this.store.invalidate();
+      this.store.publish(zoom);
+    }
+
+    // 5. Draw. Explicit, because autoStart is off.
+    this.app.renderer.render(this.app.stage);
+  };
+
+  private observeResize(host: HTMLElement): void {
+    const apply = () => {
+      const w = Math.max(1, host.clientWidth);
+      const h = Math.max(1, host.clientHeight);
+      this.app.renderer.resize(w, h);
+      this.camera.viewportWidth = w;
+      this.camera.viewportHeight = h;
+      this.camera.clampToBounds();
+    };
+    apply();
+    this.resizeObserver = new ResizeObserver(apply);
+    this.resizeObserver.observe(host);
+  }
+}
