@@ -2,7 +2,9 @@ import { useCallback, useRef, useState } from 'react';
 import { SelectionPanel } from '@ui/components/SelectionPanel';
 import { TopBar } from '@ui/components/TopBar';
 import { ControlsHint, LoadingOverlay } from '@ui/components/Overlays';
+import { BattlePanel } from '@ui/components/BattlePanel';
 import { ScenarioPicker, type ScenarioEntry } from '@ui/components/ScenarioPicker';
+import type { BattleSummary } from './viewStore';
 import { useGame, useViewSnapshot } from './useGame';
 
 /**
@@ -44,6 +46,15 @@ export function App() {
     session.engine.issue({ type: 'stop', divisions: [...snapshot.selection] });
   }, [sessionRef, snapshot.selection]);
 
+  const focusBattle = useCallback(
+    (battle: BattleSummary) => {
+      const session = sessionRef.current;
+      if (!session) return;
+      session.renderer.camera.centerOn({ x: battle.x, y: battle.y });
+    },
+    [sessionRef],
+  );
+
   if (!scenario) return <ScenarioPicker onPick={setScenario} />;
 
   return (
@@ -61,6 +72,7 @@ export function App() {
             onTogglePause={togglePause}
           />
           <SelectionPanel selected={snapshot.selectedDetails} onStop={stopSelected} />
+          <BattlePanel battles={snapshot.battles} onFocus={focusBattle} />
           <ControlsHint />
         </>
       )}

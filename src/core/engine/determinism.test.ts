@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Command } from '@core/commands/commands';
 import { GameEngine } from '@core/engine/gameEngine';
 import { addTestDivision, createTestWorld } from '@core/testing/testWorld';
-import { divisionId } from '@core/world/ids';
+import { divisionId, factionId } from '@core/world/ids';
 import { hashWorld, hashWorldHex } from '@core/world/worldHash';
 import type { World } from '@core/world/world';
 
@@ -101,6 +101,69 @@ describe('simulation determinism', () => {
     addTestDivision(w2, 'a', 100, 100);
 
     expect(hashWorld(w2)).toBe(hashWorld(w1));
+  });
+});
+
+/**
+ * The determinism contract has to survive combat, which is the first system
+ * that actually consumes randomness. If these fail, the seeded RNG was
+ * pointless.
+ */
+function battleRun(seed: string, ticks = 600): { world: World; battlesStarted: number } {
+  const world = createTestWorld({ seed });
+  // A meeting engagement in the open, plus a flanking force arriving late.
+  for (let i = 0; i < 3; i++) {
+    addTestDivision(world, `red-${i}`, 200, 190 + i * 8, {
+      faction: factionId('red'), softAttack: 30 + i * 3, defence: 28, speedKmh: 2.5,
+    });
+    addTestDivision(world, `blue-${i}`, 214, 190 + i * 8, {
+      faction: factionId('blue'), softAttack: 28, defence: 30, speedKmh: 2.2,
+    });
+  }
+  addTestDivision(world, 'red-flank', 260, 320, { faction: factionId('red'), speedKmh: 3 });
+
+  const engine = new GameEngine(world);
+  let battlesStarted = 0;
+  engine.events.on('battleStarted', () => battlesStarted++);
+
+  engine.issue({
+    type: 'move',
+    divisions: [divisionId('red-0'), divisionId('red-1'), divisionId('red-2')],
+    destination: { x: 260, y: 210 },
+    append: false,
+  });
+  engine.issue({
+    type: 'move',
+    divisions: [divisionId('red-flank')],
+    destination: { x: 214, y: 200 },
+    append: false,
+  });
+
+  for (let tick = 0; tick < ticks; tick++) engine.step();
+  return { world, battlesStarted };
+}
+
+describe('determinism survives combat', () => {
+  it('produces an identical world from an identical battle', () => {
+    expect(hashWorld(battleRun('kursk').world)).toBe(hashWorld(battleRun('kursk').world));
+  });
+
+  it('repeats identically across many runs', () => {
+    const reference = hashWorldHex(battleRun('kursk').world);
+    for (let i = 0; i < 3; i++) expect(hashWorldHex(battleRun('kursk').world)).toBe(reference);
+  });
+
+  it('actually diverges on a different seed', () => {
+    // Confirms combat really is consuming the RNG — otherwise the tests above
+    // would pass trivially and prove nothing.
+    expect(hashWorld(battleRun('seed-a').world)).not.toBe(hashWorld(battleRun('seed-b').world));
+  });
+
+  it('fought a real battle, not an empty field', () => {
+    // Guard against the suite passing because the units never met. Checked by
+    // event, not by end state: six days later the survivors have rested and
+    // their organisation bars are full again.
+    expect(battleRun('kursk').battlesStarted).toBeGreaterThan(0);
   });
 });
 

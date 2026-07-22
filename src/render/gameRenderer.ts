@@ -3,6 +3,7 @@ import type { GameEngine } from '@core/engine/gameEngine';
 import type { MapData } from '@core/scenario/scenarioLoader';
 import type { ViewStore } from '@app/viewStore';
 import { Camera } from './camera';
+import { BattleLayer } from './layers/battleLayer';
 import { BorderLayer } from './layers/borderLayer';
 import { MapLayer } from './layers/mapLayer';
 import { OrderLayer } from './layers/orderLayer';
@@ -42,6 +43,7 @@ export class GameRenderer {
   private readonly borderLayer: BorderLayer | null;
   private readonly unitLayer: UnitLayer;
   private readonly orderLayer: OrderLayer;
+  private readonly battleLayer: BattleLayer;
   private resizeObserver: ResizeObserver | null = null;
   private uiClock = 0;
   private rafHandle = 0;
@@ -61,12 +63,19 @@ export class GameRenderer {
     this.borderLayer = mapData.borders ? new BorderLayer(mapData.borders, world.projection) : null;
     this.orderLayer = new OrderLayer(world);
     this.unitLayer = new UnitLayer(world);
+    this.battleLayer = new BattleLayer(world);
 
     // Draw order. Borders sit above the terrain but below anything the player
-    // manipulates, so a dashed frontier can never obscure a counter.
+    // manipulates, so a dashed frontier can never obscure a counter. Battle
+    // bubbles go on top of everything: a fight is the most urgent thing on
+    // the map and must never be hidden behind a counter.
     this.worldRoot.addChild(this.mapLayer.container);
     if (this.borderLayer) this.worldRoot.addChild(this.borderLayer.container);
-    this.worldRoot.addChild(this.orderLayer.container, this.unitLayer.container);
+    this.worldRoot.addChild(
+      this.orderLayer.container,
+      this.unitLayer.container,
+      this.battleLayer.container,
+    );
     app.stage.addChild(this.worldRoot);
   }
 
@@ -128,6 +137,7 @@ export class GameRenderer {
     this.borderLayer?.destroy();
     this.unitLayer.destroy();
     this.orderLayer.destroy();
+    this.battleLayer.destroy();
     this.app.destroy(true, { children: true });
   }
 
@@ -155,6 +165,7 @@ export class GameRenderer {
     this.borderLayer?.update(zoom);
     this.orderLayer.update(zoom, this.store.selection, this.store.dragBox);
     this.unitLayer.update(zoom, alpha, this.store.selection, this.store.hovered);
+    this.battleLayer.update(zoom, deltaMS);
 
     // 4. Publish to React on a throttle, never per frame.
     this.uiClock += deltaMS;

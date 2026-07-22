@@ -51,17 +51,29 @@ describe('MovementSystem', () => {
     }
   });
 
-  it('gives up instead of grinding against an uncrossable shore', () => {
-    // Regression test. The order is snapped to the far side of the lake, so
-    // the division walks into the near shore and can slide but never approach.
-    // It used to do that forever, silently bleeding organisation.
+  it('gives up on an order it can never fulfil', () => {
+    // Regression test for the shore livelock: coast-sliding "succeeds" every
+    // tick, so nothing used to report the order impossible and the division
+    // ground against the water forever, bleeding organisation.
+    //
+    // Since Milestone 2 the pathfinder routes such orders around the obstacle,
+    // so this sets the waypoint DIRECTLY rather than going through
+    // OrderSystem — the stall guard is the safety net for orders no path can
+    // satisfy, and it still has to work.
     const world = createTestWorld();
     const d = addTestDivision(world, 'a', 300, 500, { speedKmh: 5 });
     const engine = new GameEngine(world);
 
     let blocked = 0;
     engine.events.on('orderBlocked', () => blocked++);
-    engine.issue({ type: 'move', divisions: [d.id], destination: { x: 500, y: 500 }, append: false });
+    d.order = {
+      kind: 'move',
+      waypoints: [{ x: 700, y: 500 }], // straight through the lake
+      cursor: 0,
+      bestDistance: Infinity,
+      stalledTicks: 0,
+    };
+    d.stance = 'move';
 
     for (let i = 0; i < TICKS_PER_DAY * 3; i++) engine.step();
 
@@ -70,6 +82,21 @@ describe('MovementSystem', () => {
     expect(d.stance).toBe('hold');
     // And it must not have burned a day of cohesion doing it.
     expect(d.organisation).toBeGreaterThan(49);
+  });
+
+  it('now routes around the lake rather than stalling at it', () => {
+    // The same order, issued properly: the pathfinder makes it achievable.
+    const world = createTestWorld();
+    const d = addTestDivision(world, 'a', 300, 500, { speedKmh: 6 });
+    const engine = new GameEngine(world);
+
+    let blocked = 0;
+    engine.events.on('orderBlocked', () => blocked++);
+    engine.issue({ type: 'move', divisions: [d.id], destination: { x: 700, y: 500 }, append: false });
+    for (let i = 0; i < TICKS_PER_DAY * 8; i++) engine.step();
+
+    expect(blocked).toBe(0);
+    expect(Math.hypot(d.position.x - 700, d.position.y - 500)).toBeLessThan(5);
   });
 
   it('walks a queued waypoint list in order', () => {

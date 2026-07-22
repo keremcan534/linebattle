@@ -35,12 +35,26 @@ export class OrderSystem implements System {
             events.emit({ type: 'orderBlocked', division: id, reason: 'impassable' });
             continue;
           }
+          // Route around terrain rather than into it. The pathfinder returns
+          // the destination unchanged when the way is already clear, so the
+          // common case costs one line-of-sight walk.
+          const origin =
+            cmd.append && d.order?.kind === 'move'
+              ? (d.order.waypoints[d.order.waypoints.length - 1] ?? d.position)
+              : d.position;
+          const route = world.pathfinder.findPath(origin, target);
+
+          if (!route) {
+            events.emit({ type: 'orderBlocked', division: id, reason: 'unreachable' });
+            continue;
+          }
+
           if (cmd.append && d.order?.kind === 'move') {
-            d.order.waypoints.push({ ...target });
+            d.order.waypoints.push(...route);
           } else {
             d.order = {
               kind: 'move',
-              waypoints: [{ ...target }],
+              waypoints: route,
               cursor: 0,
               bestDistance: Infinity,
               stalledTicks: 0,

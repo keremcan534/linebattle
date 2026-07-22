@@ -2,7 +2,7 @@ import type { Branch, Stance } from '@core/world/division';
 import type { DivisionId } from '@core/world/ids';
 import type { World } from '@core/world/world';
 import { effectiveSpeedKmh, organisationRatio, strengthRatio } from '@core/world/division';
-import { formatGameDate } from '@core/time/gameClock';
+import { formatGameDate, MINUTES_PER_TICK } from '@core/time/gameClock';
 import { TERRAIN_PROFILES } from '@core/terrain/terrainTypes';
 
 /**
@@ -40,6 +40,25 @@ export interface DivisionSummary {
   lat: number;
 }
 
+export interface BattleSummary {
+  id: string;
+  /** Where it is, so the HUD can fly the camera there. */
+  x: number;
+  y: number;
+  lon: number;
+  lat: number;
+  terrain: string;
+  /** 0..1 — how the fight is going for the PLAYER's side. */
+  progress: number;
+  playerPower: number;
+  enemyPower: number;
+  playerDivisions: number;
+  enemyDivisions: number;
+  /** Elapsed hours, for "how long has this been grinding?". */
+  hours: number;
+  attacking: boolean;
+}
+
 export interface ViewSnapshot {
   selection: readonly DivisionId[];
   selectedDetails: readonly DivisionSummary[];
@@ -51,6 +70,7 @@ export interface ViewSnapshot {
   zoom: number;
   cursor: { lon: number; lat: number; terrain: string } | null;
   divisionCount: number;
+  battles: readonly BattleSummary[];
 }
 
 const EMPTY_SNAPSHOT: ViewSnapshot = {
@@ -64,6 +84,7 @@ const EMPTY_SNAPSHOT: ViewSnapshot = {
   zoom: 0.1,
   cursor: null,
   divisionCount: 0,
+  battles: [],
 };
 
 export class ViewStore {
@@ -74,6 +95,8 @@ export class ViewStore {
   cursorWorld: { x: number; y: number } | null = null;
 
   private world: World | null = null;
+  /** Set at boot; battles are reported from this side's point of view. */
+  playerAlliance = '';
   private snapshot: ViewSnapshot = EMPTY_SNAPSHOT;
   private listeners = new Set<() => void>();
   private dirty = true;
@@ -162,6 +185,36 @@ export class ViewStore {
       cursor = { lon, lat, terrain: TERRAIN_PROFILES[world.terrain.sample(this.cursorWorld)].name };
     }
 
+    // Always reported from the player's point of view: `progress` above 0.5
+    // means the player is winning, whichever side of the battle they are on.
+    // A HUD that made the player work out which arc was theirs would be
+    // useless at a glance, which is the only speed that matters here.
+    const battles: BattleSummary[] = [];
+    for (const battle of world.battles.values()) {
+      const mine = battle.sides.findIndex((s) => s.alliance === this.playerAlliance);
+      if (mine < 0) continue;
+      const theirs = mine === 0 ? 1 : 0;
+      const { lon, lat } = world.projection.unproject(battle.position);
+
+      battles.push({
+        id: battle.id,
+        x: battle.position.x,
+        y: battle.position.y,
+        lon,
+        lat,
+        terrain: battle.terrain,
+        progress: mine === 0 ? battle.progress : 1 - battle.progress,
+        playerPower: battle.sides[mine]!.power,
+        enemyPower: battle.sides[theirs]!.power,
+        playerDivisions: battle.sides[mine]!.divisions.length,
+        enemyDivisions: battle.sides[theirs]!.divisions.length,
+        hours: ((world.clock.tick - battle.startedTick) * MINUTES_PER_TICK) / 60,
+        attacking: battle.sides[mine]!.attacking,
+      });
+    }
+    // Worst first: the player should see where they are losing.
+    battles.sort((a, b) => a.progress - b.progress);
+
     this.snapshot = {
       selection: [...this.selection],
       selectedDetails: details,
@@ -173,6 +226,7 @@ export class ViewStore {
       zoom,
       cursor,
       divisionCount: world.divisions.size,
+      battles,
     };
 
     for (const listener of this.listeners) listener();

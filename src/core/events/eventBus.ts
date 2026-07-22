@@ -1,4 +1,5 @@
-import type { DivisionId } from '@core/world/ids';
+import type { Vec2 } from '@core/math/vec2';
+import type { BattleId, DivisionId, FactionId } from '@core/world/ids';
 
 /**
  * Notifications flowing OUT of the simulation.
@@ -13,7 +14,12 @@ export type GameEvent =
   | { type: 'tick'; tick: number }
   | { type: 'orderIssued'; division: DivisionId }
   | { type: 'destinationReached'; division: DivisionId }
-  | { type: 'orderBlocked'; division: DivisionId; reason: 'impassable' };
+  | { type: 'orderBlocked'; division: DivisionId; reason: 'impassable' | 'unreachable' }
+  | { type: 'battleStarted'; battle: BattleId; position: Vec2 }
+  | { type: 'battleDecided'; battle: BattleId; position: Vec2; winner: FactionId | null }
+  | { type: 'battleEnded'; battle: BattleId; position: Vec2 }
+  | { type: 'divisionRetreating'; division: DivisionId }
+  | { type: 'divisionDestroyed'; division: DivisionId; position: Vec2 };
 
 type Handler<E extends GameEvent = GameEvent> = (event: E) => void;
 

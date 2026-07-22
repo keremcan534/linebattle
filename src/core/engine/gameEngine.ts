@@ -1,5 +1,7 @@
 import { CommandQueue, type Command } from '@core/commands/commands';
 import { EventBus } from '@core/events/eventBus';
+import { CombatSystem } from '@core/systems/combatSystem';
+import { ContactSystem } from '@core/systems/contactSystem';
 import { MovementSystem } from '@core/systems/movementSystem';
 import { OrderSystem } from '@core/systems/orderSystem';
 import { RecoverySystem } from '@core/systems/recoverySystem';
@@ -63,17 +65,21 @@ export class GameEngine {
  * The canonical system order.
  *
  * Read this list top to bottom and you have the tick: orders are consumed,
- * units move, then formations recover. Milestone 2 inserts supply before
- * movement and contact/combat after it — the ordering contract lives here and
- * only here.
+ * units move, contact is re-evaluated where they ended up, battles are fought,
+ * then everyone out of the line recovers.
+ *
+ * Contact runs AFTER movement on purpose. Detecting it first would let a
+ * division march clean through an enemy formation in the same tick it touched
+ * it. Recovery runs last so that organisation spent in a battle cannot be
+ * refunded in the tick it was lost.
  */
 export function createDefaultSystems(queue: CommandQueue): System[] {
   return [
     new OrderSystem(queue),
     // supply           <- Milestone 3
     new MovementSystem(),
-    // contact detection <- Milestone 2
-    // combat resolution <- Milestone 2
+    new ContactSystem(),
+    new CombatSystem(),
     new RecoverySystem(),
   ];
 }

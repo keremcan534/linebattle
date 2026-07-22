@@ -55,6 +55,7 @@ export function useGame(scenarioUrl: string | null, hostRef: React.RefObject<HTM
 
         const store = storeRef.current;
         store.attach(world);
+        store.playerAlliance = world.getFaction(factionId(scenario.playerFaction))?.alliance ?? '';
 
         const engine = new GameEngine(world);
         const renderer = await GameRenderer.create(host, engine, mapData, store);

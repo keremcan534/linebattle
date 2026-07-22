@@ -135,6 +135,45 @@ html, body, #root {
 .panel__rosterOrg { font-family: var(--font-mono); color: var(--org); }
 .swatch { width: 9px; height: 9px; border-radius: 2px; flex: none; }
 
+/* ----------------------------------------------------------------- battles */
+
+.battles {
+  position: absolute;
+  right: 12px; bottom: 12px;
+  width: 268px;
+  max-height: 42%;
+  display: flex; flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  backdrop-filter: blur(3px);
+}
+.battles__head {
+  display: flex; justify-content: space-between;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim);
+}
+.battles__count { color: var(--accent); }
+.battles__list { list-style: none; margin: 0; padding: 4px; overflow-y: auto; display: grid; gap: 2px; }
+
+.battles__item {
+  display: grid; gap: 3px; width: 100%;
+  padding: 6px 7px; text-align: left; cursor: pointer;
+  background: none; border: 1px solid transparent; border-radius: 3px; color: var(--text);
+}
+.battles__item:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--panel-border); }
+
+.battles__row { display: flex; align-items: baseline; gap: 8px; font-size: 11px; }
+.battles__state { flex: 1; text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; color: var(--text-dim); }
+.battles__state.is-losing { color: #d9736a; }
+.battles__state.is-winning { color: var(--strength); }
+.battles__odds, .battles__hours { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); }
+
+.battles__track { height: 3px; background: rgba(217, 115, 106, 0.35); border-radius: 2px; overflow: hidden; }
+.battles__fill { display: block; height: 100%; background: var(--strength); transition: width 0.25s linear; }
+.battles__meta { font-size: 10px; color: var(--text-dim); }
+
 /* ---------------------------------------------------------------- controls */
 
 .controls {

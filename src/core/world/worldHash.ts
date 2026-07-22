@@ -84,6 +84,23 @@ export function hashWorld(world: World): number {
     }
   }
 
+  // Battles are simulation state — two runs that agree on unit positions but
+  // disagree on who is fighting whom have already diverged.
+  h.int(world.nextBattleSerial);
+  for (const id of [...world.battles.keys()].sort()) {
+    const battle = world.battles.get(id)!;
+    h.text(id);
+    h.int(battle.startedTick);
+    h.float(battle.position.x);
+    h.float(battle.position.y);
+    h.float(battle.progress);
+    for (const side of battle.sides) {
+      h.text(side.alliance);
+      h.byte(side.attacking ? 1 : 0);
+      for (const d of side.divisions) h.text(d);
+    }
+  }
+
   return h.value;
 }
 

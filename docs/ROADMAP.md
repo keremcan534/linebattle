@@ -55,21 +55,24 @@ Each milestone is a **playable build**, not a layer of plumbing. If a milestone 
 
 ---
 
-## Milestone 2 — Contact and combat
+## ✅ Milestone 2 — Contact and combat
 
-**Goal: the front line becomes a real thing.** Two divisions that meet fight, and the loser gives ground.
+**Shipped.** The front line is a real thing: divisions that meet fight, and the loser gives ground.
 
-- [ ] Spatial hash for proximity queries (replaces the linear scan)
-- [ ] A* pathfinding over the terrain grid, so orders across water route around it instead of being abandoned
-- [ ] `ContactSystem` — detect opposing divisions within engagement range
-- [ ] `Battle` entity: attackers, defenders, terrain, frontage, duration
-- [ ] `CombatSystem` — resolve per tick from strength, organisation, morale, supply, experience, terrain, river crossings, plus a **bounded** random factor
-- [ ] Organisation as the primary combat currency; manpower losses follow
-- [ ] Retreat: the loser withdraws along the least-contested vector
-- [ ] Combat bubble rendering (HOI4-style) with attacker/defender readout
-- [ ] Battle log in the HUD
+- [x] Spatial hash for proximity queries (replaces the linear scan)
+- [x] A* pathfinding over the terrain grid, with a line-of-sight fast path — orders across water route around instead of being abandoned
+- [x] `ContactSystem` — transitive clustering, so a sector is one engagement rather than a hundred duels
+- [x] `Battle` entity: sides, who is attacking, terrain, duration, progress
+- [x] `CombatSystem` — strength, organisation, morale, supply, experience, terrain, river crossings, plus a bounded random factor
+- [x] Organisation as the primary combat currency; manpower losses follow at a fraction of the rate
+- [x] Retreat as a stance, so a broken division actually escapes instead of being re-engaged
+- [x] Combat bubble rendering with a progress dial and power readout
+- [x] Engagement list in the HUD, worst first, click to fly the camera there
+- [x] Determinism verified *with* combat consuming the RNG
 
-**Design constraint:** randomness must never make a well-supplied veteran panzer division lose to a broken rifle division. Variance modulates *how fast* and *how expensive*, never *who wins*, outside narrow margins.
+**The design constraint held.** Randomness must never make a well-supplied veteran division lose to a broken one — a test runs 25 seeds and requires 25 wins out of 25, while a second test requires that battle *durations* still vary. Variance changes how fast and how expensive, never who wins.
+
+Measured on Barbarossa: 44 battles over a simulated week, **0.097 ms per tick**, identical world hash across runs.
 
 ---
 

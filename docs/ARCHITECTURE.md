@@ -157,6 +157,38 @@ Adding bocage also exposed a latent bug in the terrain rasteriser. It had encode
 
 ---
 
+## 7b. Combat
+
+The brief asked for results driven by unit statistics, terrain, supply, organisation, morale and experience, plus a small random factor that never makes combat feel unfair. **That last clause drove the whole design.**
+
+**Randomness modulates rate, not outcome.** Each tick applies a triangular multiplier of ±12% to damage. A battle runs for dozens of ticks, so the rolls average out and the stronger force wins reliably — variance decides whether it takes eighteen hours or thirty, and what it costs. There is no single roll that can lose a battle a well-supplied veteran division should win. A test asserts this across 25 seeds and demands **25 wins out of 25**, not "usually".
+
+**Organisation is the currency, not manpower.** Divisions break long before they are destroyed: a formation that has lost cohesion stops being able to fight and falls back, having lost perhaps a tenth of its men. A full bar of organisation is worth about 13% of a division's strength, so *a single battle cannot annihilate anyone* — which is why encirclement (Milestone 3) will be so much deadlier than frontal assault, and why a broken army can be reconstituted.
+
+**A battle is a relationship, not a place.** It owns no ground and no units, only ids. Divisions keep marching, taking losses and being ordered around while it exists. Battles form by transitive clustering — any two hostile divisions in range join the same engagement, and so does anyone in range of them — so a continuous front behaves like a front instead of a hundred separate duels. They are rebuilt from scratch each tick and inherit the id of the battle they most overlap, so the UI sees one continuous engagement rather than a new one every fifteen minutes.
+
+**Attacking is a state, not an intent.** A side attacks when it has a live move order. That is what earns the other side its terrain bonus, and it is why sitting in a forest is worth doing.
+
+**Retreat is a stance.** Without it a broken division walks 500 m, re-enters contact and is ground to nothing for no reason the player can see. `ContactSystem` refuses to enrol a retreating formation, so it actually escapes.
+
+Every term in the power calculation is something the player can see in the unit panel. That is a deliberate constraint: a player who loses a battle should be able to point at the number that lost it.
+
+---
+
+## 7c. Pathfinding and the spatial index
+
+Two pieces of infrastructure that Milestone 1 deliberately deferred, added when combat made them necessary.
+
+**A\* over the terrain grid**, with a line-of-sight fast path. Most orders are unobstructed, and a LOS walk is orders of magnitude cheaper than a grid search, so A\* only runs when the direct route is genuinely blocked — that is what makes it affordable to path a hundred divisions on one click (measured: 57 orders in 4 ms). Cost is *time*, not distance, so a route prefers open ground over a short slog through marsh. Scratch buffers are allocated once and reused through a generation stamp; allocating per call would be 10 MB of churn per division per order. Ties break on cell index, never insertion order, so paths are byte-identical between runs.
+
+Raw grid paths are staircases of hundreds of cells, so the result is string-pulled down to the handful of corners the terrain actually forces.
+
+`MovementSystem` was not touched by any of this — exactly as this document promised in Milestone 1. It already only knew how to walk a list of points; pathfinding changed who produces the list.
+
+**The spatial index** replaces the linear scan. Contact detection asks "who is near this?" for every division every tick: at 400 divisions that is 15 million distance tests per simulated day, growing quadratically. It is rebuilt from scratch each tick rather than maintained incrementally — with a few hundred moving entities the rebuild is microseconds and it cannot drift out of sync, which an incremental index eventually does.
+
+---
+
 ## 8. Scenarios are data
 
 A scenario is one JSON file: projection, map bounds, terrain resolution, map layers, factions, stat templates and the order of battle. Adding *Case Blue* must mean writing JSON and **zero TypeScript** — that requirement is why the projection and the theatre bounds are scenario-declared rather than global constants.

@@ -1,10 +1,13 @@
 import type { Projection } from '@core/geo/projection';
 import { Rng } from '@core/math/random';
+import { Pathfinder } from '@core/pathfinding/pathfinder';
 import type { TerrainGrid } from '@core/terrain/terrainGrid';
 import { GameClock } from '@core/time/gameClock';
+import type { Battle } from './battle';
 import type { Division } from './division';
 import type { Faction } from './faction';
-import type { DivisionId, FactionId } from './ids';
+import type { BattleId, DivisionId, FactionId } from './ids';
+import { SpatialIndex } from './spatialIndex';
 
 export interface WorldBounds {
   minX: number;
@@ -36,6 +39,14 @@ export class World {
    */
   readonly rng: Rng;
 
+  readonly battles = new Map<BattleId, Battle>();
+  /** Monotonic, so battle ids are stable across identical runs. */
+  nextBattleSerial = 1;
+
+  /** Rebuilt every tick by ContactSystem; see SpatialIndex for why. */
+  readonly index: SpatialIndex;
+  readonly pathfinder: Pathfinder;
+
   constructor(
     readonly projection: Projection,
     readonly terrain: TerrainGrid,
@@ -45,6 +56,18 @@ export class World {
   ) {
     this.clock = new GameClock(startDate);
     this.rng = new Rng(seed);
+    this.pathfinder = new Pathfinder(terrain);
+    // Bucket edge ~ twice the engagement range, so a contact query touches a
+    // 3x3 neighbourhood at most.
+    this.index = new SpatialIndex(25);
+  }
+
+  /** The battle this division is committed to, if any. */
+  battleOf(id: DivisionId): Battle | undefined {
+    for (const battle of this.battles.values()) {
+      for (const side of battle.sides) if (side.divisions.includes(id)) return battle;
+    }
+    return undefined;
   }
 
   addFaction(f: Faction): void {
@@ -70,22 +93,8 @@ export class World {
     return !!fa && !!fb && fa.alliance !== fb.alliance;
   }
 
-  /**
-   * Divisions whose centre lies within `radiusKm` of a world point.
-   *
-   * Linear scan. At Barbarossa scale (~400 divisions) this is a few
-   * microseconds and is only called on player clicks — replacing it with a
-   * spatial hash before combat needs proximity queries every tick is a
-   * Milestone 2 task, deliberately not done now.
-   */
+  /** Divisions whose centre lies within `radiusKm` of a world point. */
   divisionsNear(x: number, y: number, radiusKm: number): Division[] {
-    const r2 = radiusKm * radiusKm;
-    const out: Division[] = [];
-    for (const d of this.divisions.values()) {
-      const dx = d.position.x - x;
-      const dy = d.position.y - y;
-      if (dx * dx + dy * dy <= r2) out.push(d);
-    }
-    return out;
+    return this.index.query(x, y, radiusKm);
   }
 }

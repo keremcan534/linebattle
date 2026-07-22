@@ -16,7 +16,12 @@ export type Branch =
   | 'artillery'
   | 'security';
 
-export type Stance = 'move' | 'hold' | 'entrench';
+/**
+ * `retreat` is a real state, not a flavour of `move`: ContactSystem refuses to
+ * enrol a retreating division in a new battle, which is what stops a broken
+ * formation walking 500 m, coming back into range and being ground to nothing.
+ */
+export type Stance = 'move' | 'hold' | 'entrench' | 'retreat';
 
 /**
  * A movement order: an ordered list of world-space waypoints.
@@ -117,6 +122,8 @@ export const organisationRatio = (d: Division): number =>
 export function effectiveSpeedKmh(d: Division): number {
   const supplyFactor = 0.35 + 0.65 * d.supply;
   const orgFactor = 0.5 + 0.5 * organisationRatio(d);
-  const stanceFactor = d.stance === 'move' ? 1 : 0;
+  // A broken formation still moves — that is the whole point of retreating —
+  // but it does so as a mob, not a division.
+  const stanceFactor = d.stance === 'move' ? 1 : d.stance === 'retreat' ? 0.75 : 0;
   return d.speedKmh * supplyFactor * orgFactor * stanceFactor;
 }

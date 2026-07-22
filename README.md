@@ -30,16 +30,15 @@ npm run dev
 | **Terrain** | 996 × 825 grid at 4 km/cell — water, plains, forest, marsh, hills, mountains, urban — rasterised from GeoJSON at load |
 | **Camera** | Free pan and zoom, 0.02–4 px/km, level-of-detail city labels |
 | **Units** | 112 divisions, procedural APP-6 counters, strength and organisation bars |
-| **Movement** | Continuous, terrain-modified, coastline-aware, with waypoint queues |
+| **Movement** | Continuous, terrain-modified, with A* pathfinding around obstacles and waypoint queues |
+| **Combat** | Automatic on contact — organisation-based, terrain and supply driven, retreat and pursuit, combat bubbles |
 | **Simulation** | Fixed 15-minute tick, deterministic, decoupled from frame rate |
 | **Randomness** | Seeded, saveable RNG; `Math.random` banned in `core/` at lint level |
 | **Scenarios** | Pure JSON — order of battle, stats, projection and map layers are all data |
-| **Tests** | 44 tests in plain Node, no DOM — determinism, projection, movement, RNG |
-
-Combat is **not** implemented yet. That is Milestone 2, by design.
+| **Tests** | 125 tests in plain Node, no DOM — determinism, combat fairness, pathfinding, projection, scenarios |
 
 ```bash
-npm test      # 44 tests
+npm test      # 125 tests
 npm run check # lint + typecheck + tests
 ```
 
@@ -54,6 +53,9 @@ npm run check # lint + typecheck + tests
 | Determinism | identical world hash across runs, seeds, and batch sizes |
 | Bocage vs open ground | **10.7 vs 35.6 km/day** — the hedgerows are terrain you feel |
 | Scenario load | 36–67 ms including terrain rasterisation |
+| Tick cost with 44 battles running | **0.097 ms** |
+| Pathfinding 57 divisions on one order | **4 ms** |
+| Combat fairness | stronger force wins **25 / 25** seeds; durations still vary |
 
 ## Controls
 

@@ -45,6 +45,12 @@ export const theme = {
     orgBar: 0x6aa9d0,
   },
 
+  battle: {
+    radiusPx: 15,
+    rim: 0xf0d99a,
+    blades: 0xf5ead0,
+  },
+
   order: {
     line: 0xffe680,
     lineAlpha: 0.75,
