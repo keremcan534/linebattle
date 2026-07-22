@@ -6,6 +6,17 @@ import type { System, TickContext } from './system';
 /** How close a division must get to a waypoint to count as having reached it. */
 const ARRIVAL_TOLERANCE_KM = 1.5;
 
+/** Progress smaller than this does not count as progress. */
+const PROGRESS_EPSILON_KM = 0.05;
+
+/**
+ * Ticks of zero progress before an order is judged impossible.
+ * Eight ticks is two game-hours — long enough to survive squeezing along a
+ * coastline, short enough that a division never bleeds a day of organisation
+ * into a lake it cannot cross.
+ */
+const STALL_LIMIT_TICKS = 8;
+
 /**
  * Continuous movement across the map.
  *
@@ -40,6 +51,8 @@ export class MovementSystem implements System {
 
         if (remaining <= ARRIVAL_TOLERANCE_KM) {
           order.cursor++;
+          order.bestDistance = Infinity;
+          order.stalledTicks = 0;
           if (order.cursor >= order.waypoints.length) {
             d.order = null;
             d.stance = 'hold';
@@ -77,6 +90,23 @@ export class MovementSystem implements System {
         }
 
         budgetKm -= stepKm;
+      }
+
+      // Progress check, once per tick rather than per sub-step: sliding along
+      // a shore genuinely moves the division, so "did I move?" is the wrong
+      // question. The right one is "am I any closer to where I was sent?".
+      if (d.order && d.order.cursor < d.order.waypoints.length) {
+        const target = d.order.waypoints[d.order.cursor]!;
+        const remaining = distance(d.position, target);
+
+        if (remaining < d.order.bestDistance - PROGRESS_EPSILON_KM) {
+          d.order.bestDistance = remaining;
+          d.order.stalledTicks = 0;
+        } else if (++d.order.stalledTicks >= STALL_LIMIT_TICKS) {
+          d.order = null;
+          d.stance = 'hold';
+          events.emit({ type: 'orderBlocked', division: d.id, reason: 'impassable' });
+        }
       }
     }
   }

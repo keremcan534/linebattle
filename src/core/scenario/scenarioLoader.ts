@@ -89,7 +89,15 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
   });
 
   report('Deploying forces', 0.8);
-  const world = new World(projection, terrain, bounds, new Date(scenario.startDate));
+  // An explicit seed makes a scenario reproducible run to run; falling back to
+  // the scenario id keeps it reproducible even when the author omits one.
+  const world = new World(
+    projection,
+    terrain,
+    bounds,
+    new Date(scenario.startDate),
+    scenario.seed ?? scenario.id,
+  );
 
   for (const f of scenario.factions) {
     world.addFaction({

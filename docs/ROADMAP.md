@@ -23,11 +23,26 @@ Each milestone is a **playable build**, not a layer of plumbing. If a milestone 
 
 ---
 
+## ✅ Milestone 1.5 — Determinism foundation
+
+**Shipped.** Done *before* combat, because it cannot be retrofitted afterwards.
+
+- [x] Seeded xoshiro128\*\* RNG as part of world state, saveable and hashable
+- [x] `Math.random` banned in `core/` by ESLint (rule verified to fire)
+- [x] `hashWorld()` — a checksum of the whole simulation, and the primitive multiplayer desync detection will use
+- [x] Vitest suite running in plain Node with no DOM: 44 tests
+- [x] Determinism tests: same stream → same hash; batch-size independence; seed divergence; order insensitivity
+- [x] Projection standard parallels re-tuned by measurement (1.24% → 0.55% error where the fighting is)
+- [x] Fixed a movement livelock: divisions ordered across water ground against the shore forever
+
+---
+
 ## Milestone 2 — Contact and combat
 
 **Goal: the front line becomes a real thing.** Two divisions that meet fight, and the loser gives ground.
 
 - [ ] Spatial hash for proximity queries (replaces the linear scan)
+- [ ] A* pathfinding over the terrain grid, so orders across water route around it instead of being abandoned
 - [ ] `ContactSystem` — detect opposing divisions within engagement range
 - [ ] `Battle` entity: attackers, defenders, terrain, frontage, duration
 - [ ] `CombatSystem` — resolve per tick from strength, organisation, morale, supply, experience, terrain, river crossings, plus a **bounded** random factor

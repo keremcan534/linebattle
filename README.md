@@ -24,9 +24,26 @@ npm run dev
 | **Units** | 112 divisions, procedural APP-6 counters, strength and organisation bars |
 | **Movement** | Continuous, terrain-modified, coastline-aware, with waypoint queues |
 | **Simulation** | Fixed 15-minute tick, deterministic, decoupled from frame rate |
+| **Randomness** | Seeded, saveable RNG; `Math.random` banned in `core/` at lint level |
 | **Scenarios** | Pure JSON — order of battle, stats, projection and map layers are all data |
+| **Tests** | 44 tests in plain Node, no DOM — determinism, projection, movement, RNG |
 
 Combat is **not** implemented yet. That is Milestone 2, by design.
+
+```bash
+npm test      # 44 tests
+npm run check # lint + typecheck + tests
+```
+
+### Measured, not assumed
+
+| | |
+|---|---|
+| Frame cost, 112 divisions @1080p | **0.17 ms** (budget is 16.7 ms) |
+| Frame cost, 1000 divisions | **0.81 ms** |
+| Projection round-trip | exact to **1e-9°** |
+| Operational distance error | **< 0.55%** vs. haversine |
+| Determinism | identical world hash across runs, seeds, and batch sizes |
 
 ## Controls
 

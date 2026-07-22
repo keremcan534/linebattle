@@ -9,7 +9,10 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit false --emitDeclarationOnly false --pretty",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint . --ext .ts,.tsx,.mjs",
+    "check": "npm run lint && tsc --noEmit && vitest run",
     "data:prepare": "node scripts/prepare-map-data.mjs"
   },
   "dependencies": {
@@ -26,6 +29,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^8.57.1",
     "typescript": "^5.7.2",
-    "vite": "^6.0.5"
+    "vite": "^6.0.5",
+    "vitest": "^2.1.9"
   }
 }

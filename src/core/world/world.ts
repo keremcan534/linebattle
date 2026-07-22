@@ -1,4 +1,5 @@
 import type { Projection } from '@core/geo/projection';
+import { Rng } from '@core/math/random';
 import type { TerrainGrid } from '@core/terrain/terrainGrid';
 import { GameClock } from '@core/time/gameClock';
 import type { Division } from './division';
@@ -25,13 +26,25 @@ export class World {
   readonly factions = new Map<FactionId, Faction>();
   readonly clock: GameClock;
 
+  /**
+   * The simulation's ONLY source of randomness.
+   *
+   * It lives on the world rather than in a module because its state is
+   * simulation state: it has to be saved, restored and hashed alongside unit
+   * positions. A system that reaches for `Math.random()` instead silently
+   * destroys reproducibility, so ESLint forbids it inside `core/`.
+   */
+  readonly rng: Rng;
+
   constructor(
     readonly projection: Projection,
     readonly terrain: TerrainGrid,
     readonly bounds: WorldBounds,
     startDate: Date,
+    seed: number | string = 0,
   ) {
     this.clock = new GameClock(startDate);
+    this.rng = new Rng(seed);
   }
 
   addFaction(f: Faction): void {

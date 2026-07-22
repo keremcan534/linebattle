@@ -38,7 +38,13 @@ export class OrderSystem implements System {
           if (cmd.append && d.order?.kind === 'move') {
             d.order.waypoints.push({ ...target });
           } else {
-            d.order = { kind: 'move', waypoints: [{ ...target }], cursor: 0 };
+            d.order = {
+              kind: 'move',
+              waypoints: [{ ...target }],
+              cursor: 0,
+              bestDistance: Infinity,
+              stalledTicks: 0,
+            };
           }
           d.stance = 'move';
           events.emit({ type: 'orderIssued', division: id });

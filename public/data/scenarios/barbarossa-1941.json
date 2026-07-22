@@ -7,7 +7,7 @@
   "playerFaction": "germany",
 
   "map": {
-    "projection": { "type": "lcc", "lon0": 28, "lat0": 52, "lat1": 44, "lat2": 62 },
+    "projection": { "type": "lcc", "lon0": 28, "lat0": 52, "lat1": 47, "lat2": 59 },
     "bounds": { "minLon": 6, "minLat": 38, "maxLon": 51, "maxLat": 66 },
     "terrainCellSizeKm": 4,
     "layers": {

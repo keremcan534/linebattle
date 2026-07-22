@@ -47,6 +47,21 @@ This buys, at essentially no cost today:
 
 ---
 
+## 3a. Randomness is simulation state
+
+`Math.random()` is **banned inside `src/core/`** by an ESLint rule (`no-restricted-properties`), verified to actually fire. All randomness comes from `world.rng`, a seeded xoshiro128\*\* generator whose entire state is four uint32s.
+
+This is not fastidiousness. `Math.random()`'s state is global, unseedable and unsaveable: the first combat roll that uses it makes every replay unreproducible, and there is no way to retrofit the fix except by rewriting every system that touched it. Combat — Milestone 2 — is the first system that wants randomness, which is why the generator had to land **before** it.
+
+Consequences:
+- The RNG state is saved, restored and **hashed** alongside unit positions (`worldHash.ts`).
+- `rng.fork()` gives a subsystem an independent stream, so adding a call site in one system cannot shift another system's sequence — the classic cause of "my replay desyncs after I added a log line".
+- `rng.variance(spread)` returns a triangular multiplier centred on 1. That is the shape combat should use: variance changes *how fast* and *how costly* a battle is, never *who was going to win*.
+
+`hashWorld()` turns determinism from a claim into something a test fails on, and is exactly the primitive multiplayer needs later: peers compare hashes per tick and a mismatch localises a desync to the tick it happened.
+
+---
+
 ## 4. Entities: ECS-lite, on purpose
 
 Divisions are plain mutable records in a `Map<DivisionId, Division>`. Systems are objects with `update(ctx)`, run in a **declared order** (`createDefaultSystems`) — order *is* the dependency graph, so it lives in exactly one place.
@@ -61,7 +76,19 @@ Branded id types (`DivisionId`) are strings at runtime and distinct at compile t
 
 ## 5. Geography
 
-**Projection.** Lambert Conformal Conic, standard parallels 44°N/62°N, centred on 28°E. The Eastern Front spans 45–62°N, where Web Mercator inflates area by 2–4× — a division near Leningrad would look twice the size of one near Odessa, and every distance would be a lie. LCC holds scale error near 1% across the theatre, so **one world unit is one real kilometre everywhere**. Verified: `project`/`unproject` round-trips to 1e-9 degrees.
+**Projection.** Lambert Conformal Conic, standard parallels **47°N/59°N**, centred on 28°E. The Eastern Front spans 45–62°N, where Web Mercator inflates distance by >10% — a division near Leningrad would look twice the size of one near Odessa, and every distance would be a lie.
+
+The standard parallels were **chosen by measurement, not by rule of thumb.** LCC scale is exact along the parallels and compressed between them, so widely spaced parallels systematically shrink everything in the middle. The original 44/62 understated *every* operational distance by ~1.2% (Brest–Minsk came out 335 km instead of 340). Surveying candidates against haversine ground truth:
+
+| parallels | worst error, 38–66°N | worst error, 45–60°N *(where the fighting is)* |
+|---|---|---|
+| 44 / 62 | 2.04% | 1.24% |
+| **47 / 59** | **2.68%** | **0.55%** |
+| 48 / 58 | 2.84% | 0.57% |
+
+47/59 more than halves the error where units actually operate, at the cost of accuracy at the extreme corners of the bounding box — empty sea and tundra. That trade is deliberate and is locked in by a test, so nobody widens the parallels again without seeing what it costs.
+
+Both facts are enforced in `projection.test.ts`: round-trip to 1e-9 degrees, and operational distances within 0.6%.
 
 World space is kilometres with **y increasing southwards**, matching screen conventions so the renderer never flips a sign.
 
@@ -117,12 +144,27 @@ See [SCENARIO_FORMAT.md](SCENARIO_FORMAT.md).
 
 ---
 
-## 9. Known limits (deliberate, for now)
+## 9. Testing
+
+`npm test` runs 44 tests in **plain Node with no DOM**. That environment is itself an assertion: if a test in `core/` ever needs jsdom, a browser dependency has leaked into the simulation.
+
+The suite is weighted towards claims that are expensive to discover being wrong:
+
+- **Determinism** — identical command streams produce identical world hashes; a run stepped in one batch matches one stepped in thirty (the frame-rate independence claim); different seeds diverge; the hash is insensitive to insertion order but sensitive to a single extra tick.
+- **Projection** — round-trip precision and measured scale error against haversine ground truth.
+- **Movement** — terrain effects, never entering water, waypoint queues, supply effects, and a regression test for the shore livelock described below.
+- **RNG** — reproducibility, state round-trip through JSON, uniformity, fork independence.
+
+The suite has already paid for itself: it caught a livelock where a division ordered across a lake ground against the shore indefinitely, bleeding organisation, while coast-sliding reported "success" every tick so nothing ever flagged the order impossible. Fixed by tracking progress toward the objective rather than movement per se.
+
+---
+
+## 10. Known limits (deliberate, for now)
 
 | Limit | Why it's fine today | When to fix |
 |---|---|---|
 | `divisionsNear` is a linear scan | ~400 divisions, only on click | Milestone 2, when contact detection runs every tick — spatial hash |
-| Movement is straight-line, no pathfinding | Units slide along coastlines and do not deadlock | Milestone 2 — A* over the terrain grid; `MovementSystem` already only walks a waypoint list, so it will not change |
+| Movement is straight-line, no pathfinding | Units slide along coastlines; an order across a lake is abandoned after 2 game-hours of zero progress rather than grinding forever | Milestone 2 — A* over the terrain grid; `MovementSystem` already only walks a waypoint list, so it will not change |
 | No save/load | Nothing to save yet | Milestone 4 — the World is one serialisable object by construction |
 | Supply is a static number | No combat consumes it | Milestone 3 — supply system before movement in the tick order |
 | Terrain overlays are hand-drawn polygons | Coarse but operationally honest | Replace with a landcover raster; no code changes needed |

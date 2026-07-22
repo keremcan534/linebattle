@@ -31,6 +31,18 @@ export interface MoveOrder {
   waypoints: Vec2[];
   /** Index of the waypoint currently being approached. */
   cursor: number;
+  /**
+   * Closest the division has come to the current waypoint, in km, and how many
+   * ticks it has failed to beat that.
+   *
+   * Without this a division ordered across a lake walks into the shore and
+   * grinds against it forever: coast-sliding "succeeds" every tick, so nothing
+   * ever reports the order as impossible, while organisation bleeds away. This
+   * is the stopgap until Milestone 2's pathfinder makes such orders unissuable
+   * in the first place.
+   */
+  bestDistance: number;
+  stalledTicks: number;
 }
 
 export type Order = MoveOrder;

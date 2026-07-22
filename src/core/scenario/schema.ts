@@ -21,6 +21,12 @@ export interface ScenarioFile {
   description?: string;
   /** ISO 8601, treated as UTC. */
   startDate: string;
+  /**
+   * Seed for the simulation's RNG. Omit and the scenario id is used, so a
+   * scenario is reproducible either way; set it explicitly to replay a
+   * specific run or to offer the player "reroll".
+   */
+  seed?: number | string;
   map: MapSpec;
   playerFaction: string;
   factions: FactionSpec[];

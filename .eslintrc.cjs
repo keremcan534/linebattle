@@ -14,6 +14,24 @@ module.exports = {
   },
   overrides: [
     {
+      // The simulation must stay reproducible. `Math.random()` has global,
+      // unseedable, unsaveable state: a single call makes replays, saves and
+      // desync-free multiplayer impossible, and the damage is silent. Use
+      // `world.rng`, whose state is saved and hashed with everything else.
+      files: ['src/core/**/*.ts'],
+      excludedFiles: ['**/*.test.ts'],
+      rules: {
+        'no-restricted-properties': [
+          'error',
+          {
+            object: 'Math',
+            property: 'random',
+            message: 'Use world.rng (see src/core/math/random.ts) — Math.random breaks determinism.',
+          },
+        ],
+      },
+    },
+    {
       // The map pipeline is a Node script, not browser code.
       files: ['scripts/**/*.mjs'],
       env: { node: true, browser: false },
