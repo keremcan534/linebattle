@@ -5,6 +5,7 @@ import type { ViewStore } from '@app/viewStore';
 import { Camera } from './camera';
 import { BattleLayer } from './layers/battleLayer';
 import { BorderLayer } from './layers/borderLayer';
+import { SupplyOverlay } from './layers/supplyOverlay';
 import { MapLayer } from './layers/mapLayer';
 import { OrderLayer } from './layers/orderLayer';
 import { UnitLayer } from './layers/unitLayer';
@@ -44,6 +45,7 @@ export class GameRenderer {
   private readonly unitLayer: UnitLayer;
   private readonly orderLayer: OrderLayer;
   private readonly battleLayer: BattleLayer;
+  private readonly supplyOverlay: SupplyOverlay | null;
   private resizeObserver: ResizeObserver | null = null;
   private uiClock = 0;
   private rafHandle = 0;
@@ -64,12 +66,16 @@ export class GameRenderer {
     this.orderLayer = new OrderLayer(world);
     this.unitLayer = new UnitLayer(world);
     this.battleLayer = new BattleLayer(world);
+    this.supplyOverlay = world.supply ? new SupplyOverlay(world) : null;
 
     // Draw order. Borders sit above the terrain but below anything the player
     // manipulates, so a dashed frontier can never obscure a counter. Battle
     // bubbles go on top of everything: a fight is the most urgent thing on
     // the map and must never be hidden behind a counter.
     this.worldRoot.addChild(this.mapLayer.container);
+    // The supply wash sits directly on the terrain, under the political and
+    // unit layers, so it reads as a property of the ground.
+    if (this.supplyOverlay) this.worldRoot.addChild(this.supplyOverlay.container);
     if (this.borderLayer) this.worldRoot.addChild(this.borderLayer.container);
     this.worldRoot.addChild(
       this.orderLayer.container,
@@ -111,6 +117,18 @@ export class GameRenderer {
     return this.app.canvas;
   }
 
+  /** Which side's logistics the supply overlay shows. */
+  setSupplyAlliance(alliance: string): void {
+    this.supplyOverlay?.setAlliance(alliance);
+  }
+
+  /** Toggles the supply map mode. Returns the new visibility. */
+  toggleSupplyOverlay(): boolean {
+    if (!this.supplyOverlay) return false;
+    this.supplyOverlay.setVisible(!this.supplyOverlay.visible);
+    return this.supplyOverlay.visible;
+  }
+
   /** Toggles the political overlay. Returns the new visibility. */
   toggleBorders(): boolean {
     if (!this.borderLayer) return false;
@@ -138,6 +156,7 @@ export class GameRenderer {
     this.unitLayer.destroy();
     this.orderLayer.destroy();
     this.battleLayer.destroy();
+    this.supplyOverlay?.destroy();
     this.app.destroy(true, { children: true });
   }
 
@@ -163,6 +182,7 @@ export class GameRenderer {
     const alpha = this.engine.world.clock.subTickAlpha;
     this.mapLayer.update(zoom);
     this.borderLayer?.update(zoom);
+    this.supplyOverlay?.update();
     this.orderLayer.update(zoom, this.store.selection, this.store.dragBox);
     this.unitLayer.update(zoom, alpha, this.store.selection, this.store.hovered);
     this.battleLayer.update(zoom, deltaMS);

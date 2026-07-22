@@ -20,25 +20,26 @@ npm run dev
 
 ---
 
-## What exists today (Milestone 1)
+## What exists today (Milestones 1–3)
 
 | | |
 |---|---|
 | **Map** | Natural Earth vector coastlines, lakes, rivers and cities. Each theatre is clipped offline and gets its own projection and source resolution — 1:50m at 4 km cells for a 3000 km front, 1:10m at 2 km for Normandy, where the whole scenario is an argument about one coastline |
-| **Terrain classes** | Water, plains, forest, marsh, hills, mountains, urban, desert, bocage |
-| **Borders** | Hand-authored 22 June 1941 political boundaries and country labels — drawn, never enforced (toggle with `B`) |
-| **Terrain** | 996 × 825 grid at 4 km/cell — water, plains, forest, marsh, hills, mountains, urban — rasterised from GeoJSON at load |
+| **Terrain** | Nine classes rasterised from GeoJSON at load; 996 × 825 grid at 4 km/cell on the Eastern Front |
+| **Borders** | Hand-authored period boundaries and country labels — drawn, never enforced (toggle with `B`) |
 | **Camera** | Free pan and zoom, 0.02–4 px/km, level-of-detail city labels |
 | **Units** | 112 divisions, procedural APP-6 counters, strength and organisation bars |
 | **Movement** | Continuous, terrain-modified, with A* pathfinding around obstacles and waypoint queues |
 | **Combat** | Automatic on contact — organisation-based, terrain and supply driven, retreat and pursuit, combat bubbles |
+| **Supply** | Depots and capturable rail hubs, terrain-weighted propagation, encirclement as a consequence rather than a rule, supply map mode |
+| **Weather** | Rasputitsa, deep winter and desert summer, derived from the date and the scenario's climate |
 | **Simulation** | Fixed 15-minute tick, deterministic, decoupled from frame rate |
 | **Randomness** | Seeded, saveable RNG; `Math.random` banned in `core/` at lint level |
 | **Scenarios** | Pure JSON — order of battle, stats, projection and map layers are all data |
-| **Tests** | 125 tests in plain Node, no DOM — determinism, combat fairness, pathfinding, projection, scenarios |
+| **Tests** | 139 tests in plain Node, no DOM — determinism, combat fairness, pathfinding, projection, scenarios |
 
 ```bash
-npm test      # 125 tests
+npm test      # 139 tests
 npm run check # lint + typecheck + tests
 ```
 
@@ -53,9 +54,10 @@ npm run check # lint + typecheck + tests
 | Determinism | identical world hash across runs, seeds, and batch sizes |
 | Bocage vs open ground | **10.7 vs 35.6 km/day** — the hedgerows are terrain you feel |
 | Scenario load | 36–67 ms including terrain rasterisation |
-| Tick cost with 44 battles running | **0.097 ms** |
+| Tick cost, 44 battles + supply flooding | **1.36 ms** (budget 16.7 ms) |
 | Pathfinding 57 divisions on one order | **4 ms** |
 | Combat fairness | stronger force wins **25 / 25** seeds; durations still vary |
+| Barbarossa, 75 simulated days | advance to **38.1°E**, supply 0.60, 44 of 57 divisions alive |
 
 ## Controls
 
@@ -72,7 +74,8 @@ npm run check # lint + typecheck + tests
 | Space | Pause |
 | 1 – 5 | Game speed |
 | H | Halt selected |
-| B | Toggle 1941 borders |
+| B | Toggle period borders |
+| M | Supply map mode |
 | Ctrl + A | Select all your divisions |
 | Home | Fit theatre |
 | Esc | Clear selection |
@@ -113,12 +116,16 @@ src/
   core/          simulation — no rendering, no React
     geo/         projections, GeoJSON types
     terrain/     terrain classes, raster grid, load-time rasteriser
-    world/       World, Division, Faction, ids
-    systems/     OrderSystem, MovementSystem, RecoverySystem
+    world/       World, Division, Battle, Faction, spatial index, hashing
+    systems/     order, supply, movement, contact, combat, attrition, recovery
+    pathfinding/ A* over the terrain grid
+    supply/      coarse supply and control field
+    weather/     season model
     commands/    the only way to mutate the world
     events/      the only way the world talks back
     scenario/    JSON schema + loader
     time/        fixed-timestep clock
+    math/        vectors, seeded RNG
     engine/      GameEngine — owns world, systems, queue
   render/        PixiJS — camera, layers, symbols, theme
   input/         DOM input → commands + selection

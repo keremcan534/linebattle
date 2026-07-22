@@ -5,10 +5,20 @@
   "description": "03:15, 22 June 1941. Three army groups cross the Bug and the Niemen. A representative order of battle — not every division that existed, but every formation that mattered on the first morning.",
   "startDate": "1941-06-22T03:15:00Z",
   "playerFaction": "germany",
-
   "map": {
-    "projection": { "type": "lcc", "lon0": 28, "lat0": 52, "lat1": 47, "lat2": 59 },
-    "bounds": { "minLon": 6, "minLat": 38, "maxLon": 51, "maxLat": 66 },
+    "projection": {
+      "type": "lcc",
+      "lon0": 28,
+      "lat0": 52,
+      "lat1": 47,
+      "lat2": 59
+    },
+    "bounds": {
+      "minLon": 6,
+      "minLat": 38,
+      "maxLon": 51,
+      "maxLat": 66
+    },
     "terrainCellSizeKm": 4,
     "layers": {
       "land": "../geo/eastern-front/land.geojson",
@@ -19,218 +29,1586 @@
       "borders": "../geo/eastern-front/borders-1941.geojson"
     }
   },
-
   "factions": [
-    { "id": "germany", "name": "Germany", "alliance": "axis", "color": "#5c6b7a", "accentColor": "#e8eef4" },
-    { "id": "romania", "name": "Romania", "alliance": "axis", "color": "#8a7647", "accentColor": "#f2ead6" },
-    { "id": "finland", "name": "Finland", "alliance": "axis", "color": "#4f7d96", "accentColor": "#eaf4f8" },
-    { "id": "soviet", "name": "Soviet Union", "alliance": "allies", "color": "#9c3630", "accentColor": "#f7e6e2" }
+    {
+      "id": "germany",
+      "name": "Germany",
+      "alliance": "axis",
+      "color": "#5c6b7a",
+      "accentColor": "#e8eef4"
+    },
+    {
+      "id": "romania",
+      "name": "Romania",
+      "alliance": "axis",
+      "color": "#8a7647",
+      "accentColor": "#f2ead6"
+    },
+    {
+      "id": "finland",
+      "name": "Finland",
+      "alliance": "axis",
+      "color": "#4f7d96",
+      "accentColor": "#eaf4f8"
+    },
+    {
+      "id": "soviet",
+      "name": "Soviet Union",
+      "alliance": "allies",
+      "color": "#9c3630",
+      "accentColor": "#f7e6e2"
+    }
   ],
-
   "templates": {
     "panzer": {
-      "branch": "armoured", "maxManpower": 14000, "maxOrganisation": 60, "speedKmh": 3.0,
-      "softAttack": 44, "hardAttack": 38, "defence": 32, "hardness": 0.55,
-      "experience": 0.55, "morale": 0.9, "supply": 1.0
+      "branch": "armoured",
+      "maxManpower": 14000,
+      "maxOrganisation": 60,
+      "speedKmh": 3,
+      "softAttack": 44,
+      "hardAttack": 38,
+      "defence": 32,
+      "hardness": 0.55,
+      "experience": 0.55,
+      "morale": 0.9,
+      "supply": 1
     },
     "motorised": {
-      "branch": "motorised", "maxManpower": 15000, "maxOrganisation": 55, "speedKmh": 2.7,
-      "softAttack": 34, "hardAttack": 16, "defence": 30, "hardness": 0.15,
-      "experience": 0.5, "morale": 0.88, "supply": 1.0
+      "branch": "motorised",
+      "maxManpower": 15000,
+      "maxOrganisation": 55,
+      "speedKmh": 2.7,
+      "softAttack": 34,
+      "hardAttack": 16,
+      "defence": 30,
+      "hardness": 0.15,
+      "experience": 0.5,
+      "morale": 0.88,
+      "supply": 1
     },
     "ss-motorised": {
-      "branch": "mechanised", "maxManpower": 16000, "maxOrganisation": 62, "speedKmh": 2.7,
-      "softAttack": 38, "hardAttack": 20, "defence": 34, "hardness": 0.25,
-      "experience": 0.6, "morale": 0.95, "supply": 1.0
+      "branch": "mechanised",
+      "maxManpower": 16000,
+      "maxOrganisation": 62,
+      "speedKmh": 2.7,
+      "softAttack": 38,
+      "hardAttack": 20,
+      "defence": 34,
+      "hardness": 0.25,
+      "experience": 0.6,
+      "morale": 0.95,
+      "supply": 1
     },
     "heer-infantry": {
-      "branch": "infantry", "maxManpower": 17000, "maxOrganisation": 50, "speedKmh": 1.45,
-      "softAttack": 26, "hardAttack": 8, "defence": 30, "hardness": 0.05,
-      "experience": 0.45, "morale": 0.85, "supply": 1.0
+      "branch": "infantry",
+      "maxManpower": 17000,
+      "maxOrganisation": 50,
+      "speedKmh": 1.45,
+      "softAttack": 26,
+      "hardAttack": 8,
+      "defence": 30,
+      "hardness": 0.05,
+      "experience": 0.45,
+      "morale": 0.85,
+      "supply": 1
     },
     "heer-mountain": {
-      "branch": "mountain", "maxManpower": 14000, "maxOrganisation": 52, "speedKmh": 1.3,
-      "softAttack": 26, "hardAttack": 7, "defence": 32, "hardness": 0.04,
-      "experience": 0.55, "morale": 0.88, "supply": 1.0
+      "branch": "mountain",
+      "maxManpower": 14000,
+      "maxOrganisation": 52,
+      "speedKmh": 1.3,
+      "softAttack": 26,
+      "hardAttack": 7,
+      "defence": 32,
+      "hardness": 0.04,
+      "experience": 0.55,
+      "morale": 0.88,
+      "supply": 1
     },
     "heer-security": {
-      "branch": "security", "maxManpower": 9000, "maxOrganisation": 35, "speedKmh": 1.3,
-      "softAttack": 10, "hardAttack": 2, "defence": 14, "hardness": 0.02,
-      "experience": 0.25, "morale": 0.7, "supply": 1.0
+      "branch": "security",
+      "maxManpower": 9000,
+      "maxOrganisation": 35,
+      "speedKmh": 1.3,
+      "softAttack": 10,
+      "hardAttack": 2,
+      "defence": 14,
+      "hardness": 0.02,
+      "experience": 0.25,
+      "morale": 0.7,
+      "supply": 1
     },
     "romanian-infantry": {
-      "branch": "infantry", "maxManpower": 15000, "maxOrganisation": 38, "speedKmh": 1.3,
-      "softAttack": 17, "hardAttack": 4, "defence": 20, "hardness": 0.03,
-      "experience": 0.25, "morale": 0.7, "supply": 0.85
+      "branch": "infantry",
+      "maxManpower": 15000,
+      "maxOrganisation": 38,
+      "speedKmh": 1.3,
+      "softAttack": 17,
+      "hardAttack": 4,
+      "defence": 20,
+      "hardness": 0.03,
+      "experience": 0.25,
+      "morale": 0.7,
+      "supply": 0.85
     },
     "romanian-armoured": {
-      "branch": "armoured", "maxManpower": 11000, "maxOrganisation": 40, "speedKmh": 2.4,
-      "softAttack": 22, "hardAttack": 14, "defence": 18, "hardness": 0.4,
-      "experience": 0.25, "morale": 0.7, "supply": 0.85
+      "branch": "armoured",
+      "maxManpower": 11000,
+      "maxOrganisation": 40,
+      "speedKmh": 2.4,
+      "softAttack": 22,
+      "hardAttack": 14,
+      "defence": 18,
+      "hardness": 0.4,
+      "experience": 0.25,
+      "morale": 0.7,
+      "supply": 0.85
     },
     "finnish-infantry": {
-      "branch": "infantry", "maxManpower": 14000, "maxOrganisation": 48, "speedKmh": 1.4,
-      "softAttack": 24, "hardAttack": 5, "defence": 30, "hardness": 0.02,
-      "experience": 0.6, "morale": 0.9, "supply": 0.9
+      "branch": "infantry",
+      "maxManpower": 14000,
+      "maxOrganisation": 48,
+      "speedKmh": 1.4,
+      "softAttack": 24,
+      "hardAttack": 5,
+      "defence": 30,
+      "hardness": 0.02,
+      "experience": 0.6,
+      "morale": 0.9,
+      "supply": 0.9
     },
     "soviet-rifle": {
-      "branch": "infantry", "maxManpower": 14500, "maxOrganisation": 36, "speedKmh": 1.25,
-      "softAttack": 20, "hardAttack": 6, "defence": 24, "hardness": 0.04,
-      "experience": 0.15, "morale": 0.6, "supply": 0.7
+      "branch": "infantry",
+      "maxManpower": 14500,
+      "maxOrganisation": 36,
+      "speedKmh": 1.25,
+      "softAttack": 20,
+      "hardAttack": 6,
+      "defence": 24,
+      "hardness": 0.04,
+      "experience": 0.15,
+      "morale": 0.6,
+      "supply": 0.7
     },
     "soviet-guards": {
-      "branch": "infantry", "maxManpower": 15000, "maxOrganisation": 46, "speedKmh": 1.3,
-      "softAttack": 26, "hardAttack": 8, "defence": 30, "hardness": 0.05,
-      "experience": 0.4, "morale": 0.8, "supply": 0.8
+      "branch": "infantry",
+      "maxManpower": 15000,
+      "maxOrganisation": 46,
+      "speedKmh": 1.3,
+      "softAttack": 26,
+      "hardAttack": 8,
+      "defence": 30,
+      "hardness": 0.05,
+      "experience": 0.4,
+      "morale": 0.8,
+      "supply": 0.8
     },
     "soviet-tank": {
-      "branch": "armoured", "maxManpower": 10900, "maxOrganisation": 38, "speedKmh": 2.5,
-      "softAttack": 30, "hardAttack": 26, "defence": 22, "hardness": 0.6,
-      "experience": 0.15, "morale": 0.6, "supply": 0.55
+      "branch": "armoured",
+      "maxManpower": 10900,
+      "maxOrganisation": 38,
+      "speedKmh": 2.5,
+      "softAttack": 30,
+      "hardAttack": 26,
+      "defence": 22,
+      "hardness": 0.6,
+      "experience": 0.15,
+      "morale": 0.6,
+      "supply": 0.55
     },
     "soviet-motorised": {
-      "branch": "motorised", "maxManpower": 11000, "maxOrganisation": 34, "speedKmh": 2.3,
-      "softAttack": 22, "hardAttack": 10, "defence": 20, "hardness": 0.12,
-      "experience": 0.15, "morale": 0.6, "supply": 0.6
+      "branch": "motorised",
+      "maxManpower": 11000,
+      "maxOrganisation": 34,
+      "speedKmh": 2.3,
+      "softAttack": 22,
+      "hardAttack": 10,
+      "defence": 20,
+      "hardness": 0.12,
+      "experience": 0.15,
+      "morale": 0.6,
+      "supply": 0.6
     },
     "soviet-cavalry": {
-      "branch": "cavalry", "maxManpower": 9000, "maxOrganisation": 40, "speedKmh": 1.9,
-      "softAttack": 16, "hardAttack": 3, "defence": 16, "hardness": 0.02,
-      "experience": 0.3, "morale": 0.7, "supply": 0.7
+      "branch": "cavalry",
+      "maxManpower": 9000,
+      "maxOrganisation": 40,
+      "speedKmh": 1.9,
+      "softAttack": 16,
+      "hardAttack": 3,
+      "defence": 16,
+      "hardness": 0.02,
+      "experience": 0.3,
+      "morale": 0.7,
+      "supply": 0.7
     },
     "soviet-mountain": {
-      "branch": "mountain", "maxManpower": 9000, "maxOrganisation": 38, "speedKmh": 1.25,
-      "softAttack": 18, "hardAttack": 4, "defence": 26, "hardness": 0.03,
-      "experience": 0.3, "morale": 0.7, "supply": 0.7
+      "branch": "mountain",
+      "maxManpower": 9000,
+      "maxOrganisation": 38,
+      "speedKmh": 1.25,
+      "softAttack": 18,
+      "hardAttack": 4,
+      "defence": 26,
+      "hardness": 0.03,
+      "experience": 0.3,
+      "morale": 0.7,
+      "supply": 0.7
     }
   },
-
   "divisions": [
-    { "id": "ger-1pz", "template": "panzer", "faction": "germany", "name": "1. Panzer-Division", "shortName": "1.Pz", "formation": "Panzergruppe 4", "lon": 22.05, "lat": 55.42 },
-    { "id": "ger-6pz", "template": "panzer", "faction": "germany", "name": "6. Panzer-Division", "shortName": "6.Pz", "formation": "Panzergruppe 4", "lon": 22.32, "lat": 55.22 },
-    { "id": "ger-8pz", "template": "panzer", "faction": "germany", "name": "8. Panzer-Division", "shortName": "8.Pz", "formation": "Panzergruppe 4", "lon": 22.18, "lat": 55.05 },
-    { "id": "ger-3mot", "template": "motorised", "faction": "germany", "name": "3. Infanterie-Division (mot.)", "shortName": "3.mot", "formation": "Panzergruppe 4", "lon": 21.86, "lat": 55.30 },
-    { "id": "ger-36mot", "template": "motorised", "faction": "germany", "name": "36. Infanterie-Division (mot.)", "shortName": "36.mot", "formation": "Panzergruppe 4", "lon": 22.44, "lat": 54.92 },
-    { "id": "ger-ss-tk", "template": "ss-motorised", "faction": "germany", "name": "SS-Division Totenkopf", "shortName": "SS-TK", "formation": "Panzergruppe 4", "lon": 21.72, "lat": 55.12 },
-
-    { "id": "ger-11id", "template": "heer-infantry", "faction": "germany", "name": "11. Infanterie-Division", "shortName": "11.ID", "formation": "16. Armee", "lon": 22.62, "lat": 54.72 },
-    { "id": "ger-21id", "template": "heer-infantry", "faction": "germany", "name": "21. Infanterie-Division", "shortName": "21.ID", "formation": "16. Armee", "lon": 22.40, "lat": 54.58 },
-    { "id": "ger-30id", "template": "heer-infantry", "faction": "germany", "name": "30. Infanterie-Division", "shortName": "30.ID", "formation": "16. Armee", "lon": 22.10, "lat": 54.80 },
-    { "id": "ger-122id", "template": "heer-infantry", "faction": "germany", "name": "122. Infanterie-Division", "shortName": "122.ID", "formation": "16. Armee", "lon": 22.84, "lat": 54.46 },
-    { "id": "ger-1id", "template": "heer-infantry", "faction": "germany", "name": "1. Infanterie-Division", "shortName": "1.ID", "formation": "18. Armee", "lon": 21.42, "lat": 55.62 },
-    { "id": "ger-61id", "template": "heer-infantry", "faction": "germany", "name": "61. Infanterie-Division", "shortName": "61.ID", "formation": "18. Armee", "lon": 21.28, "lat": 55.82 },
-    { "id": "ger-217id", "template": "heer-infantry", "faction": "germany", "name": "217. Infanterie-Division", "shortName": "217.ID", "formation": "18. Armee", "lon": 21.60, "lat": 55.90 },
-    { "id": "ger-291id", "template": "heer-infantry", "faction": "germany", "name": "291. Infanterie-Division", "shortName": "291.ID", "formation": "18. Armee", "lon": 21.14, "lat": 56.02 },
-
-    { "id": "ger-7pz", "template": "panzer", "faction": "germany", "name": "7. Panzer-Division", "shortName": "7.Pz", "formation": "Panzergruppe 3", "lon": 22.88, "lat": 54.30 },
-    { "id": "ger-12pz", "template": "panzer", "faction": "germany", "name": "12. Panzer-Division", "shortName": "12.Pz", "formation": "Panzergruppe 3", "lon": 22.72, "lat": 54.14 },
-    { "id": "ger-19pz", "template": "panzer", "faction": "germany", "name": "19. Panzer-Division", "shortName": "19.Pz", "formation": "Panzergruppe 3", "lon": 22.54, "lat": 54.02 },
-    { "id": "ger-20pz", "template": "panzer", "faction": "germany", "name": "20. Panzer-Division", "shortName": "20.Pz", "formation": "Panzergruppe 3", "lon": 23.06, "lat": 54.20 },
-    { "id": "ger-14mot", "template": "motorised", "faction": "germany", "name": "14. Infanterie-Division (mot.)", "shortName": "14.mot", "formation": "Panzergruppe 3", "lon": 22.40, "lat": 54.34 },
-    { "id": "ger-18mot", "template": "motorised", "faction": "germany", "name": "18. Infanterie-Division (mot.)", "shortName": "18.mot", "formation": "Panzergruppe 3", "lon": 22.96, "lat": 53.94 },
-
-    { "id": "ger-3pz", "template": "panzer", "faction": "germany", "name": "3. Panzer-Division", "shortName": "3.Pz", "formation": "Panzergruppe 2", "lon": 23.42, "lat": 52.30 },
-    { "id": "ger-4pz", "template": "panzer", "faction": "germany", "name": "4. Panzer-Division", "shortName": "4.Pz", "formation": "Panzergruppe 2", "lon": 23.36, "lat": 52.14 },
-    { "id": "ger-17pz", "template": "panzer", "faction": "germany", "name": "17. Panzer-Division", "shortName": "17.Pz", "formation": "Panzergruppe 2", "lon": 23.30, "lat": 52.52 },
-    { "id": "ger-18pz", "template": "panzer", "faction": "germany", "name": "18. Panzer-Division", "shortName": "18.Pz", "formation": "Panzergruppe 2", "lon": 23.44, "lat": 52.66 },
-    { "id": "ger-10mot", "template": "motorised", "faction": "germany", "name": "10. Infanterie-Division (mot.)", "shortName": "10.mot", "formation": "Panzergruppe 2", "lon": 23.10, "lat": 52.40 },
-    { "id": "ger-29mot", "template": "motorised", "faction": "germany", "name": "29. Infanterie-Division (mot.)", "shortName": "29.mot", "formation": "Panzergruppe 2", "lon": 23.16, "lat": 52.06 },
-    { "id": "ger-ss-dr", "template": "ss-motorised", "faction": "germany", "name": "SS-Division Das Reich", "shortName": "SS-DR", "formation": "Panzergruppe 2", "lon": 22.92, "lat": 52.24 },
-
-    { "id": "ger-8id", "template": "heer-infantry", "faction": "germany", "name": "8. Infanterie-Division", "shortName": "8.ID", "formation": "9. Armee", "lon": 22.60, "lat": 53.62 },
-    { "id": "ger-28id", "template": "heer-infantry", "faction": "germany", "name": "28. Infanterie-Division", "shortName": "28.ID", "formation": "9. Armee", "lon": 22.44, "lat": 53.40 },
-    { "id": "ger-87id", "template": "heer-infantry", "faction": "germany", "name": "87. Infanterie-Division", "shortName": "87.ID", "formation": "9. Armee", "lon": 22.28, "lat": 53.18 },
-    { "id": "ger-161id", "template": "heer-infantry", "faction": "germany", "name": "161. Infanterie-Division", "shortName": "161.ID", "formation": "9. Armee", "lon": 22.74, "lat": 53.82 },
-    { "id": "ger-31id", "template": "heer-infantry", "faction": "germany", "name": "31. Infanterie-Division", "shortName": "31.ID", "formation": "4. Armee", "lon": 23.02, "lat": 52.86 },
-    { "id": "ger-34id", "template": "heer-infantry", "faction": "germany", "name": "34. Infanterie-Division", "shortName": "34.ID", "formation": "4. Armee", "lon": 23.20, "lat": 52.94 },
-    { "id": "ger-45id", "template": "heer-infantry", "faction": "germany", "name": "45. Infanterie-Division", "shortName": "45.ID", "formation": "4. Armee", "lon": 23.58, "lat": 52.08 },
-    { "id": "ger-267id", "template": "heer-infantry", "faction": "germany", "name": "267. Infanterie-Division", "shortName": "267.ID", "formation": "4. Armee", "lon": 23.24, "lat": 51.78 },
-
-    { "id": "ger-9pz", "template": "panzer", "faction": "germany", "name": "9. Panzer-Division", "shortName": "9.Pz", "formation": "Panzergruppe 1", "lon": 23.52, "lat": 50.42 },
-    { "id": "ger-11pz", "template": "panzer", "faction": "germany", "name": "11. Panzer-Division", "shortName": "11.Pz", "formation": "Panzergruppe 1", "lon": 23.66, "lat": 50.62 },
-    { "id": "ger-13pz", "template": "panzer", "faction": "germany", "name": "13. Panzer-Division", "shortName": "13.Pz", "formation": "Panzergruppe 1", "lon": 23.80, "lat": 50.84 },
-    { "id": "ger-14pz", "template": "panzer", "faction": "germany", "name": "14. Panzer-Division", "shortName": "14.Pz", "formation": "Panzergruppe 1", "lon": 23.40, "lat": 51.04 },
-    { "id": "ger-16pz", "template": "panzer", "faction": "germany", "name": "16. Panzer-Division", "shortName": "16.Pz", "formation": "Panzergruppe 1", "lon": 23.26, "lat": 50.24 },
-    { "id": "ger-25mot", "template": "motorised", "faction": "germany", "name": "25. Infanterie-Division (mot.)", "shortName": "25.mot", "formation": "Panzergruppe 1", "lon": 23.08, "lat": 50.66 },
-    { "id": "ger-ss-lah", "template": "ss-motorised", "faction": "germany", "name": "SS-Leibstandarte Adolf Hitler", "shortName": "LSSAH", "formation": "Panzergruppe 1", "lon": 22.90, "lat": 50.48 },
-    { "id": "ger-ss-wiking", "template": "ss-motorised", "faction": "germany", "name": "SS-Division Wiking", "shortName": "SS-Wk", "formation": "Panzergruppe 1", "lon": 22.86, "lat": 50.86 },
-
-    { "id": "ger-44id", "template": "heer-infantry", "faction": "germany", "name": "44. Infanterie-Division", "shortName": "44.ID", "formation": "6. Armee", "lon": 23.94, "lat": 51.24 },
-    { "id": "ger-57id", "template": "heer-infantry", "faction": "germany", "name": "57. Infanterie-Division", "shortName": "57.ID", "formation": "6. Armee", "lon": 23.72, "lat": 51.42 },
-    { "id": "ger-62id", "template": "heer-infantry", "faction": "germany", "name": "62. Infanterie-Division", "shortName": "62.ID", "formation": "6. Armee", "lon": 23.56, "lat": 51.60 },
-    { "id": "ger-297id", "template": "heer-infantry", "faction": "germany", "name": "297. Infanterie-Division", "shortName": "297.ID", "formation": "6. Armee", "lon": 23.34, "lat": 50.98 },
-    { "id": "ger-68id", "template": "heer-infantry", "faction": "germany", "name": "68. Infanterie-Division", "shortName": "68.ID", "formation": "17. Armee", "lon": 22.72, "lat": 49.94 },
-    { "id": "ger-71id", "template": "heer-infantry", "faction": "germany", "name": "71. Infanterie-Division", "shortName": "71.ID", "formation": "17. Armee", "lon": 22.94, "lat": 50.06 },
-    { "id": "ger-125id", "template": "heer-infantry", "faction": "germany", "name": "125. Infanterie-Division", "shortName": "125.ID", "formation": "17. Armee", "lon": 22.52, "lat": 49.80 },
-    { "id": "ger-257id", "template": "heer-infantry", "faction": "germany", "name": "257. Infanterie-Division", "shortName": "257.ID", "formation": "17. Armee", "lon": 22.34, "lat": 49.66 },
-    { "id": "ger-1geb", "template": "heer-mountain", "faction": "germany", "name": "1. Gebirgs-Division", "shortName": "1.Geb", "formation": "17. Armee", "lon": 22.16, "lat": 49.46 },
-    { "id": "ger-4geb", "template": "heer-mountain", "faction": "germany", "name": "4. Gebirgs-Division", "shortName": "4.Geb", "formation": "17. Armee", "lon": 22.02, "lat": 49.30 },
-
-    { "id": "ger-22id", "template": "heer-infantry", "faction": "germany", "name": "22. Infanterie-Division", "shortName": "22.ID", "formation": "11. Armee", "lon": 26.72, "lat": 47.70 },
-    { "id": "ger-76id", "template": "heer-infantry", "faction": "germany", "name": "76. Infanterie-Division", "shortName": "76.ID", "formation": "11. Armee", "lon": 26.98, "lat": 47.46 },
-    { "id": "ger-239id", "template": "heer-infantry", "faction": "germany", "name": "239. Infanterie-Division", "shortName": "239.ID", "formation": "11. Armee", "lon": 27.18, "lat": 47.20 },
-    { "id": "ger-707sich", "template": "heer-security", "faction": "germany", "name": "707. Sicherungs-Division", "shortName": "707.Si", "formation": "Heeresgebiet Mitte", "lon": 21.60, "lat": 52.60 },
-
-    { "id": "rom-1blindata", "template": "romanian-armoured", "faction": "romania", "name": "Divizia 1 Blindată", "shortName": "1.Bl", "formation": "Armata 3", "lon": 27.42, "lat": 47.02 },
-    { "id": "rom-5inf", "template": "romanian-infantry", "faction": "romania", "name": "Divizia 5 Infanterie", "shortName": "5.Inf", "formation": "Armata 3", "lon": 27.62, "lat": 46.74 },
-    { "id": "rom-13inf", "template": "romanian-infantry", "faction": "romania", "name": "Divizia 13 Infanterie", "shortName": "13.Inf", "formation": "Armata 4", "lon": 27.86, "lat": 46.30 },
-    { "id": "rom-21inf", "template": "romanian-infantry", "faction": "romania", "name": "Divizia 21 Infanterie", "shortName": "21.Inf", "formation": "Armata 4", "lon": 28.02, "lat": 45.86 },
-    { "id": "rom-35inf", "template": "romanian-infantry", "faction": "romania", "name": "Divizia 35 Infanterie", "shortName": "35.Inf", "formation": "Armata 4", "lon": 28.16, "lat": 45.48 },
-
-    { "id": "fin-6d", "template": "finnish-infantry", "faction": "finland", "name": "6. Divisioona", "shortName": "6.D", "formation": "Karjalan Armeija", "lon": 29.60, "lat": 62.10 },
-    { "id": "fin-12d", "template": "finnish-infantry", "faction": "finland", "name": "12. Divisioona", "shortName": "12.D", "formation": "Karjalan Armeija", "lon": 29.96, "lat": 61.62 },
-    { "id": "fin-2d", "template": "finnish-infantry", "faction": "finland", "name": "2. Divisioona", "shortName": "2.D", "formation": "IV Armeijakunta", "lon": 28.40, "lat": 60.96 },
-
-    { "id": "sov-10rifle", "template": "soviet-rifle", "faction": "soviet", "name": "10th Rifle Division", "shortName": "10.RD", "formation": "8th Army", "lon": 21.62, "lat": 55.94, "organisation": 0.6, "supply": 0.6 },
-    { "id": "sov-90rifle", "template": "soviet-rifle", "faction": "soviet", "name": "90th Rifle Division", "shortName": "90.RD", "formation": "8th Army", "lon": 22.10, "lat": 55.72, "organisation": 0.6, "supply": 0.6 },
-    { "id": "sov-125rifle", "template": "soviet-rifle", "faction": "soviet", "name": "125th Rifle Division", "shortName": "125.RD", "formation": "8th Army", "lon": 22.34, "lat": 55.44, "organisation": 0.55, "supply": 0.55 },
-    { "id": "sov-5rifle", "template": "soviet-rifle", "faction": "soviet", "name": "5th Rifle Division", "shortName": "5.RD", "formation": "11th Army", "lon": 22.86, "lat": 54.86, "organisation": 0.6, "supply": 0.6 },
-    { "id": "sov-33rifle", "template": "soviet-rifle", "faction": "soviet", "name": "33rd Rifle Division", "shortName": "33.RD", "formation": "11th Army", "lon": 23.16, "lat": 54.62, "organisation": 0.55, "supply": 0.55 },
-    { "id": "sov-128rifle", "template": "soviet-rifle", "faction": "soviet", "name": "128th Rifle Division", "shortName": "128.RD", "formation": "11th Army", "lon": 23.02, "lat": 54.40, "organisation": 0.5, "supply": 0.5 },
-    { "id": "sov-2tank", "template": "soviet-tank", "faction": "soviet", "name": "2nd Tank Division", "shortName": "2.TD", "formation": "3rd Mechanised Corps", "lon": 23.60, "lat": 55.30, "organisation": 0.6 },
-    { "id": "sov-5tank", "template": "soviet-tank", "faction": "soviet", "name": "5th Tank Division", "shortName": "5.TD", "formation": "3rd Mechanised Corps", "lon": 23.94, "lat": 54.94, "organisation": 0.6 },
-    { "id": "sov-23tank", "template": "soviet-tank", "faction": "soviet", "name": "23rd Tank Division", "shortName": "23.TD", "formation": "12th Mechanised Corps", "lon": 23.20, "lat": 56.02, "organisation": 0.55 },
-    { "id": "sov-84mot", "template": "soviet-motorised", "faction": "soviet", "name": "84th Motorised Division", "shortName": "84.MD", "formation": "3rd Mechanised Corps", "lon": 24.26, "lat": 55.16, "organisation": 0.55 },
-
-    { "id": "sov-56rifle", "template": "soviet-rifle", "faction": "soviet", "name": "56th Rifle Division", "shortName": "56.RD", "formation": "3rd Army", "lon": 23.68, "lat": 53.78, "organisation": 0.55, "supply": 0.6 },
-    { "id": "sov-27rifle", "template": "soviet-rifle", "faction": "soviet", "name": "27th Rifle Division", "shortName": "27.RD", "formation": "3rd Army", "lon": 23.40, "lat": 53.98, "organisation": 0.55, "supply": 0.6 },
-    { "id": "sov-85rifle", "template": "soviet-rifle", "faction": "soviet", "name": "85th Rifle Division", "shortName": "85.RD", "formation": "3rd Army", "lon": 23.86, "lat": 53.56, "organisation": 0.5, "supply": 0.55 },
-    { "id": "sov-113rifle", "template": "soviet-rifle", "faction": "soviet", "name": "113th Rifle Division", "shortName": "113.RD", "formation": "10th Army", "lon": 23.34, "lat": 52.96, "organisation": 0.5, "supply": 0.55 },
-    { "id": "sov-49rifle", "template": "soviet-rifle", "faction": "soviet", "name": "49th Rifle Division", "shortName": "49.RD", "formation": "10th Army", "lon": 23.62, "lat": 52.74, "organisation": 0.5, "supply": 0.55 },
-    { "id": "sov-6rifle", "template": "soviet-rifle", "faction": "soviet", "name": "6th Rifle Division", "shortName": "6.RD", "formation": "4th Army", "lon": 23.72, "lat": 52.12, "organisation": 0.45, "supply": 0.5 },
-    { "id": "sov-42rifle", "template": "soviet-rifle", "faction": "soviet", "name": "42nd Rifle Division", "shortName": "42.RD", "formation": "4th Army", "lon": 23.80, "lat": 52.00, "organisation": 0.45, "supply": 0.5 },
-    { "id": "sov-75rifle", "template": "soviet-rifle", "faction": "soviet", "name": "75th Rifle Division", "shortName": "75.RD", "formation": "4th Army", "lon": 23.98, "lat": 51.72, "organisation": 0.5, "supply": 0.55 },
-    { "id": "sov-4tank", "template": "soviet-tank", "faction": "soviet", "name": "4th Tank Division", "shortName": "4.TD", "formation": "6th Mechanised Corps", "lon": 24.30, "lat": 53.10, "organisation": 0.6 },
-    { "id": "sov-7tank", "template": "soviet-tank", "faction": "soviet", "name": "7th Tank Division", "shortName": "7.TD", "formation": "6th Mechanised Corps", "lon": 24.56, "lat": 53.28, "organisation": 0.6 },
-    { "id": "sov-29tank", "template": "soviet-tank", "faction": "soviet", "name": "29th Tank Division", "shortName": "29.TD", "formation": "11th Mechanised Corps", "lon": 24.10, "lat": 53.62, "organisation": 0.5 },
-    { "id": "sov-22tank", "template": "soviet-tank", "faction": "soviet", "name": "22nd Tank Division", "shortName": "22.TD", "formation": "14th Mechanised Corps", "lon": 24.20, "lat": 52.10, "organisation": 0.5 },
-    { "id": "sov-36cav", "template": "soviet-cavalry", "faction": "soviet", "name": "36th Cavalry Division", "shortName": "36.CD", "formation": "6th Cavalry Corps", "lon": 24.02, "lat": 52.90, "organisation": 0.6 },
-    { "id": "sov-100rifle", "template": "soviet-guards", "faction": "soviet", "name": "100th Rifle Division", "shortName": "100.RD", "formation": "2nd Rifle Corps", "lon": 27.10, "lat": 53.98, "organisation": 0.7, "supply": 0.8 },
-    { "id": "sov-64rifle", "template": "soviet-rifle", "faction": "soviet", "name": "64th Rifle Division", "shortName": "64.RD", "formation": "44th Rifle Corps", "lon": 26.86, "lat": 54.10, "organisation": 0.6, "supply": 0.75 },
-
-    { "id": "sov-87rifle", "template": "soviet-rifle", "faction": "soviet", "name": "87th Rifle Division", "shortName": "87.RD", "formation": "5th Army", "lon": 24.20, "lat": 50.86, "organisation": 0.55, "supply": 0.6 },
-    { "id": "sov-124rifle", "template": "soviet-rifle", "faction": "soviet", "name": "124th Rifle Division", "shortName": "124.RD", "formation": "5th Army", "lon": 24.44, "lat": 50.62, "organisation": 0.5, "supply": 0.55 },
-    { "id": "sov-41rifle", "template": "soviet-rifle", "faction": "soviet", "name": "41st Rifle Division", "shortName": "41.RD", "formation": "6th Army", "lon": 24.08, "lat": 50.16, "organisation": 0.55, "supply": 0.6 },
-    { "id": "sov-97rifle", "template": "soviet-rifle", "faction": "soviet", "name": "97th Rifle Division", "shortName": "97.RD", "formation": "6th Army", "lon": 23.90, "lat": 49.92, "organisation": 0.5, "supply": 0.55 },
-    { "id": "sov-159rifle", "template": "soviet-rifle", "faction": "soviet", "name": "159th Rifle Division", "shortName": "159.RD", "formation": "6th Army", "lon": 24.02, "lat": 49.68, "organisation": 0.45, "supply": 0.5 },
-    { "id": "sov-72mtn", "template": "soviet-mountain", "faction": "soviet", "name": "72nd Mountain Division", "shortName": "72.MtD", "formation": "26th Army", "lon": 23.44, "lat": 49.28, "organisation": 0.55, "supply": 0.6 },
-    { "id": "sov-173rifle", "template": "soviet-rifle", "faction": "soviet", "name": "173rd Rifle Division", "shortName": "173.RD", "formation": "12th Army", "lon": 24.60, "lat": 48.82, "organisation": 0.5, "supply": 0.55 },
-    { "id": "sov-10tank", "template": "soviet-tank", "faction": "soviet", "name": "10th Tank Division", "shortName": "10.TD", "formation": "15th Mechanised Corps", "lon": 25.20, "lat": 50.02, "organisation": 0.6 },
-    { "id": "sov-32tank", "template": "soviet-tank", "faction": "soviet", "name": "32nd Tank Division", "shortName": "32.TD", "formation": "4th Mechanised Corps", "lon": 24.66, "lat": 49.78, "organisation": 0.65 },
-    { "id": "sov-34tank", "template": "soviet-tank", "faction": "soviet", "name": "34th Tank Division", "shortName": "34.TD", "formation": "8th Mechanised Corps", "lon": 25.62, "lat": 49.52, "organisation": 0.6 },
-    { "id": "sov-12tank", "template": "soviet-tank", "faction": "soviet", "name": "12th Tank Division", "shortName": "12.TD", "formation": "8th Mechanised Corps", "lon": 25.94, "lat": 49.36, "organisation": 0.6 },
-    { "id": "sov-8tank", "template": "soviet-tank", "faction": "soviet", "name": "8th Tank Division", "shortName": "8.TD", "formation": "4th Mechanised Corps", "lon": 25.02, "lat": 50.44, "organisation": 0.6 },
-    { "id": "sov-43tank", "template": "soviet-tank", "faction": "soviet", "name": "43rd Tank Division", "shortName": "43.TD", "formation": "19th Mechanised Corps", "lon": 26.24, "lat": 50.58, "organisation": 0.5 },
-    { "id": "sov-131mot", "template": "soviet-motorised", "faction": "soviet", "name": "131st Motorised Division", "shortName": "131.MD", "formation": "9th Mechanised Corps", "lon": 26.60, "lat": 50.90, "organisation": 0.5 },
-
-    { "id": "sov-176rifle", "template": "soviet-rifle", "faction": "soviet", "name": "176th Rifle Division", "shortName": "176.RD", "formation": "9th Army", "lon": 27.94, "lat": 47.62, "organisation": 0.55, "supply": 0.6 },
-    { "id": "sov-95rifle", "template": "soviet-rifle", "faction": "soviet", "name": "95th Rifle Division", "shortName": "95.RD", "formation": "9th Army", "lon": 28.16, "lat": 47.16, "organisation": 0.55, "supply": 0.6 },
-    { "id": "sov-25rifle", "template": "soviet-guards", "faction": "soviet", "name": "25th Rifle Division 'Chapayev'", "shortName": "25.RD", "formation": "9th Army", "lon": 28.34, "lat": 46.62, "organisation": 0.65, "supply": 0.7 },
-    { "id": "sov-51rifle", "template": "soviet-rifle", "faction": "soviet", "name": "51st Rifle Division", "shortName": "51.RD", "formation": "9th Army", "lon": 28.62, "lat": 45.94, "organisation": 0.5, "supply": 0.55 },
-    { "id": "sov-15mot", "template": "soviet-motorised", "faction": "soviet", "name": "15th Motorised Division", "shortName": "15.MD", "formation": "2nd Mechanised Corps", "lon": 28.88, "lat": 47.02, "organisation": 0.55 },
-    { "id": "sov-11tank", "template": "soviet-tank", "faction": "soviet", "name": "11th Tank Division", "shortName": "11.TD", "formation": "2nd Mechanised Corps", "lon": 29.14, "lat": 46.78, "organisation": 0.55 },
-
-    { "id": "sov-70rifle", "template": "soviet-rifle", "faction": "soviet", "name": "70th Rifle Division", "shortName": "70.RD", "formation": "23rd Army", "lon": 29.20, "lat": 60.68, "organisation": 0.6, "supply": 0.75 },
-    { "id": "sov-168rifle", "template": "soviet-rifle", "faction": "soviet", "name": "168th Rifle Division", "shortName": "168.RD", "formation": "7th Army", "lon": 31.90, "lat": 61.95, "organisation": 0.6, "supply": 0.75 }
-  ]
+    {
+      "id": "ger-1pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "1. Panzer-Division",
+      "shortName": "1.Pz",
+      "formation": "Panzergruppe 4",
+      "lon": 22.05,
+      "lat": 55.42
+    },
+    {
+      "id": "ger-6pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "6. Panzer-Division",
+      "shortName": "6.Pz",
+      "formation": "Panzergruppe 4",
+      "lon": 22.32,
+      "lat": 55.22
+    },
+    {
+      "id": "ger-8pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "8. Panzer-Division",
+      "shortName": "8.Pz",
+      "formation": "Panzergruppe 4",
+      "lon": 22.18,
+      "lat": 55.05
+    },
+    {
+      "id": "ger-3mot",
+      "template": "motorised",
+      "faction": "germany",
+      "name": "3. Infanterie-Division (mot.)",
+      "shortName": "3.mot",
+      "formation": "Panzergruppe 4",
+      "lon": 21.86,
+      "lat": 55.3
+    },
+    {
+      "id": "ger-36mot",
+      "template": "motorised",
+      "faction": "germany",
+      "name": "36. Infanterie-Division (mot.)",
+      "shortName": "36.mot",
+      "formation": "Panzergruppe 4",
+      "lon": 22.44,
+      "lat": 54.92
+    },
+    {
+      "id": "ger-ss-tk",
+      "template": "ss-motorised",
+      "faction": "germany",
+      "name": "SS-Division Totenkopf",
+      "shortName": "SS-TK",
+      "formation": "Panzergruppe 4",
+      "lon": 21.72,
+      "lat": 55.12
+    },
+    {
+      "id": "ger-11id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "11. Infanterie-Division",
+      "shortName": "11.ID",
+      "formation": "16. Armee",
+      "lon": 22.62,
+      "lat": 54.72
+    },
+    {
+      "id": "ger-21id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "21. Infanterie-Division",
+      "shortName": "21.ID",
+      "formation": "16. Armee",
+      "lon": 22.4,
+      "lat": 54.58
+    },
+    {
+      "id": "ger-30id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "30. Infanterie-Division",
+      "shortName": "30.ID",
+      "formation": "16. Armee",
+      "lon": 22.1,
+      "lat": 54.8
+    },
+    {
+      "id": "ger-122id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "122. Infanterie-Division",
+      "shortName": "122.ID",
+      "formation": "16. Armee",
+      "lon": 22.84,
+      "lat": 54.46
+    },
+    {
+      "id": "ger-1id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "1. Infanterie-Division",
+      "shortName": "1.ID",
+      "formation": "18. Armee",
+      "lon": 21.42,
+      "lat": 55.62
+    },
+    {
+      "id": "ger-61id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "61. Infanterie-Division",
+      "shortName": "61.ID",
+      "formation": "18. Armee",
+      "lon": 21.28,
+      "lat": 55.82
+    },
+    {
+      "id": "ger-217id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "217. Infanterie-Division",
+      "shortName": "217.ID",
+      "formation": "18. Armee",
+      "lon": 21.6,
+      "lat": 55.9
+    },
+    {
+      "id": "ger-291id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "291. Infanterie-Division",
+      "shortName": "291.ID",
+      "formation": "18. Armee",
+      "lon": 21.14,
+      "lat": 56.02
+    },
+    {
+      "id": "ger-7pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "7. Panzer-Division",
+      "shortName": "7.Pz",
+      "formation": "Panzergruppe 3",
+      "lon": 22.88,
+      "lat": 54.3
+    },
+    {
+      "id": "ger-12pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "12. Panzer-Division",
+      "shortName": "12.Pz",
+      "formation": "Panzergruppe 3",
+      "lon": 22.72,
+      "lat": 54.14
+    },
+    {
+      "id": "ger-19pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "19. Panzer-Division",
+      "shortName": "19.Pz",
+      "formation": "Panzergruppe 3",
+      "lon": 22.54,
+      "lat": 54.02
+    },
+    {
+      "id": "ger-20pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "20. Panzer-Division",
+      "shortName": "20.Pz",
+      "formation": "Panzergruppe 3",
+      "lon": 23.06,
+      "lat": 54.2
+    },
+    {
+      "id": "ger-14mot",
+      "template": "motorised",
+      "faction": "germany",
+      "name": "14. Infanterie-Division (mot.)",
+      "shortName": "14.mot",
+      "formation": "Panzergruppe 3",
+      "lon": 22.4,
+      "lat": 54.34
+    },
+    {
+      "id": "ger-18mot",
+      "template": "motorised",
+      "faction": "germany",
+      "name": "18. Infanterie-Division (mot.)",
+      "shortName": "18.mot",
+      "formation": "Panzergruppe 3",
+      "lon": 22.96,
+      "lat": 53.94
+    },
+    {
+      "id": "ger-3pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "3. Panzer-Division",
+      "shortName": "3.Pz",
+      "formation": "Panzergruppe 2",
+      "lon": 23.42,
+      "lat": 52.3
+    },
+    {
+      "id": "ger-4pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "4. Panzer-Division",
+      "shortName": "4.Pz",
+      "formation": "Panzergruppe 2",
+      "lon": 23.36,
+      "lat": 52.14
+    },
+    {
+      "id": "ger-17pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "17. Panzer-Division",
+      "shortName": "17.Pz",
+      "formation": "Panzergruppe 2",
+      "lon": 23.3,
+      "lat": 52.52
+    },
+    {
+      "id": "ger-18pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "18. Panzer-Division",
+      "shortName": "18.Pz",
+      "formation": "Panzergruppe 2",
+      "lon": 23.44,
+      "lat": 52.66
+    },
+    {
+      "id": "ger-10mot",
+      "template": "motorised",
+      "faction": "germany",
+      "name": "10. Infanterie-Division (mot.)",
+      "shortName": "10.mot",
+      "formation": "Panzergruppe 2",
+      "lon": 23.1,
+      "lat": 52.4
+    },
+    {
+      "id": "ger-29mot",
+      "template": "motorised",
+      "faction": "germany",
+      "name": "29. Infanterie-Division (mot.)",
+      "shortName": "29.mot",
+      "formation": "Panzergruppe 2",
+      "lon": 23.16,
+      "lat": 52.06
+    },
+    {
+      "id": "ger-ss-dr",
+      "template": "ss-motorised",
+      "faction": "germany",
+      "name": "SS-Division Das Reich",
+      "shortName": "SS-DR",
+      "formation": "Panzergruppe 2",
+      "lon": 22.92,
+      "lat": 52.24
+    },
+    {
+      "id": "ger-8id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "8. Infanterie-Division",
+      "shortName": "8.ID",
+      "formation": "9. Armee",
+      "lon": 22.6,
+      "lat": 53.62
+    },
+    {
+      "id": "ger-28id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "28. Infanterie-Division",
+      "shortName": "28.ID",
+      "formation": "9. Armee",
+      "lon": 22.44,
+      "lat": 53.4
+    },
+    {
+      "id": "ger-87id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "87. Infanterie-Division",
+      "shortName": "87.ID",
+      "formation": "9. Armee",
+      "lon": 22.28,
+      "lat": 53.18
+    },
+    {
+      "id": "ger-161id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "161. Infanterie-Division",
+      "shortName": "161.ID",
+      "formation": "9. Armee",
+      "lon": 22.74,
+      "lat": 53.82
+    },
+    {
+      "id": "ger-31id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "31. Infanterie-Division",
+      "shortName": "31.ID",
+      "formation": "4. Armee",
+      "lon": 23.02,
+      "lat": 52.86
+    },
+    {
+      "id": "ger-34id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "34. Infanterie-Division",
+      "shortName": "34.ID",
+      "formation": "4. Armee",
+      "lon": 23.2,
+      "lat": 52.94
+    },
+    {
+      "id": "ger-45id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "45. Infanterie-Division",
+      "shortName": "45.ID",
+      "formation": "4. Armee",
+      "lon": 23.58,
+      "lat": 52.08
+    },
+    {
+      "id": "ger-267id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "267. Infanterie-Division",
+      "shortName": "267.ID",
+      "formation": "4. Armee",
+      "lon": 23.24,
+      "lat": 51.78
+    },
+    {
+      "id": "ger-9pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "9. Panzer-Division",
+      "shortName": "9.Pz",
+      "formation": "Panzergruppe 1",
+      "lon": 23.52,
+      "lat": 50.42
+    },
+    {
+      "id": "ger-11pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "11. Panzer-Division",
+      "shortName": "11.Pz",
+      "formation": "Panzergruppe 1",
+      "lon": 23.66,
+      "lat": 50.62
+    },
+    {
+      "id": "ger-13pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "13. Panzer-Division",
+      "shortName": "13.Pz",
+      "formation": "Panzergruppe 1",
+      "lon": 23.8,
+      "lat": 50.84
+    },
+    {
+      "id": "ger-14pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "14. Panzer-Division",
+      "shortName": "14.Pz",
+      "formation": "Panzergruppe 1",
+      "lon": 23.4,
+      "lat": 51.04
+    },
+    {
+      "id": "ger-16pz",
+      "template": "panzer",
+      "faction": "germany",
+      "name": "16. Panzer-Division",
+      "shortName": "16.Pz",
+      "formation": "Panzergruppe 1",
+      "lon": 23.26,
+      "lat": 50.24
+    },
+    {
+      "id": "ger-25mot",
+      "template": "motorised",
+      "faction": "germany",
+      "name": "25. Infanterie-Division (mot.)",
+      "shortName": "25.mot",
+      "formation": "Panzergruppe 1",
+      "lon": 23.08,
+      "lat": 50.66
+    },
+    {
+      "id": "ger-ss-lah",
+      "template": "ss-motorised",
+      "faction": "germany",
+      "name": "SS-Leibstandarte Adolf Hitler",
+      "shortName": "LSSAH",
+      "formation": "Panzergruppe 1",
+      "lon": 22.9,
+      "lat": 50.48
+    },
+    {
+      "id": "ger-ss-wiking",
+      "template": "ss-motorised",
+      "faction": "germany",
+      "name": "SS-Division Wiking",
+      "shortName": "SS-Wk",
+      "formation": "Panzergruppe 1",
+      "lon": 22.86,
+      "lat": 50.86
+    },
+    {
+      "id": "ger-44id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "44. Infanterie-Division",
+      "shortName": "44.ID",
+      "formation": "6. Armee",
+      "lon": 23.94,
+      "lat": 51.24
+    },
+    {
+      "id": "ger-57id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "57. Infanterie-Division",
+      "shortName": "57.ID",
+      "formation": "6. Armee",
+      "lon": 23.72,
+      "lat": 51.42
+    },
+    {
+      "id": "ger-62id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "62. Infanterie-Division",
+      "shortName": "62.ID",
+      "formation": "6. Armee",
+      "lon": 23.56,
+      "lat": 51.6
+    },
+    {
+      "id": "ger-297id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "297. Infanterie-Division",
+      "shortName": "297.ID",
+      "formation": "6. Armee",
+      "lon": 23.34,
+      "lat": 50.98
+    },
+    {
+      "id": "ger-68id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "68. Infanterie-Division",
+      "shortName": "68.ID",
+      "formation": "17. Armee",
+      "lon": 22.72,
+      "lat": 49.94
+    },
+    {
+      "id": "ger-71id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "71. Infanterie-Division",
+      "shortName": "71.ID",
+      "formation": "17. Armee",
+      "lon": 22.94,
+      "lat": 50.06
+    },
+    {
+      "id": "ger-125id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "125. Infanterie-Division",
+      "shortName": "125.ID",
+      "formation": "17. Armee",
+      "lon": 22.52,
+      "lat": 49.8
+    },
+    {
+      "id": "ger-257id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "257. Infanterie-Division",
+      "shortName": "257.ID",
+      "formation": "17. Armee",
+      "lon": 22.34,
+      "lat": 49.66
+    },
+    {
+      "id": "ger-1geb",
+      "template": "heer-mountain",
+      "faction": "germany",
+      "name": "1. Gebirgs-Division",
+      "shortName": "1.Geb",
+      "formation": "17. Armee",
+      "lon": 22.16,
+      "lat": 49.46
+    },
+    {
+      "id": "ger-4geb",
+      "template": "heer-mountain",
+      "faction": "germany",
+      "name": "4. Gebirgs-Division",
+      "shortName": "4.Geb",
+      "formation": "17. Armee",
+      "lon": 22.02,
+      "lat": 49.3
+    },
+    {
+      "id": "ger-22id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "22. Infanterie-Division",
+      "shortName": "22.ID",
+      "formation": "11. Armee",
+      "lon": 26.72,
+      "lat": 47.7
+    },
+    {
+      "id": "ger-76id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "76. Infanterie-Division",
+      "shortName": "76.ID",
+      "formation": "11. Armee",
+      "lon": 26.98,
+      "lat": 47.46
+    },
+    {
+      "id": "ger-239id",
+      "template": "heer-infantry",
+      "faction": "germany",
+      "name": "239. Infanterie-Division",
+      "shortName": "239.ID",
+      "formation": "11. Armee",
+      "lon": 27.18,
+      "lat": 47.2
+    },
+    {
+      "id": "ger-707sich",
+      "template": "heer-security",
+      "faction": "germany",
+      "name": "707. Sicherungs-Division",
+      "shortName": "707.Si",
+      "formation": "Heeresgebiet Mitte",
+      "lon": 21.6,
+      "lat": 52.6
+    },
+    {
+      "id": "rom-1blindata",
+      "template": "romanian-armoured",
+      "faction": "romania",
+      "name": "Divizia 1 Blindată",
+      "shortName": "1.Bl",
+      "formation": "Armata 3",
+      "lon": 27.42,
+      "lat": 47.02
+    },
+    {
+      "id": "rom-5inf",
+      "template": "romanian-infantry",
+      "faction": "romania",
+      "name": "Divizia 5 Infanterie",
+      "shortName": "5.Inf",
+      "formation": "Armata 3",
+      "lon": 27.62,
+      "lat": 46.74
+    },
+    {
+      "id": "rom-13inf",
+      "template": "romanian-infantry",
+      "faction": "romania",
+      "name": "Divizia 13 Infanterie",
+      "shortName": "13.Inf",
+      "formation": "Armata 4",
+      "lon": 27.86,
+      "lat": 46.3
+    },
+    {
+      "id": "rom-21inf",
+      "template": "romanian-infantry",
+      "faction": "romania",
+      "name": "Divizia 21 Infanterie",
+      "shortName": "21.Inf",
+      "formation": "Armata 4",
+      "lon": 28.02,
+      "lat": 45.86
+    },
+    {
+      "id": "rom-35inf",
+      "template": "romanian-infantry",
+      "faction": "romania",
+      "name": "Divizia 35 Infanterie",
+      "shortName": "35.Inf",
+      "formation": "Armata 4",
+      "lon": 28.16,
+      "lat": 45.48
+    },
+    {
+      "id": "fin-6d",
+      "template": "finnish-infantry",
+      "faction": "finland",
+      "name": "6. Divisioona",
+      "shortName": "6.D",
+      "formation": "Karjalan Armeija",
+      "lon": 29.6,
+      "lat": 62.1
+    },
+    {
+      "id": "fin-12d",
+      "template": "finnish-infantry",
+      "faction": "finland",
+      "name": "12. Divisioona",
+      "shortName": "12.D",
+      "formation": "Karjalan Armeija",
+      "lon": 29.96,
+      "lat": 61.62
+    },
+    {
+      "id": "fin-2d",
+      "template": "finnish-infantry",
+      "faction": "finland",
+      "name": "2. Divisioona",
+      "shortName": "2.D",
+      "formation": "IV Armeijakunta",
+      "lon": 28.4,
+      "lat": 60.96
+    },
+    {
+      "id": "sov-10rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "10th Rifle Division",
+      "shortName": "10.RD",
+      "formation": "8th Army",
+      "lon": 21.62,
+      "lat": 55.94,
+      "organisation": 0.6,
+      "supply": 0.6
+    },
+    {
+      "id": "sov-90rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "90th Rifle Division",
+      "shortName": "90.RD",
+      "formation": "8th Army",
+      "lon": 22.1,
+      "lat": 55.72,
+      "organisation": 0.6,
+      "supply": 0.6
+    },
+    {
+      "id": "sov-125rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "125th Rifle Division",
+      "shortName": "125.RD",
+      "formation": "8th Army",
+      "lon": 22.34,
+      "lat": 55.44,
+      "organisation": 0.55,
+      "supply": 0.55
+    },
+    {
+      "id": "sov-5rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "5th Rifle Division",
+      "shortName": "5.RD",
+      "formation": "11th Army",
+      "lon": 22.86,
+      "lat": 54.86,
+      "organisation": 0.6,
+      "supply": 0.6
+    },
+    {
+      "id": "sov-33rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "33rd Rifle Division",
+      "shortName": "33.RD",
+      "formation": "11th Army",
+      "lon": 23.16,
+      "lat": 54.62,
+      "organisation": 0.55,
+      "supply": 0.55
+    },
+    {
+      "id": "sov-128rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "128th Rifle Division",
+      "shortName": "128.RD",
+      "formation": "11th Army",
+      "lon": 23.02,
+      "lat": 54.4,
+      "organisation": 0.5,
+      "supply": 0.5
+    },
+    {
+      "id": "sov-2tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "2nd Tank Division",
+      "shortName": "2.TD",
+      "formation": "3rd Mechanised Corps",
+      "lon": 23.6,
+      "lat": 55.3,
+      "organisation": 0.6
+    },
+    {
+      "id": "sov-5tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "5th Tank Division",
+      "shortName": "5.TD",
+      "formation": "3rd Mechanised Corps",
+      "lon": 23.94,
+      "lat": 54.94,
+      "organisation": 0.6
+    },
+    {
+      "id": "sov-23tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "23rd Tank Division",
+      "shortName": "23.TD",
+      "formation": "12th Mechanised Corps",
+      "lon": 23.2,
+      "lat": 56.02,
+      "organisation": 0.55
+    },
+    {
+      "id": "sov-84mot",
+      "template": "soviet-motorised",
+      "faction": "soviet",
+      "name": "84th Motorised Division",
+      "shortName": "84.MD",
+      "formation": "3rd Mechanised Corps",
+      "lon": 24.26,
+      "lat": 55.16,
+      "organisation": 0.55
+    },
+    {
+      "id": "sov-56rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "56th Rifle Division",
+      "shortName": "56.RD",
+      "formation": "3rd Army",
+      "lon": 23.68,
+      "lat": 53.78,
+      "organisation": 0.55,
+      "supply": 0.6
+    },
+    {
+      "id": "sov-27rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "27th Rifle Division",
+      "shortName": "27.RD",
+      "formation": "3rd Army",
+      "lon": 23.4,
+      "lat": 53.98,
+      "organisation": 0.55,
+      "supply": 0.6
+    },
+    {
+      "id": "sov-85rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "85th Rifle Division",
+      "shortName": "85.RD",
+      "formation": "3rd Army",
+      "lon": 23.86,
+      "lat": 53.56,
+      "organisation": 0.5,
+      "supply": 0.55
+    },
+    {
+      "id": "sov-113rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "113th Rifle Division",
+      "shortName": "113.RD",
+      "formation": "10th Army",
+      "lon": 23.34,
+      "lat": 52.96,
+      "organisation": 0.5,
+      "supply": 0.55
+    },
+    {
+      "id": "sov-49rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "49th Rifle Division",
+      "shortName": "49.RD",
+      "formation": "10th Army",
+      "lon": 23.62,
+      "lat": 52.74,
+      "organisation": 0.5,
+      "supply": 0.55
+    },
+    {
+      "id": "sov-6rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "6th Rifle Division",
+      "shortName": "6.RD",
+      "formation": "4th Army",
+      "lon": 23.72,
+      "lat": 52.12,
+      "organisation": 0.45,
+      "supply": 0.5
+    },
+    {
+      "id": "sov-42rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "42nd Rifle Division",
+      "shortName": "42.RD",
+      "formation": "4th Army",
+      "lon": 23.8,
+      "lat": 52,
+      "organisation": 0.45,
+      "supply": 0.5
+    },
+    {
+      "id": "sov-75rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "75th Rifle Division",
+      "shortName": "75.RD",
+      "formation": "4th Army",
+      "lon": 23.98,
+      "lat": 51.72,
+      "organisation": 0.5,
+      "supply": 0.55
+    },
+    {
+      "id": "sov-4tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "4th Tank Division",
+      "shortName": "4.TD",
+      "formation": "6th Mechanised Corps",
+      "lon": 24.3,
+      "lat": 53.1,
+      "organisation": 0.6
+    },
+    {
+      "id": "sov-7tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "7th Tank Division",
+      "shortName": "7.TD",
+      "formation": "6th Mechanised Corps",
+      "lon": 24.56,
+      "lat": 53.28,
+      "organisation": 0.6
+    },
+    {
+      "id": "sov-29tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "29th Tank Division",
+      "shortName": "29.TD",
+      "formation": "11th Mechanised Corps",
+      "lon": 24.1,
+      "lat": 53.62,
+      "organisation": 0.5
+    },
+    {
+      "id": "sov-22tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "22nd Tank Division",
+      "shortName": "22.TD",
+      "formation": "14th Mechanised Corps",
+      "lon": 24.2,
+      "lat": 52.1,
+      "organisation": 0.5
+    },
+    {
+      "id": "sov-36cav",
+      "template": "soviet-cavalry",
+      "faction": "soviet",
+      "name": "36th Cavalry Division",
+      "shortName": "36.CD",
+      "formation": "6th Cavalry Corps",
+      "lon": 24.02,
+      "lat": 52.9,
+      "organisation": 0.6
+    },
+    {
+      "id": "sov-100rifle",
+      "template": "soviet-guards",
+      "faction": "soviet",
+      "name": "100th Rifle Division",
+      "shortName": "100.RD",
+      "formation": "2nd Rifle Corps",
+      "lon": 27.1,
+      "lat": 53.98,
+      "organisation": 0.7,
+      "supply": 0.8
+    },
+    {
+      "id": "sov-64rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "64th Rifle Division",
+      "shortName": "64.RD",
+      "formation": "44th Rifle Corps",
+      "lon": 26.86,
+      "lat": 54.1,
+      "organisation": 0.6,
+      "supply": 0.75
+    },
+    {
+      "id": "sov-87rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "87th Rifle Division",
+      "shortName": "87.RD",
+      "formation": "5th Army",
+      "lon": 24.2,
+      "lat": 50.86,
+      "organisation": 0.55,
+      "supply": 0.6
+    },
+    {
+      "id": "sov-124rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "124th Rifle Division",
+      "shortName": "124.RD",
+      "formation": "5th Army",
+      "lon": 24.44,
+      "lat": 50.62,
+      "organisation": 0.5,
+      "supply": 0.55
+    },
+    {
+      "id": "sov-41rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "41st Rifle Division",
+      "shortName": "41.RD",
+      "formation": "6th Army",
+      "lon": 24.08,
+      "lat": 50.16,
+      "organisation": 0.55,
+      "supply": 0.6
+    },
+    {
+      "id": "sov-97rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "97th Rifle Division",
+      "shortName": "97.RD",
+      "formation": "6th Army",
+      "lon": 23.9,
+      "lat": 49.92,
+      "organisation": 0.5,
+      "supply": 0.55
+    },
+    {
+      "id": "sov-159rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "159th Rifle Division",
+      "shortName": "159.RD",
+      "formation": "6th Army",
+      "lon": 24.02,
+      "lat": 49.68,
+      "organisation": 0.45,
+      "supply": 0.5
+    },
+    {
+      "id": "sov-72mtn",
+      "template": "soviet-mountain",
+      "faction": "soviet",
+      "name": "72nd Mountain Division",
+      "shortName": "72.MtD",
+      "formation": "26th Army",
+      "lon": 23.44,
+      "lat": 49.28,
+      "organisation": 0.55,
+      "supply": 0.6
+    },
+    {
+      "id": "sov-173rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "173rd Rifle Division",
+      "shortName": "173.RD",
+      "formation": "12th Army",
+      "lon": 24.6,
+      "lat": 48.82,
+      "organisation": 0.5,
+      "supply": 0.55
+    },
+    {
+      "id": "sov-10tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "10th Tank Division",
+      "shortName": "10.TD",
+      "formation": "15th Mechanised Corps",
+      "lon": 25.2,
+      "lat": 50.02,
+      "organisation": 0.6
+    },
+    {
+      "id": "sov-32tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "32nd Tank Division",
+      "shortName": "32.TD",
+      "formation": "4th Mechanised Corps",
+      "lon": 24.66,
+      "lat": 49.78,
+      "organisation": 0.65
+    },
+    {
+      "id": "sov-34tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "34th Tank Division",
+      "shortName": "34.TD",
+      "formation": "8th Mechanised Corps",
+      "lon": 25.62,
+      "lat": 49.52,
+      "organisation": 0.6
+    },
+    {
+      "id": "sov-12tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "12th Tank Division",
+      "shortName": "12.TD",
+      "formation": "8th Mechanised Corps",
+      "lon": 25.94,
+      "lat": 49.36,
+      "organisation": 0.6
+    },
+    {
+      "id": "sov-8tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "8th Tank Division",
+      "shortName": "8.TD",
+      "formation": "4th Mechanised Corps",
+      "lon": 25.02,
+      "lat": 50.44,
+      "organisation": 0.6
+    },
+    {
+      "id": "sov-43tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "43rd Tank Division",
+      "shortName": "43.TD",
+      "formation": "19th Mechanised Corps",
+      "lon": 26.24,
+      "lat": 50.58,
+      "organisation": 0.5
+    },
+    {
+      "id": "sov-131mot",
+      "template": "soviet-motorised",
+      "faction": "soviet",
+      "name": "131st Motorised Division",
+      "shortName": "131.MD",
+      "formation": "9th Mechanised Corps",
+      "lon": 26.6,
+      "lat": 50.9,
+      "organisation": 0.5
+    },
+    {
+      "id": "sov-176rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "176th Rifle Division",
+      "shortName": "176.RD",
+      "formation": "9th Army",
+      "lon": 27.94,
+      "lat": 47.62,
+      "organisation": 0.55,
+      "supply": 0.6
+    },
+    {
+      "id": "sov-95rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "95th Rifle Division",
+      "shortName": "95.RD",
+      "formation": "9th Army",
+      "lon": 28.16,
+      "lat": 47.16,
+      "organisation": 0.55,
+      "supply": 0.6
+    },
+    {
+      "id": "sov-25rifle",
+      "template": "soviet-guards",
+      "faction": "soviet",
+      "name": "25th Rifle Division 'Chapayev'",
+      "shortName": "25.RD",
+      "formation": "9th Army",
+      "lon": 28.34,
+      "lat": 46.62,
+      "organisation": 0.65,
+      "supply": 0.7
+    },
+    {
+      "id": "sov-51rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "51st Rifle Division",
+      "shortName": "51.RD",
+      "formation": "9th Army",
+      "lon": 28.62,
+      "lat": 45.94,
+      "organisation": 0.5,
+      "supply": 0.55
+    },
+    {
+      "id": "sov-15mot",
+      "template": "soviet-motorised",
+      "faction": "soviet",
+      "name": "15th Motorised Division",
+      "shortName": "15.MD",
+      "formation": "2nd Mechanised Corps",
+      "lon": 28.88,
+      "lat": 47.02,
+      "organisation": 0.55
+    },
+    {
+      "id": "sov-11tank",
+      "template": "soviet-tank",
+      "faction": "soviet",
+      "name": "11th Tank Division",
+      "shortName": "11.TD",
+      "formation": "2nd Mechanised Corps",
+      "lon": 29.14,
+      "lat": 46.78,
+      "organisation": 0.55
+    },
+    {
+      "id": "sov-70rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "70th Rifle Division",
+      "shortName": "70.RD",
+      "formation": "23rd Army",
+      "lon": 29.2,
+      "lat": 60.68,
+      "organisation": 0.6,
+      "supply": 0.75
+    },
+    {
+      "id": "sov-168rifle",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "168th Rifle Division",
+      "shortName": "168.RD",
+      "formation": "7th Army",
+      "lon": 31.9,
+      "lat": 61.95,
+      "organisation": 0.6,
+      "supply": 0.75
+    }
+  ],
+  "supply": {
+    "climate": "continental",
+    "sources": [
+      {
+        "name": "Königsberg railhead",
+        "faction": "germany",
+        "lon": 20.51,
+        "lat": 54.71,
+        "rangeKm": 430,
+        "capturable": false
+      },
+      {
+        "name": "Warsaw railhead",
+        "faction": "germany",
+        "lon": 21.01,
+        "lat": 52.23,
+        "rangeKm": 470,
+        "capturable": false
+      },
+      {
+        "name": "Lublin railhead",
+        "faction": "germany",
+        "lon": 22.57,
+        "lat": 51.25,
+        "rangeKm": 430,
+        "capturable": false
+      },
+      {
+        "name": "Kraków railhead",
+        "faction": "germany",
+        "lon": 19.94,
+        "lat": 50.06,
+        "rangeKm": 400,
+        "capturable": false
+      },
+      {
+        "name": "Bucharest depot",
+        "faction": "romania",
+        "lon": 26.1,
+        "lat": 44.43,
+        "rangeKm": 380,
+        "capturable": false
+      },
+      {
+        "name": "Helsinki depot",
+        "faction": "finland",
+        "lon": 24.94,
+        "lat": 60.17,
+        "rangeKm": 360,
+        "capturable": false
+      },
+      {
+        "name": "Riga",
+        "faction": "soviet",
+        "lon": 24.11,
+        "lat": 56.95,
+        "rangeKm": 330,
+        "capturable": true
+      },
+      {
+        "name": "Vilnius",
+        "faction": "soviet",
+        "lon": 25.28,
+        "lat": 54.69,
+        "rangeKm": 330,
+        "capturable": true
+      },
+      {
+        "name": "Minsk",
+        "faction": "soviet",
+        "lon": 27.56,
+        "lat": 53.9,
+        "rangeKm": 380,
+        "capturable": true
+      },
+      {
+        "name": "Lviv",
+        "faction": "soviet",
+        "lon": 24.03,
+        "lat": 49.84,
+        "rangeKm": 330,
+        "capturable": true
+      },
+      {
+        "name": "Pskov",
+        "faction": "soviet",
+        "lon": 28.33,
+        "lat": 57.82,
+        "rangeKm": 330,
+        "capturable": true
+      },
+      {
+        "name": "Smolensk",
+        "faction": "soviet",
+        "lon": 32.05,
+        "lat": 54.78,
+        "rangeKm": 380,
+        "capturable": true
+      },
+      {
+        "name": "Kyiv",
+        "faction": "soviet",
+        "lon": 30.52,
+        "lat": 50.45,
+        "rangeKm": 430,
+        "capturable": true
+      },
+      {
+        "name": "Odessa port",
+        "faction": "soviet",
+        "lon": 30.73,
+        "lat": 46.48,
+        "rangeKm": 360,
+        "capturable": true
+      },
+      {
+        "name": "Leningrad",
+        "faction": "soviet",
+        "lon": 30.31,
+        "lat": 59.94,
+        "rangeKm": 450,
+        "capturable": true
+      },
+      {
+        "name": "Kharkov",
+        "faction": "soviet",
+        "lon": 36.23,
+        "lat": 49.99,
+        "rangeKm": 430,
+        "capturable": true
+      },
+      {
+        "name": "Bryansk",
+        "faction": "soviet",
+        "lon": 34.37,
+        "lat": 53.24,
+        "rangeKm": 360,
+        "capturable": true
+      },
+      {
+        "name": "Moscow railhead",
+        "faction": "soviet",
+        "lon": 37.62,
+        "lat": 55.75,
+        "rangeKm": 520,
+        "capturable": true
+      },
+      {
+        "name": "Rostov",
+        "faction": "soviet",
+        "lon": 39.72,
+        "lat": 47.23,
+        "rangeKm": 400,
+        "capturable": true
+      }
+    ]
+  }
 }

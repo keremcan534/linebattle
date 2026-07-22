@@ -18,8 +18,9 @@ export class RecoverySystem implements System {
     for (const d of ctx.world.divisions.values()) {
       const resting = d.order === null;
       // Marching costs cohesion; sitting still restores it. Both scale with
-      // supply, because a formation without fuel or rations recovers slowly.
-      const ratePerDay = resting ? 0.25 * d.supply : -0.05;
+      // supply, because a formation without fuel or rations recovers slowly —
+      // and with weather, because a camp in a December field is not rest.
+      const ratePerDay = resting ? 0.25 * d.supply * ctx.world.weather.recovery : -0.05;
       d.organisation = Math.max(
         0,
         Math.min(d.maxOrganisation, d.organisation + d.maxOrganisation * ratePerDay * (hours / 24)),

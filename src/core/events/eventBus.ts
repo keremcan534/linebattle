@@ -19,7 +19,10 @@ export type GameEvent =
   | { type: 'battleDecided'; battle: BattleId; position: Vec2; winner: FactionId | null }
   | { type: 'battleEnded'; battle: BattleId; position: Vec2 }
   | { type: 'divisionRetreating'; division: DivisionId }
-  | { type: 'divisionDestroyed'; division: DivisionId; position: Vec2 };
+  | { type: 'divisionDestroyed'; division: DivisionId; position: Vec2 }
+  | { type: 'divisionEncircled'; division: DivisionId }
+  | { type: 'divisionRelieved'; division: DivisionId }
+  | { type: 'supplyHubCaptured'; name: string; alliance: string };
 
 type Handler<E extends GameEvent = GameEvent> = (event: E) => void;
 

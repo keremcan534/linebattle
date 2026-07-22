@@ -88,6 +88,7 @@ export function addTestDivision(
     maxOrganisation: 50,
     morale: 0.8,
     supply: 1,
+    encircled: false,
     experience: 0.3,
     speedKmh: 2,
     softAttack: 20,

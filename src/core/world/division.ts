@@ -92,6 +92,11 @@ export interface Division {
   morale: number;
   /** 0..1 — fraction of required supply actually received. */
   supply: number;
+  /**
+   * Cut off, as distinct from merely badly supplied. Drives the pocket
+   * attrition multiplier and the warning on the counter.
+   */
+  encircled: boolean;
   /** 0..1 — veterancy. */
   experience: number;
 
@@ -119,11 +124,11 @@ export const organisationRatio = (d: Division): number =>
  * out of fuel does not advance at parade speed. Kept here rather than in the
  * movement system so the UI can show the same number the sim uses.
  */
-export function effectiveSpeedKmh(d: Division): number {
+export function effectiveSpeedKmh(d: Division, weatherMovement = 1): number {
   const supplyFactor = 0.35 + 0.65 * d.supply;
   const orgFactor = 0.5 + 0.5 * organisationRatio(d);
   // A broken formation still moves — that is the whole point of retreating —
   // but it does so as a mob, not a division.
   const stanceFactor = d.stance === 'move' ? 1 : d.stance === 'retreat' ? 0.75 : 0;
-  return d.speedKmh * supplyFactor * orgFactor * stanceFactor;
+  return d.speedKmh * supplyFactor * orgFactor * stanceFactor * weatherMovement;
 }

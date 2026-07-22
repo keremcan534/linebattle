@@ -28,6 +28,11 @@ export interface ScenarioFile {
    */
   seed?: number | string;
   map: MapSpec;
+  /**
+   * Depots, railheads and ports. Omit and supply is disabled entirely, which
+   * is a legitimate choice for a short tactical scenario.
+   */
+  supply?: SupplySpec;
   playerFaction: string;
   factions: FactionSpec[];
   /** Reusable stat blocks, referenced by `DivisionSpec.template`. */
@@ -54,6 +59,30 @@ export interface MapSpec {
      */
     borders?: string;
   };
+}
+
+export interface SupplySpec {
+  /** Drives the seasonal model. Defaults to 'temperate'. */
+  climate?: 'continental' | 'temperate' | 'desert';
+  sources: SupplySourceSpec[];
+}
+
+export interface SupplySourceSpec {
+  name: string;
+  faction: string;
+  lon: number;
+  lat: number;
+  /**
+   * Reach across good ground, in km. Roughly the distance a depot can push
+   * tonnage before the trucks are eating what they carry: 350-500 for a rail
+   * head, less for a forward dump.
+   */
+  rangeKm: number;
+  /**
+   * Whether an enemy that overruns it may use it. Rail junctions and supply
+   * dumps inside the theatre should be capturable; a home port should not.
+   */
+  capturable?: boolean;
 }
 
 export interface FactionSpec {

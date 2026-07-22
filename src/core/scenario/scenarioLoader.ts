@@ -141,6 +141,23 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
     world.addDivision(instantiate(spec, template, projection));
   }
 
+  if (scenario.supply) {
+    world.enableSupply(
+      scenario.supply.sources.map((s) => {
+        const alliance = scenario.factions.find((f) => f.id === s.faction)?.alliance;
+        if (!alliance) throw new Error(`Supply source "${s.name}" references unknown faction "${s.faction}"`);
+        return {
+          name: s.name,
+          alliance,
+          position: projection.project(s.lon, s.lat),
+          rangeKm: s.rangeKm,
+          capturable: s.capturable ?? false,
+        };
+      }),
+      scenario.supply.climate ?? 'temperate',
+    );
+  }
+
   reportDeployment(world);
 
   report('Ready', 1);
@@ -176,6 +193,7 @@ function instantiate(
     maxOrganisation: t.maxOrganisation,
     morale: spec.morale ?? t.morale ?? 0.8,
     supply: spec.supply ?? t.supply ?? 1,
+    encircled: false,
     experience: spec.experience ?? t.experience ?? 0.3,
     speedKmh: t.speedKmh,
     softAttack: t.softAttack,

@@ -76,16 +76,20 @@ Measured on Barbarossa: 44 battles over a simulated week, **0.097 ms per tick**,
 
 ---
 
-## Milestone 3 — Supply, attrition and the operational layer
+## ✅ Milestone 3 — Supply, attrition and weather
 
-**Goal: distance starts to hurt. Barbarossa's real enemy was logistics.**
+**Shipped.** Distance hurts. Barbarossa's real enemy was logistics, and now it is here too.
 
-- [ ] Supply sources (railheads, ports, depots) declared in scenario JSON
-- [ ] Supply propagation over the terrain grid with range falloff and road weighting
-- [ ] Encirclement detection — cut-off formations lose supply, then organisation, then cohere
-- [ ] Attrition by terrain and supply state
-- [ ] Weather and seasons — mud and winter as first-class modifiers
-- [ ] Supply overlay map mode
+- [x] Supply sources — railheads, ports, depots — declared in scenario JSON
+- [x] Supply propagation by Dijkstra over a 16 km field, terrain-weighted, blocked by enemy control
+- [x] **Capturable hubs**, so an advance can carry its logistics forward
+- [x] Encirclement as a consequence of the flood, not a special case
+- [x] Attrition by terrain, weather and starvation — the only reliable way to destroy a division
+- [x] Weather and seasons: rasputitsa, deep winter, desert summer, derived from the date
+- [x] Supply map mode (`M`), drawn as one texture rather than 51k rectangles
+- [x] Encirclement and season surfaced in the HUD
+
+Fixed capacity was the interesting failure: it starved 56 of 57 German divisions to death inside two months with barely a shot fired. See the architecture doc — a measurement that changed a design.
 
 ---
 

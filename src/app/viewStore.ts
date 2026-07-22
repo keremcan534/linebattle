@@ -35,6 +35,7 @@ export interface DivisionSummary {
   experience: number;
   speedKmh: number;
   terrain: string;
+  encircled: boolean;
   hasOrder: boolean;
   lon: number;
   lat: number;
@@ -71,6 +72,9 @@ export interface ViewSnapshot {
   cursor: { lon: number; lat: number; terrain: string } | null;
   divisionCount: number;
   battles: readonly BattleSummary[];
+  weather: string;
+  /** Divisions of the player's own alliance currently cut off. */
+  encircled: number;
 }
 
 const EMPTY_SNAPSHOT: ViewSnapshot = {
@@ -85,6 +89,8 @@ const EMPTY_SNAPSHOT: ViewSnapshot = {
   cursor: null,
   divisionCount: 0,
   battles: [],
+  weather: '',
+  encircled: 0,
 };
 
 export class ViewStore {
@@ -171,8 +177,9 @@ export class ViewStore {
         morale: d.morale,
         supply: d.supply,
         experience: d.experience,
-        speedKmh: effectiveSpeedKmh(d),
+        speedKmh: effectiveSpeedKmh(d, world.weather.movement),
         terrain: TERRAIN_PROFILES[world.terrain.sample(d.position)].name,
+        encircled: d.encircled,
         hasOrder: d.order !== null,
         lon,
         lat,
@@ -227,6 +234,10 @@ export class ViewStore {
       cursor,
       divisionCount: world.divisions.size,
       battles,
+      weather: world.weather.season,
+      encircled: [...world.divisions.values()].filter(
+        (d) => d.encircled && world.getFaction(d.faction)?.alliance === this.playerAlliance,
+      ).length,
     };
 
     for (const listener of this.listeners) listener();

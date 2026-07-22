@@ -5,10 +5,20 @@
   "description": "06:30, 6 June 1944. Five divisions land between the Orne and the Cotentin while three more come down in the dark behind the beaches. The bocage beyond is the real enemy.",
   "startDate": "1944-06-06T06:30:00Z",
   "playerFaction": "usa",
-
   "map": {
-    "projection": { "type": "lcc", "lon0": -0.5, "lat0": 49.5, "lat1": 48.2, "lat2": 51.4 },
-    "bounds": { "minLon": -6.2, "minLat": 47.0, "maxLon": 5.2, "maxLat": 53.0 },
+    "projection": {
+      "type": "lcc",
+      "lon0": -0.5,
+      "lat0": 49.5,
+      "lat1": 48.2,
+      "lat2": 51.4
+    },
+    "bounds": {
+      "minLon": -6.2,
+      "minLat": 47,
+      "maxLon": 5.2,
+      "maxLat": 53
+    },
     "terrainCellSizeKm": 2,
     "layers": {
       "land": "../geo/normandy/land.geojson",
@@ -19,116 +29,683 @@
       "borders": "../geo/normandy/borders-1944.geojson"
     }
   },
-
   "factions": [
-    { "id": "usa", "name": "United States", "alliance": "allies", "color": "#4a6b46", "accentColor": "#eef4ea" },
-    { "id": "uk", "name": "United Kingdom", "alliance": "allies", "color": "#4a5f7a", "accentColor": "#eaf0f6" },
-    { "id": "canada", "name": "Canada", "alliance": "allies", "color": "#6b4a4a", "accentColor": "#f6eaea" },
-    { "id": "germany", "name": "Germany", "alliance": "axis", "color": "#5c6b7a", "accentColor": "#e8eef4" }
+    {
+      "id": "usa",
+      "name": "United States",
+      "alliance": "allies",
+      "color": "#4a6b46",
+      "accentColor": "#eef4ea"
+    },
+    {
+      "id": "uk",
+      "name": "United Kingdom",
+      "alliance": "allies",
+      "color": "#4a5f7a",
+      "accentColor": "#eaf0f6"
+    },
+    {
+      "id": "canada",
+      "name": "Canada",
+      "alliance": "allies",
+      "color": "#6b4a4a",
+      "accentColor": "#f6eaea"
+    },
+    {
+      "id": "germany",
+      "name": "Germany",
+      "alliance": "axis",
+      "color": "#5c6b7a",
+      "accentColor": "#e8eef4"
+    }
   ],
-
   "templates": {
     "us-infantry": {
-      "branch": "infantry", "maxManpower": 14250, "maxOrganisation": 55, "speedKmh": 1.5,
-      "softAttack": 32, "hardAttack": 12, "defence": 34, "hardness": 0.06,
-      "experience": 0.4, "morale": 0.85, "supply": 0.9
+      "branch": "infantry",
+      "maxManpower": 14250,
+      "maxOrganisation": 55,
+      "speedKmh": 1.5,
+      "softAttack": 32,
+      "hardAttack": 12,
+      "defence": 34,
+      "hardness": 0.06,
+      "experience": 0.4,
+      "morale": 0.85,
+      "supply": 0.9
     },
     "us-airborne": {
-      "branch": "airborne", "maxManpower": 12000, "maxOrganisation": 60, "speedKmh": 1.4,
-      "softAttack": 30, "hardAttack": 8, "defence": 32, "hardness": 0.02,
-      "experience": 0.55, "morale": 0.95, "supply": 0.45
+      "branch": "airborne",
+      "maxManpower": 12000,
+      "maxOrganisation": 60,
+      "speedKmh": 1.4,
+      "softAttack": 30,
+      "hardAttack": 8,
+      "defence": 32,
+      "hardness": 0.02,
+      "experience": 0.55,
+      "morale": 0.95,
+      "supply": 0.45
     },
     "us-armoured": {
-      "branch": "armoured", "maxManpower": 10900, "maxOrganisation": 58, "speedKmh": 2.9,
-      "softAttack": 46, "hardAttack": 40, "defence": 34, "hardness": 0.6,
-      "experience": 0.4, "morale": 0.88, "supply": 0.9
+      "branch": "armoured",
+      "maxManpower": 10900,
+      "maxOrganisation": 58,
+      "speedKmh": 2.9,
+      "softAttack": 46,
+      "hardAttack": 40,
+      "defence": 34,
+      "hardness": 0.6,
+      "experience": 0.4,
+      "morale": 0.88,
+      "supply": 0.9
     },
     "uk-infantry": {
-      "branch": "infantry", "maxManpower": 18300, "maxOrganisation": 54, "speedKmh": 1.45,
-      "softAttack": 31, "hardAttack": 12, "defence": 35, "hardness": 0.06,
-      "experience": 0.45, "morale": 0.85, "supply": 0.9
+      "branch": "infantry",
+      "maxManpower": 18300,
+      "maxOrganisation": 54,
+      "speedKmh": 1.45,
+      "softAttack": 31,
+      "hardAttack": 12,
+      "defence": 35,
+      "hardness": 0.06,
+      "experience": 0.45,
+      "morale": 0.85,
+      "supply": 0.9
     },
     "uk-airborne": {
-      "branch": "airborne", "maxManpower": 11000, "maxOrganisation": 58, "speedKmh": 1.4,
-      "softAttack": 28, "hardAttack": 7, "defence": 32, "hardness": 0.02,
-      "experience": 0.55, "morale": 0.95, "supply": 0.4
+      "branch": "airborne",
+      "maxManpower": 11000,
+      "maxOrganisation": 58,
+      "speedKmh": 1.4,
+      "softAttack": 28,
+      "hardAttack": 7,
+      "defence": 32,
+      "hardness": 0.02,
+      "experience": 0.55,
+      "morale": 0.95,
+      "supply": 0.4
     },
     "uk-armoured": {
-      "branch": "armoured", "maxManpower": 14400, "maxOrganisation": 56, "speedKmh": 2.8,
-      "softAttack": 42, "hardAttack": 36, "defence": 33, "hardness": 0.55,
-      "experience": 0.5, "morale": 0.85, "supply": 0.9
+      "branch": "armoured",
+      "maxManpower": 14400,
+      "maxOrganisation": 56,
+      "speedKmh": 2.8,
+      "softAttack": 42,
+      "hardAttack": 36,
+      "defence": 33,
+      "hardness": 0.55,
+      "experience": 0.5,
+      "morale": 0.85,
+      "supply": 0.9
     },
     "german-static": {
-      "branch": "security", "maxManpower": 12700, "maxOrganisation": 32, "speedKmh": 0.9,
-      "softAttack": 18, "hardAttack": 8, "defence": 30, "hardness": 0.03,
-      "experience": 0.2, "morale": 0.6, "supply": 0.8
+      "branch": "security",
+      "maxManpower": 12700,
+      "maxOrganisation": 32,
+      "speedKmh": 0.9,
+      "softAttack": 18,
+      "hardAttack": 8,
+      "defence": 30,
+      "hardness": 0.03,
+      "experience": 0.2,
+      "morale": 0.6,
+      "supply": 0.8
     },
     "german-infantry": {
-      "branch": "infantry", "maxManpower": 12800, "maxOrganisation": 46, "speedKmh": 1.3,
-      "softAttack": 26, "hardAttack": 10, "defence": 34, "hardness": 0.05,
-      "experience": 0.45, "morale": 0.75, "supply": 0.8
+      "branch": "infantry",
+      "maxManpower": 12800,
+      "maxOrganisation": 46,
+      "speedKmh": 1.3,
+      "softAttack": 26,
+      "hardAttack": 10,
+      "defence": 34,
+      "hardness": 0.05,
+      "experience": 0.45,
+      "morale": 0.75,
+      "supply": 0.8
     },
     "german-panzer": {
-      "branch": "armoured", "maxManpower": 14000, "maxOrganisation": 58, "speedKmh": 2.8,
-      "softAttack": 44, "hardAttack": 44, "defence": 36, "hardness": 0.6,
-      "experience": 0.55, "morale": 0.85, "supply": 0.7
+      "branch": "armoured",
+      "maxManpower": 14000,
+      "maxOrganisation": 58,
+      "speedKmh": 2.8,
+      "softAttack": 44,
+      "hardAttack": 44,
+      "defence": 36,
+      "hardness": 0.6,
+      "experience": 0.55,
+      "morale": 0.85,
+      "supply": 0.7
     },
     "german-ss-panzer": {
-      "branch": "armoured", "maxManpower": 17000, "maxOrganisation": 62, "speedKmh": 2.8,
-      "softAttack": 48, "hardAttack": 46, "defence": 38, "hardness": 0.6,
-      "experience": 0.5, "morale": 0.95, "supply": 0.7
+      "branch": "armoured",
+      "maxManpower": 17000,
+      "maxOrganisation": 62,
+      "speedKmh": 2.8,
+      "softAttack": 48,
+      "hardAttack": 46,
+      "defence": 38,
+      "hardness": 0.6,
+      "experience": 0.5,
+      "morale": 0.95,
+      "supply": 0.7
     },
     "german-panzergrenadier": {
-      "branch": "mechanised", "maxManpower": 15000, "maxOrganisation": 55, "speedKmh": 2.6,
-      "softAttack": 36, "hardAttack": 24, "defence": 34, "hardness": 0.25,
-      "experience": 0.45, "morale": 0.85, "supply": 0.7
+      "branch": "mechanised",
+      "maxManpower": 15000,
+      "maxOrganisation": 55,
+      "speedKmh": 2.6,
+      "softAttack": 36,
+      "hardAttack": 24,
+      "defence": 34,
+      "hardness": 0.25,
+      "experience": 0.45,
+      "morale": 0.85,
+      "supply": 0.7
     },
     "german-fallschirm": {
-      "branch": "airborne", "maxManpower": 15000, "maxOrganisation": 58, "speedKmh": 1.4,
-      "softAttack": 34, "hardAttack": 10, "defence": 40, "hardness": 0.03,
-      "experience": 0.6, "morale": 0.9, "supply": 0.7
+      "branch": "airborne",
+      "maxManpower": 15000,
+      "maxOrganisation": 58,
+      "speedKmh": 1.4,
+      "softAttack": 34,
+      "hardAttack": 10,
+      "defence": 40,
+      "hardness": 0.03,
+      "experience": 0.6,
+      "morale": 0.9,
+      "supply": 0.7
     }
   },
-
   "divisions": [
-    { "id": "us-4id", "template": "us-infantry", "faction": "usa", "name": "4th Infantry Division", "shortName": "4.ID", "formation": "VII Corps - Utah", "lon": -1.175, "lat": 49.415, "organisation": 0.8 },
-    { "id": "us-1id", "template": "us-infantry", "faction": "usa", "name": "1st Infantry Division", "shortName": "1.ID", "formation": "V Corps - Omaha", "lon": -0.878, "lat": 49.360, "organisation": 0.55, "strength": 0.92 },
-    { "id": "us-29id", "template": "us-infantry", "faction": "usa", "name": "29th Infantry Division", "shortName": "29.ID", "formation": "V Corps - Omaha", "lon": -0.950, "lat": 49.378, "organisation": 0.55, "strength": 0.92 },
-    { "id": "us-82ab", "template": "us-airborne", "faction": "usa", "name": "82nd Airborne Division", "shortName": "82.AB", "formation": "VII Corps", "lon": -1.315, "lat": 49.408, "organisation": 0.5, "strength": 0.7 },
-    { "id": "us-101ab", "template": "us-airborne", "faction": "usa", "name": "101st Airborne Division", "shortName": "101.AB", "formation": "VII Corps", "lon": -1.245, "lat": 49.300, "organisation": 0.5, "strength": 0.7 },
-    { "id": "us-2ad", "template": "us-armoured", "faction": "usa", "name": "2nd Armored Division", "shortName": "2.AD", "formation": "V Corps - follow-up", "lon": -2.440, "lat": 50.640, "organisation": 0.9 },
-    { "id": "us-90id", "template": "us-infantry", "faction": "usa", "name": "90th Infantry Division", "shortName": "90.ID", "formation": "VII Corps - follow-up", "lon": -1.400, "lat": 50.920, "organisation": 0.9 },
-    { "id": "us-2id", "template": "us-infantry", "faction": "usa", "name": "2nd Infantry Division", "shortName": "2.ID", "formation": "V Corps - follow-up", "lon": -1.090, "lat": 50.800, "organisation": 0.9 },
-
-    { "id": "uk-50id", "template": "uk-infantry", "faction": "uk", "name": "50th (Northumbrian) Division", "shortName": "50.ID", "formation": "XXX Corps - Gold", "lon": -0.550, "lat": 49.343, "organisation": 0.7 },
-    { "id": "uk-3id", "template": "uk-infantry", "faction": "uk", "name": "3rd Infantry Division", "shortName": "3.ID", "formation": "I Corps - Sword", "lon": -0.298, "lat": 49.305, "organisation": 0.7 },
-    { "id": "uk-6ab", "template": "uk-airborne", "faction": "uk", "name": "6th Airborne Division", "shortName": "6.AB", "formation": "I Corps", "lon": -0.255, "lat": 49.245, "organisation": 0.55, "strength": 0.75 },
-    { "id": "uk-7ad", "template": "uk-armoured", "faction": "uk", "name": "7th Armoured Division", "shortName": "7.AD", "formation": "XXX Corps - follow-up", "lon": -0.780, "lat": 50.840, "organisation": 0.9 },
-    { "id": "uk-51id", "template": "uk-infantry", "faction": "uk", "name": "51st (Highland) Division", "shortName": "51.ID", "formation": "I Corps - follow-up", "lon": 0.050, "lat": 50.870, "organisation": 0.9 },
-    { "id": "uk-49id", "template": "uk-infantry", "faction": "uk", "name": "49th (West Riding) Division", "shortName": "49.ID", "formation": "XXX Corps - follow-up", "lon": -0.550, "lat": 50.870, "organisation": 0.9 },
-
-    { "id": "ca-3id", "template": "uk-infantry", "faction": "canada", "name": "3rd Canadian Infantry Division", "shortName": "3.CID", "formation": "I Corps - Juno", "lon": -0.440, "lat": 49.338, "organisation": 0.7 },
-    { "id": "ca-2ab", "template": "uk-armoured", "faction": "canada", "name": "2nd Canadian Armoured Brigade", "shortName": "2.CAB", "formation": "I Corps - Juno", "lon": -0.435, "lat": 49.342, "organisation": 0.75, "strength": 0.5 },
-
-    { "id": "ger-716id", "template": "german-static", "faction": "germany", "name": "716. Infanterie-Division", "shortName": "716.ID", "formation": "LXXXIV. Armeekorps", "lon": -0.400, "lat": 49.255 },
-    { "id": "ger-352id", "template": "german-infantry", "faction": "germany", "name": "352. Infanterie-Division", "shortName": "352.ID", "formation": "LXXXIV. Armeekorps", "lon": -0.780, "lat": 49.270 },
-    { "id": "ger-709id", "template": "german-static", "faction": "germany", "name": "709. Infanterie-Division", "shortName": "709.ID", "formation": "LXXXIV. Armeekorps", "lon": -1.320, "lat": 49.520 },
-    { "id": "ger-91ll", "template": "german-infantry", "faction": "germany", "name": "91. Luftlande-Division", "shortName": "91.LL", "formation": "LXXXIV. Armeekorps", "lon": -1.450, "lat": 49.340 },
-    { "id": "ger-243id", "template": "german-static", "faction": "germany", "name": "243. Infanterie-Division", "shortName": "243.ID", "formation": "LXXXIV. Armeekorps", "lon": -1.620, "lat": 49.560 },
-    { "id": "ger-6fj", "template": "german-fallschirm", "faction": "germany", "name": "6. Fallschirmjäger-Regiment", "shortName": "6.FJR", "formation": "LXXXIV. Armeekorps", "lon": -1.280, "lat": 49.180, "strength": 0.3 },
-    { "id": "ger-21pz", "template": "german-panzer", "faction": "germany", "name": "21. Panzer-Division", "shortName": "21.Pz", "formation": "I. SS-Panzerkorps", "lon": -0.355, "lat": 49.175 },
-    { "id": "ger-12ss", "template": "german-ss-panzer", "faction": "germany", "name": "12. SS-Panzer-Division Hitlerjugend", "shortName": "12.SS", "formation": "I. SS-Panzerkorps", "lon": 0.620, "lat": 49.020, "supply": 0.6 },
-    { "id": "ger-plehr", "template": "german-panzer", "faction": "germany", "name": "Panzer-Lehr-Division", "shortName": "Pz.Lehr", "formation": "I. SS-Panzerkorps", "lon": 0.200, "lat": 48.010, "supply": 0.6 },
-    { "id": "ger-17ss", "template": "german-panzergrenadier", "faction": "germany", "name": "17. SS-Panzergrenadier-Division", "shortName": "17.SS", "formation": "LXXXIV. Armeekorps", "lon": -0.210, "lat": 47.150, "supply": 0.55 },
-    { "id": "ger-77id", "template": "german-infantry", "faction": "germany", "name": "77. Infanterie-Division", "shortName": "77.ID", "formation": "XXV. Armeekorps", "lon": -2.020, "lat": 48.640 },
-    { "id": "ger-275id", "template": "german-infantry", "faction": "germany", "name": "275. Infanterie-Division", "shortName": "275.ID", "formation": "XXV. Armeekorps", "lon": -3.100, "lat": 48.300 },
-    { "id": "ger-353id", "template": "german-infantry", "faction": "germany", "name": "353. Infanterie-Division", "shortName": "353.ID", "formation": "XXV. Armeekorps", "lon": -2.750, "lat": 48.500 },
-    { "id": "ger-2pz", "template": "german-panzer", "faction": "germany", "name": "2. Panzer-Division", "shortName": "2.Pz", "formation": "Heeresgruppe B reserve", "lon": 2.300, "lat": 49.890, "supply": 0.6 },
-    { "id": "ger-116pz", "template": "german-panzer", "faction": "germany", "name": "116. Panzer-Division", "shortName": "116.Pz", "formation": "Heeresgruppe B reserve", "lon": 2.480, "lat": 49.420, "supply": 0.6 },
-    { "id": "ger-711id", "template": "german-static", "faction": "germany", "name": "711. Infanterie-Division", "shortName": "711.ID", "formation": "LXXXI. Armeekorps", "lon": 0.080, "lat": 49.290 },
-    { "id": "ger-346id", "template": "german-infantry", "faction": "germany", "name": "346. Infanterie-Division", "shortName": "346.ID", "formation": "LXXXI. Armeekorps", "lon": 0.550, "lat": 49.420 },
-    { "id": "ger-245id", "template": "german-static", "faction": "germany", "name": "245. Infanterie-Division", "shortName": "245.ID", "formation": "LXXXI. Armeekorps", "lon": 1.100, "lat": 49.700 },
-    { "id": "ger-84id", "template": "german-infantry", "faction": "germany", "name": "84. Infanterie-Division", "shortName": "84.ID", "formation": "LXVII. Armeekorps", "lon": 2.100, "lat": 50.400 },
-    { "id": "ger-331id", "template": "german-infantry", "faction": "germany", "name": "331. Infanterie-Division", "shortName": "331.ID", "formation": "15. Armee", "lon": 2.900, "lat": 50.700 }
-  ]
+    {
+      "id": "us-4id",
+      "template": "us-infantry",
+      "faction": "usa",
+      "name": "4th Infantry Division",
+      "shortName": "4.ID",
+      "formation": "VII Corps - Utah",
+      "lon": -1.175,
+      "lat": 49.415,
+      "organisation": 0.8
+    },
+    {
+      "id": "us-1id",
+      "template": "us-infantry",
+      "faction": "usa",
+      "name": "1st Infantry Division",
+      "shortName": "1.ID",
+      "formation": "V Corps - Omaha",
+      "lon": -0.878,
+      "lat": 49.36,
+      "organisation": 0.55,
+      "strength": 0.92
+    },
+    {
+      "id": "us-29id",
+      "template": "us-infantry",
+      "faction": "usa",
+      "name": "29th Infantry Division",
+      "shortName": "29.ID",
+      "formation": "V Corps - Omaha",
+      "lon": -0.95,
+      "lat": 49.378,
+      "organisation": 0.55,
+      "strength": 0.92
+    },
+    {
+      "id": "us-82ab",
+      "template": "us-airborne",
+      "faction": "usa",
+      "name": "82nd Airborne Division",
+      "shortName": "82.AB",
+      "formation": "VII Corps",
+      "lon": -1.315,
+      "lat": 49.408,
+      "organisation": 0.5,
+      "strength": 0.7
+    },
+    {
+      "id": "us-101ab",
+      "template": "us-airborne",
+      "faction": "usa",
+      "name": "101st Airborne Division",
+      "shortName": "101.AB",
+      "formation": "VII Corps",
+      "lon": -1.245,
+      "lat": 49.3,
+      "organisation": 0.5,
+      "strength": 0.7
+    },
+    {
+      "id": "us-2ad",
+      "template": "us-armoured",
+      "faction": "usa",
+      "name": "2nd Armored Division",
+      "shortName": "2.AD",
+      "formation": "V Corps - follow-up",
+      "lon": -2.44,
+      "lat": 50.64,
+      "organisation": 0.9
+    },
+    {
+      "id": "us-90id",
+      "template": "us-infantry",
+      "faction": "usa",
+      "name": "90th Infantry Division",
+      "shortName": "90.ID",
+      "formation": "VII Corps - follow-up",
+      "lon": -1.4,
+      "lat": 50.92,
+      "organisation": 0.9
+    },
+    {
+      "id": "us-2id",
+      "template": "us-infantry",
+      "faction": "usa",
+      "name": "2nd Infantry Division",
+      "shortName": "2.ID",
+      "formation": "V Corps - follow-up",
+      "lon": -1.09,
+      "lat": 50.8,
+      "organisation": 0.9
+    },
+    {
+      "id": "uk-50id",
+      "template": "uk-infantry",
+      "faction": "uk",
+      "name": "50th (Northumbrian) Division",
+      "shortName": "50.ID",
+      "formation": "XXX Corps - Gold",
+      "lon": -0.55,
+      "lat": 49.343,
+      "organisation": 0.7
+    },
+    {
+      "id": "uk-3id",
+      "template": "uk-infantry",
+      "faction": "uk",
+      "name": "3rd Infantry Division",
+      "shortName": "3.ID",
+      "formation": "I Corps - Sword",
+      "lon": -0.298,
+      "lat": 49.305,
+      "organisation": 0.7
+    },
+    {
+      "id": "uk-6ab",
+      "template": "uk-airborne",
+      "faction": "uk",
+      "name": "6th Airborne Division",
+      "shortName": "6.AB",
+      "formation": "I Corps",
+      "lon": -0.255,
+      "lat": 49.245,
+      "organisation": 0.55,
+      "strength": 0.75
+    },
+    {
+      "id": "uk-7ad",
+      "template": "uk-armoured",
+      "faction": "uk",
+      "name": "7th Armoured Division",
+      "shortName": "7.AD",
+      "formation": "XXX Corps - follow-up",
+      "lon": -0.78,
+      "lat": 50.84,
+      "organisation": 0.9
+    },
+    {
+      "id": "uk-51id",
+      "template": "uk-infantry",
+      "faction": "uk",
+      "name": "51st (Highland) Division",
+      "shortName": "51.ID",
+      "formation": "I Corps - follow-up",
+      "lon": 0.05,
+      "lat": 50.87,
+      "organisation": 0.9
+    },
+    {
+      "id": "uk-49id",
+      "template": "uk-infantry",
+      "faction": "uk",
+      "name": "49th (West Riding) Division",
+      "shortName": "49.ID",
+      "formation": "XXX Corps - follow-up",
+      "lon": -0.55,
+      "lat": 50.87,
+      "organisation": 0.9
+    },
+    {
+      "id": "ca-3id",
+      "template": "uk-infantry",
+      "faction": "canada",
+      "name": "3rd Canadian Infantry Division",
+      "shortName": "3.CID",
+      "formation": "I Corps - Juno",
+      "lon": -0.44,
+      "lat": 49.338,
+      "organisation": 0.7
+    },
+    {
+      "id": "ca-2ab",
+      "template": "uk-armoured",
+      "faction": "canada",
+      "name": "2nd Canadian Armoured Brigade",
+      "shortName": "2.CAB",
+      "formation": "I Corps - Juno",
+      "lon": -0.435,
+      "lat": 49.342,
+      "organisation": 0.75,
+      "strength": 0.5
+    },
+    {
+      "id": "ger-716id",
+      "template": "german-static",
+      "faction": "germany",
+      "name": "716. Infanterie-Division",
+      "shortName": "716.ID",
+      "formation": "LXXXIV. Armeekorps",
+      "lon": -0.4,
+      "lat": 49.255
+    },
+    {
+      "id": "ger-352id",
+      "template": "german-infantry",
+      "faction": "germany",
+      "name": "352. Infanterie-Division",
+      "shortName": "352.ID",
+      "formation": "LXXXIV. Armeekorps",
+      "lon": -0.78,
+      "lat": 49.27
+    },
+    {
+      "id": "ger-709id",
+      "template": "german-static",
+      "faction": "germany",
+      "name": "709. Infanterie-Division",
+      "shortName": "709.ID",
+      "formation": "LXXXIV. Armeekorps",
+      "lon": -1.32,
+      "lat": 49.52
+    },
+    {
+      "id": "ger-91ll",
+      "template": "german-infantry",
+      "faction": "germany",
+      "name": "91. Luftlande-Division",
+      "shortName": "91.LL",
+      "formation": "LXXXIV. Armeekorps",
+      "lon": -1.45,
+      "lat": 49.34
+    },
+    {
+      "id": "ger-243id",
+      "template": "german-static",
+      "faction": "germany",
+      "name": "243. Infanterie-Division",
+      "shortName": "243.ID",
+      "formation": "LXXXIV. Armeekorps",
+      "lon": -1.62,
+      "lat": 49.56
+    },
+    {
+      "id": "ger-6fj",
+      "template": "german-fallschirm",
+      "faction": "germany",
+      "name": "6. Fallschirmjäger-Regiment",
+      "shortName": "6.FJR",
+      "formation": "LXXXIV. Armeekorps",
+      "lon": -1.28,
+      "lat": 49.18,
+      "strength": 0.3
+    },
+    {
+      "id": "ger-21pz",
+      "template": "german-panzer",
+      "faction": "germany",
+      "name": "21. Panzer-Division",
+      "shortName": "21.Pz",
+      "formation": "I. SS-Panzerkorps",
+      "lon": -0.355,
+      "lat": 49.175
+    },
+    {
+      "id": "ger-12ss",
+      "template": "german-ss-panzer",
+      "faction": "germany",
+      "name": "12. SS-Panzer-Division Hitlerjugend",
+      "shortName": "12.SS",
+      "formation": "I. SS-Panzerkorps",
+      "lon": 0.62,
+      "lat": 49.02,
+      "supply": 0.6
+    },
+    {
+      "id": "ger-plehr",
+      "template": "german-panzer",
+      "faction": "germany",
+      "name": "Panzer-Lehr-Division",
+      "shortName": "Pz.Lehr",
+      "formation": "I. SS-Panzerkorps",
+      "lon": 0.2,
+      "lat": 48.01,
+      "supply": 0.6
+    },
+    {
+      "id": "ger-17ss",
+      "template": "german-panzergrenadier",
+      "faction": "germany",
+      "name": "17. SS-Panzergrenadier-Division",
+      "shortName": "17.SS",
+      "formation": "LXXXIV. Armeekorps",
+      "lon": -0.21,
+      "lat": 47.15,
+      "supply": 0.55
+    },
+    {
+      "id": "ger-77id",
+      "template": "german-infantry",
+      "faction": "germany",
+      "name": "77. Infanterie-Division",
+      "shortName": "77.ID",
+      "formation": "XXV. Armeekorps",
+      "lon": -2.02,
+      "lat": 48.64
+    },
+    {
+      "id": "ger-275id",
+      "template": "german-infantry",
+      "faction": "germany",
+      "name": "275. Infanterie-Division",
+      "shortName": "275.ID",
+      "formation": "XXV. Armeekorps",
+      "lon": -3.1,
+      "lat": 48.3
+    },
+    {
+      "id": "ger-353id",
+      "template": "german-infantry",
+      "faction": "germany",
+      "name": "353. Infanterie-Division",
+      "shortName": "353.ID",
+      "formation": "XXV. Armeekorps",
+      "lon": -2.75,
+      "lat": 48.5
+    },
+    {
+      "id": "ger-2pz",
+      "template": "german-panzer",
+      "faction": "germany",
+      "name": "2. Panzer-Division",
+      "shortName": "2.Pz",
+      "formation": "Heeresgruppe B reserve",
+      "lon": 2.3,
+      "lat": 49.89,
+      "supply": 0.6
+    },
+    {
+      "id": "ger-116pz",
+      "template": "german-panzer",
+      "faction": "germany",
+      "name": "116. Panzer-Division",
+      "shortName": "116.Pz",
+      "formation": "Heeresgruppe B reserve",
+      "lon": 2.48,
+      "lat": 49.42,
+      "supply": 0.6
+    },
+    {
+      "id": "ger-711id",
+      "template": "german-static",
+      "faction": "germany",
+      "name": "711. Infanterie-Division",
+      "shortName": "711.ID",
+      "formation": "LXXXI. Armeekorps",
+      "lon": 0.08,
+      "lat": 49.29
+    },
+    {
+      "id": "ger-346id",
+      "template": "german-infantry",
+      "faction": "germany",
+      "name": "346. Infanterie-Division",
+      "shortName": "346.ID",
+      "formation": "LXXXI. Armeekorps",
+      "lon": 0.55,
+      "lat": 49.42
+    },
+    {
+      "id": "ger-245id",
+      "template": "german-static",
+      "faction": "germany",
+      "name": "245. Infanterie-Division",
+      "shortName": "245.ID",
+      "formation": "LXXXI. Armeekorps",
+      "lon": 1.1,
+      "lat": 49.7
+    },
+    {
+      "id": "ger-84id",
+      "template": "german-infantry",
+      "faction": "germany",
+      "name": "84. Infanterie-Division",
+      "shortName": "84.ID",
+      "formation": "LXVII. Armeekorps",
+      "lon": 2.1,
+      "lat": 50.4
+    },
+    {
+      "id": "ger-331id",
+      "template": "german-infantry",
+      "faction": "germany",
+      "name": "331. Infanterie-Division",
+      "shortName": "331.ID",
+      "formation": "15. Armee",
+      "lon": 2.9,
+      "lat": 50.7
+    }
+  ],
+  "supply": {
+    "climate": "temperate",
+    "sources": [
+      {
+        "name": "Portsmouth",
+        "faction": "uk",
+        "lon": -1.09,
+        "lat": 50.8,
+        "rangeKm": 300,
+        "capturable": false
+      },
+      {
+        "name": "Southampton",
+        "faction": "usa",
+        "lon": -1.4,
+        "lat": 50.9,
+        "rangeKm": 300,
+        "capturable": false
+      },
+      {
+        "name": "Plymouth",
+        "faction": "usa",
+        "lon": -4.14,
+        "lat": 50.37,
+        "rangeKm": 280,
+        "capturable": false
+      },
+      {
+        "name": "Mulberry - Omaha",
+        "faction": "usa",
+        "lon": -0.9,
+        "lat": 49.36,
+        "rangeKm": 150,
+        "capturable": false
+      },
+      {
+        "name": "Mulberry - Gold",
+        "faction": "uk",
+        "lon": -0.56,
+        "lat": 49.34,
+        "rangeKm": 150,
+        "capturable": false
+      },
+      {
+        "name": "Juno beachhead",
+        "faction": "canada",
+        "lon": -0.44,
+        "lat": 49.34,
+        "rangeKm": 130,
+        "capturable": false
+      },
+      {
+        "name": "Paris depot",
+        "faction": "germany",
+        "lon": 2.35,
+        "lat": 48.86,
+        "rangeKm": 420,
+        "capturable": true
+      },
+      {
+        "name": "Rouen railhead",
+        "faction": "germany",
+        "lon": 1.1,
+        "lat": 49.44,
+        "rangeKm": 340,
+        "capturable": true
+      },
+      {
+        "name": "Rennes railhead",
+        "faction": "germany",
+        "lon": -1.68,
+        "lat": 48.11,
+        "rangeKm": 320,
+        "capturable": true
+      },
+      {
+        "name": "Le Mans railhead",
+        "faction": "germany",
+        "lon": 0.2,
+        "lat": 48,
+        "rangeKm": 340,
+        "capturable": true
+      },
+      {
+        "name": "Cherbourg port",
+        "faction": "germany",
+        "lon": -1.62,
+        "lat": 49.63,
+        "rangeKm": 300,
+        "capturable": true
+      },
+      {
+        "name": "Caen railhead",
+        "faction": "germany",
+        "lon": -0.37,
+        "lat": 49.18,
+        "rangeKm": 300,
+        "capturable": true
+      }
+    ]
+  }
 }

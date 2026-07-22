@@ -14,7 +14,13 @@ export function TopBar({ snapshot, scenarioName, onSetSpeed, onTogglePause }: Pr
     <header className="topbar">
       <div className="topbar__scenario">
         <span className="topbar__title">{scenarioName}</span>
-        <span className="topbar__count">{snapshot.divisionCount} divisions</span>
+        <span className="topbar__count">
+          {snapshot.divisionCount} divisions
+          {snapshot.weather && <> · {snapshot.weather}</>}
+          {snapshot.encircled > 0 && (
+            <span className="topbar__alarm"> · {snapshot.encircled} encircled</span>
+          )}
+        </span>
       </div>
 
       <div className="topbar__clock">

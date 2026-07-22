@@ -189,6 +189,45 @@ Raw grid paths are staircases of hundreds of cells, so the result is string-pull
 
 ---
 
+## 7d. Supply, encirclement and weather
+
+**Supply is deliberately coarser than terrain** — 16 km cells against 4 km, ~51k cells instead of 821k. You are never asking "can this truck reach that hedgerow", you are asking "is this corps in supply". Finer resolution would be sixteen times the work for an answer nobody can act on.
+
+**Encirclement is not special-cased.** Supply floods outward from depots by Dijkstra and simply cannot enter cells the enemy dominates. A pocket whose every land route is enemy-held stops being reached, and its divisions starve. That *is* what a Kessel is, and getting it as a consequence rather than as a rule means it works for shapes nobody anticipated.
+
+**Supply is read from the slack left in the line, not from distance travelled.** While a route still has 150 km of reach in hand the formation at the end wants for nothing; below that it goes short, hitting zero at the limit. The obvious alternative — supply proportional to remaining range — taxes a division 70 km behind its own railhead at 18%, which is nonsense, and has to be normalised against some nominal range so scenarios with shorter depots could never reach full supply anywhere.
+
+**Supply lags.** A division carries days of stores, so being cut off is a strangulation rather than a switch — and a spearhead can outrun its trucks briefly and get away with it, which is the decision the whole campaign turns on.
+
+**Attrition is what makes encirclement lethal.** Combat cannot destroy a division (organisation breaks first), so starvation in a pocket is the only reliable way to remove one from the map — exactly how 1941 actually worked.
+
+### Hubs had to become capturable
+
+The first version had fixed depots, and measuring it exposed a fundamental error rather than a tuning problem. A general German advance on Barbarossa:
+
+| | day 0 | day 30 | day 60 | day 90 |
+|---|---|---|---|---|
+| avg. supply | 0.98 | 0.04 | 0.07 | 0.95 |
+| German divisions | 57 | 57 | **7** | **1** |
+
+The Wehrmacht destroyed itself in two months without the Red Army doing much of anything, because supply physically could not follow an advance past its start-line depots. Rail heads moved forward in 1941; they have to here. With capturable hubs:
+
+| | day 0 | day 30 | day 60 | day 75 |
+|---|---|---|---|---|
+| avg. supply | 0.98 | 0.48 | 0.60 | 0.60 |
+| German divisions | 57 | 57 | 46 | **44** |
+| advance | 23.7°E | 30.4°E | 35.4°E | **38.1°E** |
+
+with hubs falling as the front passes them — Lviv 24 Jun, Vilnius 26 Jun, Kyiv 6 Jul, Minsk 21 Jul, Smolensk 19 Aug. **This is the clearest case in the project of a measurement changing a design rather than confirming one.**
+
+### Cost
+
+The flood is the most expensive thing in the simulation: 5.7 ms per pass, amortised to **1.36 ms/tick** against 0.10 ms for everything else. It runs once a game-hour, not every tick — supply fronts move at the speed of armies. Reusing the scratch buffers instead of allocating per alliance per pass took it from 2.46 to 1.36 ms/tick; the same generation-buffer technique as the pathfinder, for the same reason. `RECOMPUTE_INTERVAL` is the knob if it ever needs to be cheaper.
+
+**Weather is derived from the date**, never stored — the same rule as the clock, so it cannot drift. Climate is per scenario, because October means opposite things in Smolensk and the Western Desert.
+
+---
+
 ## 8. Scenarios are data
 
 A scenario is one JSON file: projection, map bounds, terrain resolution, map layers, factions, stat templates and the order of battle. Adding *Case Blue* must mean writing JSON and **zero TypeScript** — that requirement is why the projection and the theatre bounds are scenario-declared rather than global constants.

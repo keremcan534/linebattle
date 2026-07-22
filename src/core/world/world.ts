@@ -3,11 +3,29 @@ import { Rng } from '@core/math/random';
 import { Pathfinder } from '@core/pathfinding/pathfinder';
 import type { TerrainGrid } from '@core/terrain/terrainGrid';
 import { GameClock } from '@core/time/gameClock';
+import { computeWeather, type Climate, type Weather } from '@core/weather/weather';
+import { SupplyField } from '@core/supply/supplyField';
 import type { Battle } from './battle';
 import type { Division } from './division';
 import type { Faction } from './faction';
 import type { BattleId, DivisionId, FactionId } from './ids';
 import { SpatialIndex } from './spatialIndex';
+
+/** A depot, railhead or port that supply flows out of. */
+export interface SupplySource {
+  name: string;
+  /**
+   * Who currently draws supply from it. MUTABLE for capturable hubs — an
+   * advancing army that takes a rail junction gets to use it, which is the
+   * only way an offensive can outrun its start line and survive.
+   */
+  alliance: string;
+  position: { x: number; y: number };
+  /** How far its reach extends across good ground, in km. */
+  rangeKm: number;
+  /** Can the other side take it? Home ports and rail heads usually cannot. */
+  capturable: boolean;
+}
 
 export interface WorldBounds {
   minX: number;
@@ -47,6 +65,14 @@ export class World {
   readonly index: SpatialIndex;
   readonly pathfinder: Pathfinder;
 
+  /** Null until a scenario declares supply sources. */
+  supply: SupplyField | null = null;
+  readonly supplySources: SupplySource[] = [];
+  climate: Climate = 'temperate';
+
+  /** Derived from the clock every tick — never stored, so it cannot drift. */
+  weather: Weather;
+
   constructor(
     readonly projection: Projection,
     readonly terrain: TerrainGrid,
@@ -60,6 +86,19 @@ export class World {
     // Bucket edge ~ twice the engagement range, so a contact query touches a
     // 3x3 neighbourhood at most.
     this.index = new SpatialIndex(25);
+    this.weather = computeWeather(this.clock.date, this.climate);
+  }
+
+  /** Distinct alliances present, sorted so iteration is deterministic. */
+  get alliances(): string[] {
+    return [...new Set([...this.factions.values()].map((f) => f.alliance))].sort();
+  }
+
+  enableSupply(sources: SupplySource[], climate: Climate): void {
+    this.supplySources.push(...sources);
+    this.climate = climate;
+    this.supply = new SupplyField(this.terrain);
+    this.weather = computeWeather(this.clock.date, climate);
   }
 
   /** The battle this division is committed to, if any. */

@@ -58,8 +58,11 @@ export class CombatSystem implements System {
     const unitsB = this.divisionsOf(world, sideB);
     if (!unitsA.length || !unitsB.length) return;
 
-    const powerA = this.sidePower(world, unitsA, unitsB, sideA);
-    const powerB = this.sidePower(world, unitsB, unitsA, sideB);
+    // Weather scales both sides equally: mud and frost do not take a side,
+    // they just make everything cost more and take longer.
+    const weather = world.weather.combat;
+    const powerA = this.sidePower(world, unitsA, unitsB, sideA) * weather;
+    const powerB = this.sidePower(world, unitsB, unitsA, sideB) * weather;
     sideA.power = powerA;
     sideB.power = powerB;
 

@@ -57,6 +57,7 @@ export class InputController {
     this.canvas = renderer.canvas;
     this.camera = renderer.camera;
     this.playerAlliance = engine.world.getFaction(playerFaction)?.alliance ?? '';
+    renderer.setSupplyAlliance(this.playerAlliance);
     this.attach();
     this.rafHandle = requestAnimationFrame(this.keyboardPanLoop);
   }
@@ -211,6 +212,9 @@ export class InputController {
         break;
       case 'KeyB':
         this.renderer.toggleBorders();
+        break;
+      case 'KeyM':
+        this.renderer.toggleSupplyOverlay();
         break;
       case 'Home':
         this.camera.fitToBounds();

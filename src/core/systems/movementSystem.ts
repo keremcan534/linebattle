@@ -42,7 +42,7 @@ export class MovementSystem implements System {
       const order = d.order;
       if (!order || order.cursor >= order.waypoints.length) continue;
 
-      let budgetKm = effectiveSpeedKmh(d) * hours;
+      let budgetKm = effectiveSpeedKmh(d, world.weather.movement) * hours;
       if (budgetKm <= 0) continue;
 
       while (budgetKm > 0 && order.cursor < order.waypoints.length) {

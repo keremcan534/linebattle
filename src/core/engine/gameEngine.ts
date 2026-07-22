@@ -1,12 +1,15 @@
 import { CommandQueue, type Command } from '@core/commands/commands';
 import { EventBus } from '@core/events/eventBus';
+import { AttritionSystem } from '@core/systems/attritionSystem';
 import { CombatSystem } from '@core/systems/combatSystem';
 import { ContactSystem } from '@core/systems/contactSystem';
 import { MovementSystem } from '@core/systems/movementSystem';
 import { OrderSystem } from '@core/systems/orderSystem';
 import { RecoverySystem } from '@core/systems/recoverySystem';
+import { SupplySystem } from '@core/systems/supplySystem';
 import type { System, TickContext } from '@core/systems/system';
 import { MINUTES_PER_TICK } from '@core/time/gameClock';
+import { computeWeather } from '@core/weather/weather';
 import type { World } from '@core/world/world';
 
 /**
@@ -53,6 +56,8 @@ export class GameEngine {
     for (const system of this.systems) system.update(ctx);
 
     this.world.clock.tick++;
+    // Derived, never stored — the same rule as the date itself.
+    this.world.weather = computeWeather(this.world.clock.date, this.world.climate);
     this.events.emit({ type: 'tick', tick: this.world.clock.tick });
   }
 
@@ -76,10 +81,11 @@ export class GameEngine {
 export function createDefaultSystems(queue: CommandQueue): System[] {
   return [
     new OrderSystem(queue),
-    // supply           <- Milestone 3
+    new SupplySystem(),
     new MovementSystem(),
     new ContactSystem(),
     new CombatSystem(),
+    new AttritionSystem(),
     new RecoverySystem(),
   ];
 }
