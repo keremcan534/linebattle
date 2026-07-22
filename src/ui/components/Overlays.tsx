@@ -44,6 +44,7 @@ const CONTROLS: [string, string][] = [
   ['Space', 'Pause'],
   ['1 – 5', 'Game speed'],
   ['H', 'Halt selected'],
+  ['B', 'Toggle 1941 borders'],
   ['Ctrl + A', 'Select all your divisions'],
   ['Home', 'Fit theatre'],
   ['Esc', 'Clear selection'],

@@ -3,6 +3,7 @@ import type { GameEngine } from '@core/engine/gameEngine';
 import type { MapData } from '@core/scenario/scenarioLoader';
 import type { ViewStore } from '@app/viewStore';
 import { Camera } from './camera';
+import { BorderLayer } from './layers/borderLayer';
 import { MapLayer } from './layers/mapLayer';
 import { OrderLayer } from './layers/orderLayer';
 import { UnitLayer } from './layers/unitLayer';
@@ -38,6 +39,7 @@ export class GameRenderer {
   readonly camera: Camera;
   private readonly worldRoot = new Container();
   private readonly mapLayer: MapLayer;
+  private readonly borderLayer: BorderLayer | null;
   private readonly unitLayer: UnitLayer;
   private readonly orderLayer: OrderLayer;
   private resizeObserver: ResizeObserver | null = null;
@@ -56,10 +58,15 @@ export class GameRenderer {
     this.camera = new Camera(world.bounds);
 
     this.mapLayer = new MapLayer(mapData, world.projection, world.bounds);
+    this.borderLayer = mapData.borders ? new BorderLayer(mapData.borders, world.projection) : null;
     this.orderLayer = new OrderLayer(world);
     this.unitLayer = new UnitLayer(world);
 
-    this.worldRoot.addChild(this.mapLayer.container, this.orderLayer.container, this.unitLayer.container);
+    // Draw order. Borders sit above the terrain but below anything the player
+    // manipulates, so a dashed frontier can never obscure a counter.
+    this.worldRoot.addChild(this.mapLayer.container);
+    if (this.borderLayer) this.worldRoot.addChild(this.borderLayer.container);
+    this.worldRoot.addChild(this.orderLayer.container, this.unitLayer.container);
     app.stage.addChild(this.worldRoot);
   }
 
@@ -95,6 +102,13 @@ export class GameRenderer {
     return this.app.canvas;
   }
 
+  /** Toggles the political overlay. Returns the new visibility. */
+  toggleBorders(): boolean {
+    if (!this.borderLayer) return false;
+    this.borderLayer.setVisible(!this.borderLayer.visible);
+    return this.borderLayer.visible;
+  }
+
   start(): void {
     if (this.running) return;
     this.running = true;
@@ -111,6 +125,7 @@ export class GameRenderer {
     this.stop();
     this.resizeObserver?.disconnect();
     this.mapLayer.destroy();
+    this.borderLayer?.destroy();
     this.unitLayer.destroy();
     this.orderLayer.destroy();
     this.app.destroy(true, { children: true });
@@ -137,6 +152,7 @@ export class GameRenderer {
     const zoom = this.camera.zoom;
     const alpha = this.engine.world.clock.subTickAlpha;
     this.mapLayer.update(zoom);
+    this.borderLayer?.update(zoom);
     this.orderLayer.update(zoom, this.store.selection, this.store.dragBox);
     this.unitLayer.update(zoom, alpha, this.store.selection, this.store.hovered);
 

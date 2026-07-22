@@ -59,3 +59,20 @@ export interface RiverProperties {
   name?: string;
   scalerank?: number;
 }
+
+/**
+ * Political boundary lines and country labels.
+ *
+ * Lives here rather than next to the renderer so that `core/` can type the
+ * loaded data without depending on `render/` — the dependency graph only ever
+ * points inwards.
+ */
+export interface BorderProperties {
+  kind?: 'border' | 'label';
+  name?: string;
+  /** Countries either side of the line, for future political logic. */
+  left?: string;
+  right?: string;
+  /** 1 = front-defining, 3 = background context. Drives level of detail. */
+  rank?: number;
+}

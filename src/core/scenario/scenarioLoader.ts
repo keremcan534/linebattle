@@ -1,4 +1,9 @@
-import type { CityProperties, FeatureCollection, RiverProperties } from '@core/geo/geojson';
+import type {
+  BorderProperties,
+  CityProperties,
+  FeatureCollection,
+  RiverProperties,
+} from '@core/geo/geojson';
 import { createProjection, type Projection } from '@core/geo/projection';
 import { buildTerrainGrid, type TerrainLayerSpec } from '@core/terrain/terrainBuilder';
 import { Terrain } from '@core/terrain/terrainTypes';
@@ -13,6 +18,7 @@ export interface MapData {
   lakes: FeatureCollection | null;
   rivers: FeatureCollection<RiverProperties> | null;
   cities: FeatureCollection<CityProperties> | null;
+  borders: FeatureCollection<BorderProperties> | null;
 }
 
 export interface LoadedScenario {
@@ -50,12 +56,13 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
 
   report('Loading map data', 0.1);
   const base = new URL(url, window.location.href);
-  const [land, lakes, rivers, cities, overlays] = await Promise.all([
+  const [land, lakes, rivers, cities, overlays, borders] = await Promise.all([
     fetchJson<FeatureCollection>(resolve(scenario.map.layers.land, base)),
     optionalJson<FeatureCollection>(scenario.map.layers.lakes, base),
     optionalJson<FeatureCollection<RiverProperties>>(scenario.map.layers.rivers, base),
     optionalJson<FeatureCollection<CityProperties>>(scenario.map.layers.cities, base),
     optionalJson<FeatureCollection<{ terrain?: string }>>(scenario.map.layers.overlays, base),
+    optionalJson<FeatureCollection<BorderProperties>>(scenario.map.layers.borders, base),
   ]);
 
   report('Projecting theatre', 0.35);
@@ -119,7 +126,7 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
   }
 
   report('Ready', 1);
-  return { scenario, world, mapData: { land, lakes, rivers, cities } };
+  return { scenario, world, mapData: { land, lakes, rivers, cities, borders } };
 }
 
 // --------------------------------------------------------------- internals --

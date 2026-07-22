@@ -48,6 +48,11 @@ export interface MapSpec {
     cities?: string;
     /** Features carrying a `terrain` property: forest, marsh, hills, mountains. */
     overlays?: string;
+    /**
+     * Political boundaries and country labels for the scenario's date.
+     * Purely cartographic — see BorderLayer. Borders never constrain movement.
+     */
+    borders?: string;
   };
 }
 

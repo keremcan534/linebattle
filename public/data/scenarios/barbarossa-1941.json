@@ -15,7 +15,8 @@
       "lakes": "../geo/lakes.geojson",
       "rivers": "../geo/rivers.geojson",
       "cities": "../geo/cities.geojson",
-      "overlays": "../geo/terrain-overlays.geojson"
+      "overlays": "../geo/terrain-overlays.geojson",
+      "borders": "../geo/borders-1941.geojson"
     }
   },
 

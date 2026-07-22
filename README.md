@@ -19,7 +19,8 @@ npm run dev
 | | |
 |---|---|
 | **Map** | Natural Earth vector coastlines, lakes, rivers and cities, Lambert Conformal Conic projection, ~150 KB of clipped data |
-| **Terrain** | 990 × 819 grid at 4 km/cell — water, plains, forest, marsh, hills, mountains, urban — rasterised from GeoJSON at load |
+| **Borders** | Hand-authored 22 June 1941 political boundaries and country labels — drawn, never enforced (toggle with `B`) |
+| **Terrain** | 996 × 825 grid at 4 km/cell — water, plains, forest, marsh, hills, mountains, urban — rasterised from GeoJSON at load |
 | **Camera** | Free pan and zoom, 0.02–4 px/km, level-of-detail city labels |
 | **Units** | 112 divisions, procedural APP-6 counters, strength and organisation bars |
 | **Movement** | Continuous, terrain-modified, coastline-aware, with waypoint queues |
@@ -60,6 +61,7 @@ npm run check # lint + typecheck + tests
 | Space | Pause |
 | 1 – 5 | Game speed |
 | H | Halt selected |
+| B | Toggle 1941 borders |
 | Ctrl + A | Select all your divisions |
 | Home | Fit theatre |
 | Esc | Clear selection |

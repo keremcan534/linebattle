@@ -22,6 +22,13 @@ export const theme = {
 
   terrainOverlayAlpha: 0.55,
 
+  border: {
+    major: 0xd6c08a,
+    minor: 0xa89a78,
+    casing: 0x0a0e14,
+    label: 0xcdbd93,
+  },
+
   city: {
     dot: 0xd9cfae,
     label: 0xcfc6a8,

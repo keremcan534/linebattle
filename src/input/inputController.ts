@@ -3,6 +3,7 @@ import type { Vec2 } from '@core/math/vec2';
 import type { DivisionId, FactionId } from '@core/world/ids';
 import type { ViewStore } from '@app/viewStore';
 import type { Camera } from '@render/camera';
+import type { GameRenderer } from '@render/gameRenderer';
 import { theme } from '@render/theme';
 import { MAX_SPEED } from '@core/time/gameClock';
 
@@ -35,13 +36,17 @@ export class InputController {
   private lastFrameTime = performance.now();
   private rafHandle = 0;
 
+  private readonly canvas: HTMLCanvasElement;
+  private readonly camera: Camera;
+
   constructor(
-    private readonly canvas: HTMLCanvasElement,
-    private readonly camera: Camera,
+    private readonly renderer: GameRenderer,
     private readonly engine: GameEngine,
     private readonly store: ViewStore,
     private readonly playerFaction: FactionId,
   ) {
+    this.canvas = renderer.canvas;
+    this.camera = renderer.camera;
     this.attach();
     this.rafHandle = requestAnimationFrame(this.keyboardPanLoop);
   }
@@ -193,6 +198,9 @@ export class InputController {
           e.preventDefault();
           this.selectAllOwnDivisions();
         }
+        break;
+      case 'KeyB':
+        this.renderer.toggleBorders();
         break;
       case 'Home':
         this.camera.fitToBounds();

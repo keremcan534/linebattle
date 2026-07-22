@@ -35,7 +35,8 @@ Load a different scenario by changing `SCENARIO_URL` in `src/app/App.tsx`.
     "lakes":    "../geo/lakes.geojson",
     "rivers":   "../geo/rivers.geojson",
     "cities":   "../geo/cities.geojson",
-    "overlays": "../geo/terrain-overlays.geojson"
+    "overlays": "../geo/terrain-overlays.geojson",
+    "borders":  "../geo/borders-1941.geojson"
   }
 }
 ```
@@ -112,6 +113,29 @@ const w = __game.engine.world;
 Accepted values: `forest`, `marsh`, `hills`, `mountains`, `urban`. Anything not covered is plains. Overlays are painted over land in a fixed class order, then lakes are painted last so an inland sea always wins.
 
 These polygons describe how ground **fights**, not how it looks — coarse is correct. Movement and defence modifiers per class live in `src/core/terrain/terrainTypes.ts`.
+
+## Borders
+
+`borders` is a GeoJSON `FeatureCollection` mixing boundary lines and country labels. **Borders are drawn, never enforced** — they carry no gameplay meaning and never block movement. Each scenario points at a file for *its own date*, which is why the political layer is scenario data rather than a global asset: a 1944 scenario ships `borders-1944.geojson` and nothing else changes.
+
+```jsonc
+// a boundary
+{ "type": "Feature",
+  "properties": { "kind": "border", "left": "Germany", "right": "Soviet Union",
+                  "name": "Molotov-Ribbentrop line", "rank": 1 },
+  "geometry": { "type": "LineString", "coordinates": [[22.95, 54.38], … ] } }
+
+// a country name
+{ "type": "Feature",
+  "properties": { "kind": "label", "name": "SOVIET UNION", "rank": 1 },
+  "geometry": { "type": "Point", "coordinates": [36.5, 54.5] } }
+```
+
+- **`rank`** drives level of detail: `1` front-defining (always drawn), `2` regional, `3` background context (hidden when zoomed out). Labels also scale their size and tracking by rank.
+- **`left`/`right`** name the countries either side. Unused today; there so political logic has somewhere to read from later.
+- The collection should carry a top-level `"asOf": "YYYY-MM-DD"` so the date a file represents is never ambiguous.
+
+**Authoring a new date:** no open dataset covers 1940–41 (`historical-basemaps` has 1938 and 1945, both wrong for Barbarossa, and is GPL-3.0), so these are hand-drawn to ~10–25 km. When adding a file, add assertions to `src/core/geo/borders.test.ts` for a few facts you are sure of — a city that must sit on the line, two cities that must end up on opposite sides. That catches the mistyped digit that hand-drawing always eventually produces.
 
 ## Regenerating map data
 

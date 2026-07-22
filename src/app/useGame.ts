@@ -63,13 +63,7 @@ export function useGame(scenarioUrl: string, hostRef: React.RefObject<HTMLDivEle
           return;
         }
 
-        input = new InputController(
-          renderer.canvas,
-          renderer.camera,
-          engine,
-          store,
-          factionId(scenario.playerFaction),
-        );
+        input = new InputController(renderer, engine, store, factionId(scenario.playerFaction));
 
         session = { engine, renderer, store, scenarioName: scenario.name };
         sessionRef.current = session;

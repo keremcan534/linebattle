@@ -34,6 +34,7 @@ Each milestone is a **playable build**, not a layer of plumbing. If a milestone 
 - [x] Determinism tests: same stream → same hash; batch-size independence; seed divergence; order insensitivity
 - [x] Projection standard parallels re-tuned by measurement (1.24% → 0.55% error where the fighting is)
 - [x] Fixed a movement livelock: divisions ordered across water ground against the shore forever
+- [x] Political layer: hand-authored 22 June 1941 borders and country labels, dashed rendering, `B` to toggle — drawn but never enforced, so the map stays province-free
 
 ---
 

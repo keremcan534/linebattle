@@ -96,6 +96,12 @@ World space is kilometres with **y increasing southwards**, matching screen conv
 
 **Rejected:** raster tile maps (Leaflet/MapLibre). They need network or a tile server, cannot be restyled to a 1941 staff map, and — decisively — a tile is a *picture*. Vector geometry doubles as gameplay data: the polygon that draws the coast defines where units cannot walk.
 
+**Borders are cartography, not rules.** `BorderLayer` draws the political boundaries of 22 June 1941 and country names. Nothing in `core/` knows they exist: movement stays continuous, and a division crossing the Bug notices only the river. This is the distinction the project depends on — a border you can *see* is orientation, a border that *stops you* is a province system, and we are explicitly not building one. When territory ownership starts to matter (supply sources, victory conditions) it will be polygon data in the scenario, and it still will not constrain movement.
+
+The lines are hand-authored, because **no open dataset covers 1940–41**: `historical-basemaps` ships 1938 (pre-Munich — Czechoslovakia intact, Poland independent, the Baltics free) and 1945 (post-war), both wrong for this scenario, and is GPL-3.0. Modern Natural Earth borders would draw a Ukraine and a Lithuania that did not exist as states. Accuracy is roughly 10–25 km and `borders.test.ts` checks the things hand-drawing gets wrong — vertices outside the theatre, implausible hops, and specific historical facts (Brest on the demarcation line, Warsaw German and Białystok Soviet, Vyborg beyond the 1940 Finnish border, Cluj Hungarian and Turda Romanian).
+
+Pixi has no dashed strokes, so `BorderLayer` emits dashes itself with phase carried across vertices. A solid line reads as a river or a road; the dash is what makes it read as political.
+
 **Terrain.** Rasterised at load into a `Uint8Array` at 4 km/cell (990 × 819) by painting GeoJSON into an offscreen 2D canvas, one solid grey per terrain class, then reading the pixels back. Sampling terrain becomes an O(1) array index rather than O(edges) point-in-polygon — and movement samples terrain for every division, every tick.
 
 This is the one place `core/` touches a browser API. It is load-time asset preparation, not simulation, and it is isolated in `terrainBuilder.ts`; the `TerrainGrid` it produces is pure data that a test can construct by hand.
