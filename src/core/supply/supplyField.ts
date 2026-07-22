@@ -34,15 +34,76 @@ export class SupplyField {
   /** Terrain cost multiplier per cell, precomputed: 0 means impassable. */
   readonly throughput: Float32Array;
 
+  /**
+   * Who holds each cell: 0 = nobody, else 1 + index into {@link controlAlliances}.
+   *
+   * This is the political map — the coloured wash whose moving boundary IS the
+   * front line, exactly as in the map animations this game imitates. It
+   * replaced the hand-drawn border lines as the primary political read: those
+   * were approximations of June 1941 that could only ever be wrong somewhere,
+   * while control is *computed from where the armies actually are*, so it can
+   * never disagree with the game state it describes. Cells keep their owner
+   * until taken, which is what makes gains stick and the front trail the
+   * armies.
+   */
+  readonly control: Uint8Array;
+  readonly controlAlliances: readonly string[];
+
   constructor(
     private readonly terrain: TerrainGrid,
+    alliances: readonly string[],
     readonly cellSize = 16,
   ) {
     this.width = Math.ceil(terrain.worldWidth / cellSize);
     this.height = Math.ceil(terrain.worldHeight / cellSize);
     this.origin = terrain.origin;
     this.throughput = new Float32Array(this.width * this.height);
+    this.control = new Uint8Array(this.width * this.height);
+    this.controlAlliances = [...alliances].sort();
     this.bakeThroughput();
+  }
+
+  allianceIndex(alliance: string): number {
+    return this.controlAlliances.indexOf(alliance);
+  }
+
+  /**
+   * Seeds initial ownership by nearest-presence Voronoi over the starting
+   * divisions and depots, capped so land far from anybody stays neutral.
+   *
+   * Approximate by construction — a cell 200 km behind the Soviet border is
+   * assigned Soviet because Soviet formations are the nearest thing to it, not
+   * because anyone surveyed a treaty line. That is the right trade: it is
+   * roughly right everywhere, it needs no hand-drawn data, and every error
+   * self-corrects the moment an army actually walks there.
+   */
+  initControl(seeds: readonly { x: number; y: number; alliance: string }[], maxRangeKm = 350): void {
+    const indexed = seeds
+      .map((s) => ({ x: s.x, y: s.y, idx: this.allianceIndex(s.alliance) }))
+      .filter((s) => s.idx >= 0);
+    const max2 = maxRangeKm * maxRangeKm;
+
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        const i = y * this.width + x;
+        if (this.throughput[i]! <= 0) continue;
+        const cx = this.origin.x + (x + 0.5) * this.cellSize;
+        const cy = this.origin.y + (y + 0.5) * this.cellSize;
+
+        let best = -1;
+        let bestD = max2;
+        for (const s of indexed) {
+          const dx = s.x - cx;
+          const dy = s.y - cy;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < bestD) {
+            bestD = d2;
+            best = s.idx;
+          }
+        }
+        if (best >= 0) this.control[i] = best + 1;
+      }
+    }
   }
 
   /**
@@ -53,19 +114,30 @@ export class SupplyField {
    * between a road net and a track.
    */
   private bakeThroughput(): void {
-    const ratio = Math.max(1, Math.round(this.cellSize / this.terrain.cellSize));
+    // Overlap is computed in WORLD coordinates, not by an integer cell ratio.
+    // The first version did `fx = x * round(cellSize / terrainCellSize) + sx`,
+    // which is only correct when the supply cell is an exact multiple of the
+    // terrain cell. At 16 km over 10 km terrain the sampling grid drifted 25%
+    // per cell and ran off the map entirely in the east — a third of the
+    // theatre silently baked as "impassable to supply". The shipped scenarios
+    // (4 km and 2 km terrain under 16 km supply) happened to divide evenly,
+    // which is exactly how this kind of bug survives: the alignment was an
+    // accident, not a contract.
+    const tcs = this.terrain.cellSize;
 
     for (let y = 0; y < this.height; y++) {
+      const fy0 = Math.max(0, Math.floor((y * this.cellSize) / tcs));
+      const fy1 = Math.min(this.terrain.height, Math.ceil(((y + 1) * this.cellSize) / tcs));
+
       for (let x = 0; x < this.width; x++) {
+        const fx0 = Math.max(0, Math.floor((x * this.cellSize) / tcs));
+        const fx1 = Math.min(this.terrain.width, Math.ceil(((x + 1) * this.cellSize) / tcs));
+
         let land = 0;
         let total = 0;
         let sum = 0;
-
-        for (let sy = 0; sy < ratio; sy++) {
-          for (let sx = 0; sx < ratio; sx++) {
-            const fx = x * ratio + sx;
-            const fy = y * ratio + sy;
-            if (fx >= this.terrain.width || fy >= this.terrain.height) continue;
+        for (let fy = fy0; fy < fy1; fy++) {
+          for (let fx = fx0; fx < fx1; fx++) {
             const t = this.terrain.cells[fy * this.terrain.width + fx] as Terrain;
             const profile: TerrainProfile = TERRAIN_PROFILES[t];
             total++;

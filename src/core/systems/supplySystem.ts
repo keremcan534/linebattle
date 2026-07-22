@@ -75,6 +75,7 @@ export class SupplySystem implements System {
       this.computePresence(world, world.supply);
       this.resolveCaptures(world, world.supply, ctx);
       this.floodSupply(world, world.supply);
+      this.updateControl(world.supply);
     }
 
     this.applyToDivisions(ctx);
@@ -254,6 +255,63 @@ export class SupplySystem implements System {
   private scratchHeap(size: number): MaxHeap {
     if (!this.heap || this.heap.capacity < size) this.heap = new MaxHeap(size);
     return this.heap;
+  }
+
+  // -------------------------------------------------------------- control --
+
+  /**
+   * Advances the political map.
+   *
+   * Two ways to take a cell, both deliberate:
+   *  - **Domination**: your troops clearly outweigh everyone else's there.
+   *    This is the front itself changing hands.
+   *  - **Logistics sweep**: nobody stands there, but exactly one side's supply
+   *    reaches it. This is what paints the ground *behind* an advance, so the
+   *    map fills in like the historical animations instead of leaving 44 km
+   *    ribbons where columns happened to drive. It also gets pockets right
+   *    for free: supply cannot enter a pocket, so a Kessel keeps its
+   *    defender's colour until it actually dies.
+   *
+   * Anything else keeps its owner — territory does not flip because a patrol
+   * drove past.
+   */
+  private updateControl(field: SupplyField): void {
+    const alliances = field.controlAlliances;
+    const presences = alliances.map((a) => field.presenceFor(a));
+    const supplies = alliances.map((a) => field.fieldFor(a));
+    const size = field.width * field.height;
+
+    for (let i = 0; i < size; i++) {
+      if (field.throughput[i]! <= 0) continue;
+
+      let best = -1;
+      let bestP = 0;
+      let second = 0;
+      for (let k = 0; k < alliances.length; k++) {
+        const p = presences[k]![i]!;
+        if (p > bestP) {
+          second = bestP;
+          bestP = p;
+          best = k;
+        } else if (p > second) {
+          second = p;
+        }
+      }
+
+      if (bestP > 0.15 && bestP > second * INTERDICTION_RATIO + 0.08) {
+        field.control[i] = best + 1;
+      } else if (bestP < 0.02) {
+        let owner = -1;
+        let reached = 0;
+        for (let k = 0; k < alliances.length; k++) {
+          if (supplies[k]![i]! > 0.05) {
+            owner = k;
+            reached++;
+          }
+        }
+        if (reached === 1) field.control[i] = owner + 1;
+      }
+    }
   }
 
   // ------------------------------------------------------------ divisions --

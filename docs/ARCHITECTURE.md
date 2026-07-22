@@ -228,6 +228,20 @@ The flood is the most expensive thing in the simulation: 5.7 ms per pass, amorti
 
 ---
 
+## 7e. The enemy plays, pursuit kills, and the map is painted
+
+Three changes driven directly by the first real playtest ("the enemy retreats in slow motion and we drive over them; there is no front line; the borders are wrong").
+
+**The AI is just another command producer.** `AiSystem` pushes into the same queue the player uses — the payoff of the Milestone 1 command-pattern decision, collected on schedule. It never touches a division directly, consumes no randomness, and visits divisions in sorted order, so it is a pure deterministic function of world state and replays don't even need to record it. Doctrine is minimal and defensive: stand when engaged (dropping any move order, because a side with orders counts as *attacking* and forfeits the terrain bonus), block approaching enemies at a standoff, counterattack only from clear local superiority, and hold quiet sectors. A claim limit stops defenders dogpiling one spearhead — which is what makes a *front* emerge instead of a scrum.
+
+**Exclusion from battle must not mean immunity.** Retreating divisions are excluded from battles by design, but the first version made that literal invulnerability: you could drive a panzer division through a routing enemy and neither noticed. Now a router caught within 10 km of a formed enemy takes one-sided overrun losses. Pursuit is where beaten armies actually died, and now it is worth doing. Rout speed also stopped double-taxing the stance — a fleeing mob is not slow, it is incoherent, and the organisation factor already models that.
+
+**The political map is computed, not drawn.** Control of each 16 km cell seeds from a nearest-presence Voronoi over starting units and depots, then updates two ways: *domination* (your troops clearly outweigh everyone else's there) and the *logistics sweep* (nobody stands there and exactly one side's supply reaches it — which paints the ground behind an advance and, for free, keeps pockets their defender's colour until they die). The tinted wash is HOI4-style; the boundary between tints IS the front line, and it can never disagree with the game state, which hand-authored border lines by construction could — and did. The hand-drawn 1941 treaty lines survive as an optional overlay (`B`), clearly labelled approximate, hidden by default.
+
+A latent bug surfaced here: supply throughput sampled terrain by integer cell ratio, correct only when the supply cell divides evenly by the terrain cell. The shipped scenarios divided evenly *by accident*; the 10 km test world did not, and a third of its map baked as impassable to supply. Overlap is now computed in world coordinates.
+
+---
+
 ## 8. Scenarios are data
 
 A scenario is one JSON file: projection, map bounds, terrain resolution, map layers, factions, stat templates and the order of battle. Adding *Case Blue* must mean writing JSON and **zero TypeScript** — that requirement is why the projection and the theatre bounds are scenario-declared rather than global constants.

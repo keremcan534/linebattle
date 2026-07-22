@@ -93,13 +93,27 @@ Fixed capacity was the interesting failure: it starved 56 of 57 German divisions
 
 ---
 
-## Milestone 4 — Command, AI and persistence
+## ✅ Milestone 3.5 — The enemy fights back
+
+**Shipped**, pulled forward from Milestone 4 after the first real playtest.
+
+- [x] Enemy AI as a pure command producer: blocks, stands, counterattacks from superiority, spreads across threats
+- [x] Overrun: a caught router takes one-sided losses — retreat is no longer immunity, pursuit is worth doing
+- [x] Computed political control map, HOI4-style tinted wash; its boundary IS the front line (`P` to toggle)
+- [x] Hand-drawn treaty borders demoted to an optional, clearly-approximate overlay, hidden by default
+- [x] Fixed supply-grid misalignment when cell sizes don't divide evenly
+
+Measured on Barbarossa with the AI playing the Soviets: 37 divisions moving to block on day one, 74 battles and 19 divisions destroyed over 45 days (pursuit and pockets kill; frontal battle still cannot), frontier length growing 407 → 1286 cells as the line bends east. Deterministic, 1.55 ms/tick.
+
+---
+
+## Milestone 4 — Command and persistence
 
 **Goal: play a campaign, not a skirmish.**
 
 - [ ] Formation hierarchy: division → corps → army → army group
-- [ ] Orders issued to a whole formation; front assignment
-- [ ] Operational AI for the opposing side (a command producer, nothing more)
+- [ ] Orders issued to a whole formation; front assignment — the "draw the plan, the divisions execute it" layer
+- [ ] AI offensives with objectives (the current AI only defends)
 - [ ] Save / load — the World is already one serialisable object
 - [ ] Replay playback from the command stream
 - [ ] Victory conditions and objectives in scenario JSON

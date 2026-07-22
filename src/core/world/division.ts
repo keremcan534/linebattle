@@ -128,7 +128,10 @@ export function effectiveSpeedKmh(d: Division, weatherMovement = 1): number {
   const supplyFactor = 0.35 + 0.65 * d.supply;
   const orgFactor = 0.5 + 0.5 * organisationRatio(d);
   // A broken formation still moves — that is the whole point of retreating —
-  // but it does so as a mob, not a division.
-  const stanceFactor = d.stance === 'move' ? 1 : d.stance === 'retreat' ? 0.75 : 0;
+  // and men in flight are not slow. What a rout lacks is cohesion, and the
+  // organisation factor above already collapses for a broken division; taxing
+  // the stance as well made routers so slow that pursuers drove straight over
+  // them, which read as "the enemy retreats in slow motion".
+  const stanceFactor = d.stance === 'move' ? 1 : d.stance === 'retreat' ? 0.9 : 0;
   return d.speedKmh * supplyFactor * orgFactor * stanceFactor * weatherMovement;
 }

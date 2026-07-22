@@ -32,14 +32,16 @@ npm run dev
 | **Movement** | Continuous, terrain-modified, with A* pathfinding around obstacles and waypoint queues |
 | **Combat** | Automatic on contact — organisation-based, terrain and supply driven, retreat and pursuit, combat bubbles |
 | **Supply** | Depots and capturable rail hubs, terrain-weighted propagation, encirclement as a consequence rather than a rule, supply map mode |
+| **Enemy AI** | A command producer like the player: blocks, defends, counterattacks — a front line emerges |
+| **Political map** | Computed control wash, HOI4-style; the colour boundary is the front line |
 | **Weather** | Rasputitsa, deep winter and desert summer, derived from the date and the scenario's climate |
 | **Simulation** | Fixed 15-minute tick, deterministic, decoupled from frame rate |
 | **Randomness** | Seeded, saveable RNG; `Math.random` banned in `core/` at lint level |
 | **Scenarios** | Pure JSON — order of battle, stats, projection and map layers are all data |
-| **Tests** | 139 tests in plain Node, no DOM — determinism, combat fairness, pathfinding, projection, scenarios |
+| **Tests** | 150 tests in plain Node, no DOM — determinism, combat fairness, pathfinding, projection, scenarios |
 
 ```bash
-npm test      # 139 tests
+npm test      # 150 tests
 npm run check # lint + typecheck + tests
 ```
 
@@ -74,8 +76,9 @@ npm run check # lint + typecheck + tests
 | Space | Pause |
 | 1 – 5 | Game speed |
 | H | Halt selected |
-| B | Toggle period borders |
+| P | Political map / front line |
 | M | Supply map mode |
+| B | Period borders (approximate, off by default) |
 | Ctrl + A | Select all your divisions |
 | Home | Fit theatre |
 | Esc | Clear selection |

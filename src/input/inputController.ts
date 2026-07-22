@@ -216,6 +216,9 @@ export class InputController {
       case 'KeyM':
         this.renderer.toggleSupplyOverlay();
         break;
+      case 'KeyP':
+        this.renderer.toggleControlOverlay();
+        break;
       case 'Home':
         this.camera.fitToBounds();
         break;

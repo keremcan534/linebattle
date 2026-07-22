@@ -55,9 +55,13 @@ export function useGame(scenarioUrl: string | null, hostRef: React.RefObject<HTM
 
         const store = storeRef.current;
         store.attach(world);
-        store.playerAlliance = world.getFaction(factionId(scenario.playerFaction))?.alliance ?? '';
+        const playerAlliance = world.getFaction(factionId(scenario.playerFaction))?.alliance ?? '';
+        store.playerAlliance = playerAlliance;
 
-        const engine = new GameEngine(world);
+        // Every alliance the player does not command is played by the AI.
+        const engine = new GameEngine(world, {
+          aiAlliances: world.alliances.filter((a) => a !== playerAlliance),
+        });
         const renderer = await GameRenderer.create(host, engine, mapData, store);
         if (cancelled) {
           renderer.destroy();

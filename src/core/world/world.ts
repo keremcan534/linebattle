@@ -97,8 +97,19 @@ export class World {
   enableSupply(sources: SupplySource[], climate: Climate): void {
     this.supplySources.push(...sources);
     this.climate = climate;
-    this.supply = new SupplyField(this.terrain);
+    this.supply = new SupplyField(this.terrain, this.alliances);
     this.weather = computeWeather(this.clock.date, climate);
+
+    // Initial political control, seeded from wherever anyone actually is.
+    // Divisions must therefore be added before supply is enabled — the loader
+    // guarantees that order.
+    const seeds: { x: number; y: number; alliance: string }[] = [];
+    for (const d of this.divisions.values()) {
+      const alliance = this.getFaction(d.faction)?.alliance;
+      if (alliance) seeds.push({ x: d.position.x, y: d.position.y, alliance });
+    }
+    for (const s of sources) seeds.push({ x: s.position.x, y: s.position.y, alliance: s.alliance });
+    this.supply.initControl(seeds);
   }
 
   /** The battle this division is committed to, if any. */

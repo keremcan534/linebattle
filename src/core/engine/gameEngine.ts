@@ -1,5 +1,6 @@
 import { CommandQueue, type Command } from '@core/commands/commands';
 import { EventBus } from '@core/events/eventBus';
+import { AiSystem } from '@core/systems/aiSystem';
 import { AttritionSystem } from '@core/systems/attritionSystem';
 import { CombatSystem } from '@core/systems/combatSystem';
 import { ContactSystem } from '@core/systems/contactSystem';
@@ -20,13 +21,20 @@ import type { World } from '@core/world/world';
  * clock in the application. Two independent loops is how you get a game that
  * stutters differently on every machine.
  */
+export interface EngineOptions {
+  /** Override the system list entirely (tests). */
+  systems?: System[];
+  /** Alliances the computer plays. Empty = every division is the player's. */
+  aiAlliances?: readonly string[];
+}
+
 export class GameEngine {
   readonly events = new EventBus();
   readonly commands = new CommandQueue();
   private readonly systems: System[];
 
-  constructor(readonly world: World, systems?: System[]) {
-    this.systems = systems ?? createDefaultSystems(this.commands);
+  constructor(readonly world: World, options: EngineOptions = {}) {
+    this.systems = options.systems ?? createDefaultSystems(this.commands, options.aiAlliances ?? []);
   }
 
   /** Convenience so callers never touch the queue directly. */
@@ -78,8 +86,11 @@ export class GameEngine {
  * it. Recovery runs last so that organisation spent in a battle cannot be
  * refunded in the tick it was lost.
  */
-export function createDefaultSystems(queue: CommandQueue): System[] {
+export function createDefaultSystems(queue: CommandQueue, aiAlliances: readonly string[] = []): System[] {
   return [
+    // The AI runs first so its commands join the player's in the same drain:
+    // both are just command producers, and OrderSystem cannot tell them apart.
+    new AiSystem(queue, new Set(aiAlliances)),
     new OrderSystem(queue),
     new SupplySystem(),
     new MovementSystem(),

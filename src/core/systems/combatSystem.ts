@@ -35,7 +35,14 @@ const VARIANCE = 0.12;
 /** Below this average organisation, a side breaks off. */
 const BREAK_THRESHOLD = 0.16;
 /** How far a broken formation falls back, in km. */
-const RETREAT_DISTANCE_KM = 30;
+const RETREAT_DISTANCE_KM = 40;
+
+/** A pursuer this close to a router is overrunning it. */
+const OVERRUN_RANGE_KM = 10;
+/** Manpower a router loses per pursuer in range, per hour, as fraction of max. */
+const OVERRUN_MANPOWER_PER_HOUR = 0.02;
+/** More than this many pursuers adds nothing — the roads are already cut. */
+const OVERRUN_MAX_PURSUERS = 4;
 /** Attacking across a major river is expensive. */
 const RIVER_CROSSING_PENALTY = 0.65;
 
@@ -47,6 +54,49 @@ export class CombatSystem implements System {
 
     for (const battle of ctx.world.battles.values()) {
       this.resolve(battle, hours, ctx);
+    }
+
+    this.resolveOverruns(ctx, hours);
+  }
+
+  /**
+   * Pursuit. A retreating division is excluded from battles by design — but
+   * the first version made that an *immunity*: you could drive a panzer
+   * division clean through a routing enemy and neither side noticed, which
+   * read on screen as "we pass over them". Exclusion from battle must not
+   * mean exclusion from harm.
+   *
+   * So a router caught within {@link OVERRUN_RANGE_KM} of a formed enemy
+   * takes one-sided losses, scaling with how many pursuers are on top of it.
+   * This is where pockets become massacres and why pursuit is worth doing:
+   * catching a broken enemy destroys it far faster than fighting it ever did.
+   * Historically most of a beaten army's losses happened exactly here.
+   */
+  private resolveOverruns(ctx: TickContext, hours: number): void {
+    const { world, events } = ctx;
+
+    for (const d of [...world.divisions.values()]) {
+      if (d.stance !== 'retreat') continue;
+
+      const pursuers = world
+        .divisionsNear(d.position.x, d.position.y, OVERRUN_RANGE_KM)
+        .filter((o) => o.stance !== 'retreat' && world.hostile(d.faction, o.faction));
+      if (!pursuers.length) continue;
+
+      const pressure = Math.min(OVERRUN_MAX_PURSUERS, pursuers.length);
+      const roll = world.rng.variance(VARIANCE);
+
+      d.manpower = Math.max(
+        0,
+        d.manpower - d.maxManpower * OVERRUN_MANPOWER_PER_HOUR * pressure * roll * hours,
+      );
+      d.organisation = Math.max(0, d.organisation - d.maxOrganisation * 0.04 * pressure * hours);
+      d.morale = Math.max(0, d.morale - 0.03 * pressure * hours);
+
+      if (d.manpower <= d.maxManpower * 0.08) {
+        world.divisions.delete(d.id);
+        events.emit({ type: 'divisionDestroyed', division: d.id, position: { ...d.position } });
+      }
     }
   }
 
