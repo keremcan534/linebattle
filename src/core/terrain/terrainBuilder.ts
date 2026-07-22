@@ -12,10 +12,14 @@ import { TerrainGrid } from './terrainGrid';
  * already a heavily optimised polygon rasteriser — hand-rolling scanline fill
  * would be several hundred lines of code that the platform gives us for free.
  *
- * Encoding trick: each terrain class is painted as the solid colour
- * `rgb(id*20, id*20, id*20)`. Reading back, `round(red / 20)` recovers the
- * class and antialiased edge pixels round to one of the two neighbouring
- * classes rather than to garbage.
+ * Each layer is rasterised as its OWN white-on-black mask and thresholded at
+ * 50% coverage. The obvious alternative — painting every class into one buffer
+ * as a distinct grey and decoding by value — is broken by antialiasing: the
+ * canvas blends along polygon edges, and a blend between two classes that are
+ * far apart numerically lands on whatever class happens to sit between them.
+ * With bocage (8) meeting sea (0) along the Normandy coast that produced a
+ * fringe of hills and desert on the invasion beaches. Masks make every edge
+ * pixel a clean choice between the two classes that actually meet there.
  */
 
 export interface TerrainLayerSpec {
@@ -36,29 +40,33 @@ export interface BuildTerrainOptions {
   rivers?: FeatureCollection<RiverProperties>;
 }
 
-const CLASS_STEP = 20;
+/** Coverage above which a cell is considered to belong to the layer. */
+const COVERAGE_THRESHOLD = 128;
 
 export function buildTerrainGrid(opts: BuildTerrainOptions): TerrainGrid {
   const width = Math.ceil(opts.worldWidth / opts.cellSize);
   const height = Math.ceil(opts.worldHeight / opts.cellSize);
 
-  const cells = decodeTerrainRaster(
-    rasterise(width, height, opts, (ctx, toPx) => {
-      // Everything is sea until proven otherwise.
-      ctx.fillStyle = classColor(Terrain.Water);
+  // Everything is sea until a layer claims it.
+  const cells = new Uint8Array(width * height).fill(Terrain.Water);
+
+  for (const layer of opts.layers) {
+    const mask = rasterise(width, height, opts, (ctx, toPx) => {
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, width, height);
-      for (const layer of opts.layers) {
-        ctx.fillStyle = classColor(layer.terrain);
-        for (const f of layer.data.features) {
-          // Filled per feature so that even-odd winding resolves holes
-          // (lakes inside a landmass) without features cancelling each other.
-          ctx.beginPath();
-          fillGeometry(ctx, f.geometry, toPx);
-          ctx.fill('evenodd');
-        }
+      ctx.fillStyle = '#fff';
+      for (const f of layer.data.features) {
+        // Filled per feature so even-odd winding resolves holes (a lake inside
+        // a landmass) without separate features cancelling each other out.
+        ctx.beginPath();
+        fillGeometry(ctx, f.geometry, toPx);
+        ctx.fill('evenodd');
       }
-    }),
-  );
+    });
+    for (let i = 0; i < cells.length; i++) {
+      if (mask[i]! >= COVERAGE_THRESHOLD) cells[i] = layer.terrain;
+    }
+  }
 
   const rivers = opts.rivers
     ? rasterise(width, height, opts, (ctx, toPx) => {
@@ -109,17 +117,6 @@ function rasterise(
   const out = new Uint8Array(width * height);
   for (let i = 0; i < out.length; i++) out[i] = data[i * 4]!;
   return out;
-}
-
-const classColor = (t: Terrain): string => {
-  const v = t * CLASS_STEP;
-  return `rgb(${v},${v},${v})`;
-};
-
-/** Decodes a raw raster of `id*20` greys into terrain classes, in place. */
-export function decodeTerrainRaster(raw: Uint8Array): Uint8Array {
-  for (let i = 0; i < raw.length; i++) raw[i] = Math.round(raw[i]! / CLASS_STEP);
-  return raw;
 }
 
 function tracePolygon(ctx: CanvasRenderingContext2D, rings: Position[][], toPx: ToPixel): void {

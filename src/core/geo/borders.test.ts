@@ -13,7 +13,10 @@ import type { BorderProperties, FeatureCollection, Position } from './geojson';
  */
 
 const data: FeatureCollection<BorderProperties> = JSON.parse(
-  readFileSync(new URL('../../../public/data/geo/borders-1941.geojson', import.meta.url), 'utf8'),
+  readFileSync(
+    new URL('../../../public/data/geo/eastern-front/borders-1941.geojson', import.meta.url),
+    'utf8',
+  ),
 );
 
 const THEATRE = { minLon: 6, minLat: 38, maxLon: 51, maxLat: 68 };

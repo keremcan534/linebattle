@@ -38,6 +38,23 @@ Each milestone is a **playable build**, not a layer of plumbing. If a milestone 
 
 ---
 
+## ✅ Milestone 1.6 — Multiple theatres
+
+**Shipped.** Proof that the scenario format carries its weight: two new campaigns, no engine changes.
+
+- [x] `prepare-map-data.mjs` takes a theatre list; each gets its own bbox, source resolution and output directory
+- [x] Three theatres — Eastern Front (1:50m, 4 km), Normandy (1:10m, 2 km), Mediterranean (1:50m, 4 km), 275 KB total
+- [x] **Operation Overlord**, 6 June 1944 — 36 divisions, five beaches, three airborne
+- [x] **Second El Alamein**, 23 October 1942 — 28 divisions between the sea and the Qattara Depression
+- [x] `Desert` and `Bocage` terrain classes (bocage measured at 10.7 km/day against 35.6 in the open)
+- [x] Scenario picker driven by `scenarios/index.json`
+- [x] Player commands their alliance, not their nationality
+- [x] Fixed terrain rasteriser antialiasing that fringed the invasion beaches with phantom classes
+- [x] Loader snaps and warns about divisions deployed on impassable ground
+- [x] 41 static scenario tests — dangling references, out-of-bounds deployment, projection sanity, unused templates
+
+---
+
 ## Milestone 2 — Contact and combat
 
 **Goal: the front line becomes a real thing.** Two divisions that meet fight, and the loser gives ground.

@@ -1,0 +1,27 @@
+{
+  "type": "FeatureCollection",
+  "note": "Political geography of the Normandy theatre on 6 June 1944. Occupied France has no meaningful internal border with the Reich's administration, so the useful lines here are the pre-war national frontiers plus labels for the sea areas and provinces the campaign is fought over. HAND-AUTHORED AND APPROXIMATE.",
+  "asOf": "1944-06-06",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "kind": "border", "left": "France", "right": "Belgium", "name": "Franco-Belgian frontier", "rank": 2 },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[2.55, 51.10], [3.20, 50.75], [3.70, 50.50], [4.20, 50.28], [4.85, 49.95], [5.50, 49.55]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "kind": "label", "name": "ENGLAND", "rank": 1 }, "geometry": { "type": "Point", "coordinates": [-1.60, 51.60] }
+    },
+    { "type": "Feature", "properties": { "kind": "label", "name": "FRANCE", "rank": 1 }, "geometry": { "type": "Point", "coordinates": [1.90, 47.90] } },
+    { "type": "Feature", "properties": { "kind": "label", "name": "ENGLISH CHANNEL", "rank": 1 }, "geometry": { "type": "Point", "coordinates": [-1.90, 50.15] } },
+    { "type": "Feature", "properties": { "kind": "label", "name": "BAY OF BISCAY", "rank": 2 }, "geometry": { "type": "Point", "coordinates": [-4.20, 47.20] } },
+    { "type": "Feature", "properties": { "kind": "label", "name": "NORTH SEA", "rank": 2 }, "geometry": { "type": "Point", "coordinates": [2.60, 52.60] } },
+    { "type": "Feature", "properties": { "kind": "label", "name": "NORMANDY", "rank": 2 }, "geometry": { "type": "Point", "coordinates": [-0.30, 48.85] } },
+    { "type": "Feature", "properties": { "kind": "label", "name": "BRITTANY", "rank": 2 }, "geometry": { "type": "Point", "coordinates": [-3.00, 48.20] } },
+    { "type": "Feature", "properties": { "kind": "label", "name": "COTENTIN", "rank": 3 }, "geometry": { "type": "Point", "coordinates": [-1.48, 49.45] } },
+    { "type": "Feature", "properties": { "kind": "label", "name": "BELGIUM", "rank": 3 }, "geometry": { "type": "Point", "coordinates": [4.60, 50.75] } }
+  ]
+}

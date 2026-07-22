@@ -26,7 +26,7 @@ export type LoadState =
  * dependency graph a tree rather than a knot: React → hook → {core, render,
  * input}, and never render → React or core → anything.
  */
-export function useGame(scenarioUrl: string, hostRef: React.RefObject<HTMLDivElement>) {
+export function useGame(scenarioUrl: string | null, hostRef: React.RefObject<HTMLDivElement>) {
   const [loadState, setLoadState] = useState<LoadState>({
     status: 'loading',
     stage: 'Starting',
@@ -37,7 +37,7 @@ export function useGame(scenarioUrl: string, hostRef: React.RefObject<HTMLDivEle
 
   useEffect(() => {
     const host = hostRef.current;
-    if (!host) return;
+    if (!host || !scenarioUrl) return;
 
     // React 18 StrictMode mounts effects twice in development. `cancelled`
     // makes the discarded first run tear itself down instead of leaving a

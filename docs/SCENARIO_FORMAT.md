@@ -1,8 +1,25 @@
 # Scenario format (v1)
 
-A scenario is a single JSON file in `public/data/scenarios/`. It declares the map, the sides and the order of battle. **Adding a campaign requires no TypeScript.**
+A scenario is a single JSON file in `public/data/scenarios/`. It declares the map, the sides and the order of battle. **Adding a campaign requires no TypeScript** — Overlord and El Alamein were added with zero engine changes.
 
-Load a different scenario by changing `SCENARIO_URL` in `src/app/App.tsx`.
+To make a scenario appear in the campaign picker, add an entry to `public/data/scenarios/index.json`.
+
+## Theatres
+
+A **theatre** is the map data a scenario draws on: a bounding box and a source resolution, clipped offline into `public/data/geo/<theatre>/`. Declared in `scripts/prepare-map-data.mjs`:
+
+| theatre | bbox | source | notes |
+|---|---|---|---|
+| `eastern-front` | 5,36 → 53,68 | 1:50m | 3000 km of front; 4 km cells |
+| `normandy` | −6.5,46.8 → 5.5,53.2 | 1:10m | the campaign is an argument about one coastline |
+| `mediterranean` | −7,27 → 37,47 | 1:50m | Morocco to Egypt, Alps to Sahara |
+
+```bash
+npm run data:prepare               # all theatres
+npm run data:prepare -- normandy   # just one
+```
+
+Add a theatre by appending to `THEATRES`, then point a scenario's `map.layers` at the new directory. Pick `10m` only when the extra fidelity matters — it is a 40 MB download against 2 MB, though the clipped output is small either way.
 
 ## Skeleton
 
@@ -110,7 +127,11 @@ const w = __game.engine.world;
   "geometry": { "type": "Polygon", "coordinates": [ … ] } }
 ```
 
-Accepted values: `forest`, `marsh`, `hills`, `mountains`, `urban`. Anything not covered is plains. Overlays are painted over land in a fixed class order, then lakes are painted last so an inland sea always wins.
+Accepted values, **in paint order** (later wins where polygons overlap):
+
+`desert` → `plains` → `forest` → `bocage` → `hills` → `mountains` → `marsh` → `urban`
+
+Anything not covered by an overlay is plains, and lakes are painted after everything so an inland sea always wins. The order encodes real decisions: `plains` sits over `desert` so the Via Balbia coastal strip reads as the supply corridor it was; `marsh` beats `bocage` so the flooded Marais du Cotentin wins over the hedgerows; `urban` is last because a city sits on whatever it was built on.
 
 These polygons describe how ground **fights**, not how it looks — coarse is correct. Movement and defence modifiers per class live in `src/core/terrain/terrainTypes.ts`.
 

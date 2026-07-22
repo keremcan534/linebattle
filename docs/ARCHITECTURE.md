@@ -140,6 +140,23 @@ React must **never re-render on a game frame**. Reconciling a tree 60×/second w
 
 ---
 
+## 7a. Theatres
+
+A **theatre** is the unit of map data: a bounding box, a source resolution and a directory under `public/data/geo/`. A scenario names one and declares its own projection over it.
+
+There is deliberately no single world map. The Eastern Front spans 3000 km and is well served by 1:50m data at 4 km cells; Normandy is 400 km across and lives or dies on exactly where the coastline is, so it uses 1:10m at 2 km. One global map would be too coarse for one and too heavy for the other, and no single set of standard parallels serves both 30°N and 66°N.
+
+`scripts/prepare-map-data.mjs` takes a theatre list and clips each independently (`npm run data:prepare -- normandy` for one). Three theatres total 275 KB.
+
+Adding the second and third theatres cost **no engine changes**, which was the point — but it did surface two assumptions the Eastern Front had hidden:
+
+- **The player commands a coalition, not a nationality.** Playing Germany, "same faction" and "same alliance" are the same set. Overlord is US + UK + Canada landing side by side, and Eighth Army is Australian, New Zealand, South African and Indian. Selection and orders now filter by alliance.
+- **Terrain classes were Europe-shaped.** North Africa without desert and Normandy without bocage are not simplifications, they are wrong maps. Both were appended to the enum (never renumbered — the values are persisted) with no other code touched.
+
+Adding bocage also exposed a latent bug in the terrain rasteriser. It had encoded each class as a distinct grey and decoded by value, so antialiasing along a polygon edge blended between classes that were far apart numerically — and bocage (8) meeting sea (0) put a fringe of hills and desert on the invasion beaches. Each layer is now rasterised as its own mask and thresholded at 50% coverage, so every edge pixel is a clean choice between the two classes that actually meet there.
+
+---
+
 ## 8. Scenarios are data
 
 A scenario is one JSON file: projection, map bounds, terrain resolution, map layers, factions, stat templates and the order of battle. Adding *Case Blue* must mean writing JSON and **zero TypeScript** — that requirement is why the projection and the theatre bounds are scenario-declared rather than global constants.

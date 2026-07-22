@@ -11,12 +11,12 @@
     "bounds": { "minLon": 6, "minLat": 38, "maxLon": 51, "maxLat": 66 },
     "terrainCellSizeKm": 4,
     "layers": {
-      "land": "../geo/land.geojson",
-      "lakes": "../geo/lakes.geojson",
-      "rivers": "../geo/rivers.geojson",
-      "cities": "../geo/cities.geojson",
-      "overlays": "../geo/terrain-overlays.geojson",
-      "borders": "../geo/borders-1941.geojson"
+      "land": "../geo/eastern-front/land.geojson",
+      "lakes": "../geo/eastern-front/lakes.geojson",
+      "rivers": "../geo/eastern-front/rivers.geojson",
+      "cities": "../geo/eastern-front/cities.geojson",
+      "overlays": "../geo/eastern-front/terrain-overlays.geojson",
+      "borders": "../geo/eastern-front/borders-1941.geojson"
     }
   },
 

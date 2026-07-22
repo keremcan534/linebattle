@@ -1,0 +1,102 @@
+{
+  "type": "FeatureCollection",
+  "note": "Operational terrain for the Normandy theatre. HAND-AUTHORED AND APPROXIMATE. The bocage extent is the important one: the hedgerow country of the Cotentin and the Bessin is what turned a 3-week timetable into a 7-week grind, and it must be terrain the player feels, not scenery.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "terrain": "bocage", "name": "Bocage du Cotentin" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-1.85, 49.05], [-1.30, 49.05], [-1.05, 49.30], [-1.10, 49.55], [-1.40, 49.68], [-1.72, 49.60], [-1.90, 49.35], [-1.85, 49.05]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "bocage", "name": "Bocage du Bessin" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-1.35, 48.85], [-0.60, 48.90], [-0.35, 49.10], [-0.45, 49.28], [-0.95, 49.32], [-1.30, 49.20], [-1.40, 49.00], [-1.35, 48.85]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "bocage", "name": "Bocage Virois and Suisse Normande" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-1.20, 48.55], [-0.45, 48.55], [-0.20, 48.80], [-0.40, 48.98], [-0.95, 48.95], [-1.25, 48.78], [-1.20, 48.55]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "bocage", "name": "Bocage Breton" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-3.60, 48.05], [-2.20, 48.05], [-1.70, 48.35], [-2.00, 48.62], [-3.20, 48.60], [-3.80, 48.40], [-3.60, 48.05]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "marsh", "name": "Marais du Cotentin - Douve and Merderet" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-1.42, 49.22], [-1.18, 49.24], [-1.08, 49.42], [-1.22, 49.50], [-1.40, 49.42], [-1.42, 49.22]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "marsh", "name": "Dives valley" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-0.15, 49.10], [0.05, 49.12], [0.10, 49.28], [-0.05, 49.30], [-0.18, 49.22], [-0.15, 49.10]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "forest", "name": "Foret de Cerisy" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-0.98, 49.10], [-0.80, 49.10], [-0.78, 49.22], [-0.96, 49.22], [-0.98, 49.10]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "forest", "name": "Foret d'Ecouves and Perche" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-0.35, 48.35], [0.45, 48.35], [0.60, 48.60], [0.10, 48.72], [-0.40, 48.60], [-0.35, 48.35]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "hills", "name": "Mont Pincon and the Normandy ridges" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-0.85, 48.90], [-0.45, 48.92], [-0.38, 49.05], [-0.70, 49.08], [-0.88, 49.00], [-0.85, 48.90]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "urban", "name": "Greater London" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-0.50, 51.30], [0.28, 51.30], [0.30, 51.66], [-0.52, 51.68], [-0.50, 51.30]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "urban", "name": "Paris" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[2.20, 48.78], [2.52, 48.78], [2.54, 48.96], [2.22, 48.96], [2.20, 48.78]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "urban", "name": "Le Havre - Rouen" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[0.06, 49.44], [0.22, 49.44], [0.24, 49.56], [0.06, 49.56], [0.06, 49.44]]]
+      }
+    }
+  ]
+}

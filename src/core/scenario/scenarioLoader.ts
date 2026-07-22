@@ -31,13 +31,29 @@ export interface LoadProgress {
   (stage: string, fraction: number): void;
 }
 
-const TERRAIN_BY_NAME: Record<string, Terrain> = {
-  forest: Terrain.Forest,
-  marsh: Terrain.Marsh,
-  hills: Terrain.Hills,
-  mountains: Terrain.Mountains,
-  urban: Terrain.Urban,
-};
+/**
+ * Overlay classes in PAINT ORDER — later entries win where polygons overlap.
+ *
+ * The order encodes real decisions, so it is an explicit list rather than an
+ * object whose iteration order is incidental:
+ *  - `desert` is a continental base coat; `plains` is painted over it for the
+ *    Via Balbia coastal strip, which is the only ground an army can be
+ *    supplied along in the Western Desert.
+ *  - `marsh` beats `bocage` and the uplands, because flooded ground is flooded
+ *    whatever the hedgerows are doing — the Marais du Cotentin over the
+ *    Norman bocage.
+ *  - `urban` is last: a city sits on top of whatever it was built on.
+ */
+const OVERLAY_PAINT_ORDER: readonly (readonly [string, Terrain])[] = [
+  ['desert', Terrain.Desert],
+  ['plains', Terrain.Plains],
+  ['forest', Terrain.Forest],
+  ['bocage', Terrain.Bocage],
+  ['hills', Terrain.Hills],
+  ['mountains', Terrain.Mountains],
+  ['marsh', Terrain.Marsh],
+  ['urban', Terrain.Urban],
+];
 
 /**
  * Loads a scenario file and everything it references into a ready World.
@@ -75,7 +91,7 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
   // Overlays are grouped by terrain class so each class is painted as one
   // layer, preserving a deterministic paint order regardless of file order.
   if (overlays) {
-    for (const [name, terrain] of Object.entries(TERRAIN_BY_NAME)) {
+    for (const [name, terrain] of OVERLAY_PAINT_ORDER) {
       const features = overlays.features.filter((f) => f.properties.terrain === name);
       if (features.length) {
         layers.push({ data: { type: 'FeatureCollection', features }, terrain });
@@ -124,6 +140,8 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
     }
     world.addDivision(instantiate(spec, template, projection));
   }
+
+  reportDeployment(world);
 
   report('Ready', 1);
   return { scenario, world, mapData: { land, lakes, rivers, cities, borders } };
@@ -202,6 +220,49 @@ function computeWorldBounds(
   }
 
   return { minX, minY, maxX, maxY };
+}
+
+/**
+ * Rescues divisions authored onto impassable ground, loudly.
+ *
+ * Coordinates are written by hand against a coastline the author cannot see,
+ * and at 2-4 km cells a beach landing is easily a cell offshore. A division
+ * that starts in water is not merely misplaced — it can never move, because
+ * water is impassable, so the symptom is one silent unit that ignores every
+ * order for the rest of the campaign.
+ *
+ * Snapping keeps the scenario playable; the warning keeps the mistake visible.
+ * Failing the load outright would be worse: one stray coordinate should not
+ * cost the player the whole campaign.
+ */
+function reportDeployment(world: World): void {
+  const moved: string[] = [];
+  const lost: string[] = [];
+
+  for (const d of world.divisions.values()) {
+    if (world.terrain.isPassableAt(d.position)) continue;
+    const snapped = world.terrain.nearestPassable(d.position, 150);
+    if (!snapped) {
+      lost.push(d.name);
+      continue;
+    }
+    const km = Math.hypot(snapped.x - d.position.x, snapped.y - d.position.y);
+    const { lon, lat } = world.projection.unproject(snapped);
+    d.position = snapped;
+    d.prevPosition = { ...snapped };
+    moved.push(`${d.id} (${d.name}) — ${km.toFixed(0)} km, try lon ${lon.toFixed(3)} lat ${lat.toFixed(3)}`);
+  }
+
+  if (moved.length) {
+    console.warn(
+      `Scenario deploys ${moved.length} division(s) on impassable terrain; moved to the nearest passable ground:\n  ${moved.join('\n  ')}`,
+    );
+  }
+  if (lost.length) {
+    console.error(
+      `Scenario deploys ${lost.length} division(s) with no passable ground within 150 km: ${lost.join(', ')}`,
+    );
+  }
 }
 
 function validate(s: ScenarioFile): void {

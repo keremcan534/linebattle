@@ -1,10 +1,9 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { SelectionPanel } from '@ui/components/SelectionPanel';
 import { TopBar } from '@ui/components/TopBar';
 import { ControlsHint, LoadingOverlay } from '@ui/components/Overlays';
+import { ScenarioPicker, type ScenarioEntry } from '@ui/components/ScenarioPicker';
 import { useGame, useViewSnapshot } from './useGame';
-
-const SCENARIO_URL = '/data/scenarios/barbarossa-1941.json';
 
 /**
  * The application shell.
@@ -16,7 +15,10 @@ const SCENARIO_URL = '/data/scenarios/barbarossa-1941.json';
  */
 export function App() {
   const hostRef = useRef<HTMLDivElement>(null);
-  const { loadState, sessionRef, store } = useGame(SCENARIO_URL, hostRef);
+  const [scenario, setScenario] = useState<ScenarioEntry | null>(null);
+  const scenarioUrl = scenario ? `/data/scenarios/${scenario.file}` : null;
+
+  const { loadState, sessionRef, store } = useGame(scenarioUrl, hostRef);
   const snapshot = useViewSnapshot(store);
 
   const setSpeed = useCallback(
@@ -42,15 +44,19 @@ export function App() {
     session.engine.issue({ type: 'stop', divisions: [...snapshot.selection] });
   }, [sessionRef, snapshot.selection]);
 
+  if (!scenario) return <ScenarioPicker onPick={setScenario} />;
+
   return (
     <div className="app">
-      <div className="app__map" ref={hostRef} />
+      {/* Keyed on the scenario so switching campaigns tears the canvas host
+          down entirely rather than trying to reuse a WebGL context. */}
+      <div className="app__map" key={scenario.id} ref={hostRef} />
 
       {loadState.status === 'ready' && (
         <>
           <TopBar
             snapshot={snapshot}
-            scenarioName={sessionRef.current?.scenarioName ?? ''}
+            scenarioName={sessionRef.current?.scenarioName ?? scenario.name}
             onSetSpeed={setSpeed}
             onTogglePause={togglePause}
           />

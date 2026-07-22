@@ -1,0 +1,94 @@
+{
+  "type": "FeatureCollection",
+  "note": "Operational terrain for the Mediterranean theatre. HAND-AUTHORED AND APPROXIMATE. The desert belt is painted first and the coastal strip over it: the Via Balbia corridor between the sea and the sand sea is the only ground an army can be supplied along, and that fact IS the Western Desert campaign.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "terrain": "desert", "name": "Sahara and Libyan Desert" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-7.0, 27.0], [37.0, 27.0], [37.0, 31.6], [33.0, 31.0], [28.0, 30.6], [24.0, 31.2], [20.0, 30.5], [17.0, 31.0], [13.0, 32.2], [10.0, 33.2], [6.0, 34.5], [2.0, 34.8], [-2.0, 34.0], [-7.0, 32.0], [-7.0, 27.0]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "plains", "name": "Via Balbia coastal strip" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[15.2, 32.4], [19.0, 30.2], [20.6, 31.6], [23.0, 32.2], [25.2, 31.6], [28.0, 30.9], [31.0, 31.0], [31.6, 31.6], [28.2, 31.4], [24.8, 32.1], [22.2, 32.9], [19.6, 32.4], [17.0, 31.4], [15.0, 32.9], [15.2, 32.4]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "hills", "name": "Jebel Akhdar" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[20.3, 32.2], [22.4, 32.3], [22.6, 32.8], [21.0, 32.9], [20.2, 32.6], [20.3, 32.2]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "marsh", "name": "Qattara Depression" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[26.4, 29.2], [29.2, 29.4], [29.4, 30.2], [28.4, 30.4], [26.8, 30.0], [26.4, 29.2]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "mountains", "name": "Atlas Mountains" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-6.0, 31.4], [-3.0, 32.0], [0.5, 34.0], [4.0, 35.4], [7.5, 35.6], [8.4, 36.4], [4.5, 36.6], [0.0, 35.6], [-4.0, 33.6], [-6.5, 32.4], [-6.0, 31.4]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "mountains", "name": "Apennines" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[7.6, 44.1], [11.0, 43.8], [13.6, 42.4], [16.0, 40.2], [16.6, 39.0], [15.8, 39.2], [14.2, 41.0], [12.0, 43.0], [9.4, 44.2], [7.6, 44.1]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "mountains", "name": "Alps" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[6.0, 44.6], [9.5, 45.9], [13.0, 46.6], [14.5, 46.5], [13.0, 47.0], [9.0, 47.0], [6.2, 46.2], [6.0, 44.6]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "mountains", "name": "Pindus and Balkan ranges" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[19.6, 39.4], [22.0, 39.6], [23.4, 41.2], [22.4, 42.4], [20.4, 42.2], [19.4, 41.0], [19.6, 39.4]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "hills", "name": "Sicily interior" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[13.0, 37.4], [14.8, 37.3], [15.0, 38.0], [13.4, 38.0], [13.0, 37.4]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "urban", "name": "Alexandria" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[29.78, 31.12], [30.02, 31.12], [30.02, 31.28], [29.78, 31.28], [29.78, 31.12]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "terrain": "urban", "name": "Cairo" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[31.14, 29.95], [31.40, 29.95], [31.40, 30.15], [31.14, 30.15], [31.14, 29.95]]]
+      }
+    }
+  ]
+}

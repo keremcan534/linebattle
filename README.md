@@ -4,7 +4,13 @@ A browser-based **real-time operational strategy game** on a continuous real-wor
 
 No provinces. No tiles. A division holds a position in kilometres and marches across real terrain.
 
-**Milestone 1 is playable now:** the Eastern Front in June 1941, 112 divisions, click to select, right-click to march.
+**Playable now — three campaigns, three theatres:**
+
+| Campaign | Date | Theatre | Divisions |
+|---|---|---|---|
+| Operation Barbarossa | 22 Jun 1941 | Eastern Front | 112 |
+| Second Battle of El Alamein | 23 Oct 1942 | Western Desert | 28 |
+| Operation Overlord | 6 Jun 1944 | Normandy | 36 |
 
 ```bash
 npm install
@@ -18,7 +24,8 @@ npm run dev
 
 | | |
 |---|---|
-| **Map** | Natural Earth vector coastlines, lakes, rivers and cities, Lambert Conformal Conic projection, ~150 KB of clipped data |
+| **Map** | Natural Earth vector coastlines, lakes, rivers and cities. Each theatre is clipped offline and gets its own projection and source resolution — 1:50m at 4 km cells for a 3000 km front, 1:10m at 2 km for Normandy, where the whole scenario is an argument about one coastline |
+| **Terrain classes** | Water, plains, forest, marsh, hills, mountains, urban, desert, bocage |
 | **Borders** | Hand-authored 22 June 1941 political boundaries and country labels — drawn, never enforced (toggle with `B`) |
 | **Terrain** | 996 × 825 grid at 4 km/cell — water, plains, forest, marsh, hills, mountains, urban — rasterised from GeoJSON at load |
 | **Camera** | Free pan and zoom, 0.02–4 px/km, level-of-detail city labels |
@@ -45,6 +52,8 @@ npm run check # lint + typecheck + tests
 | Projection round-trip | exact to **1e-9°** |
 | Operational distance error | **< 0.55%** vs. haversine |
 | Determinism | identical world hash across runs, seeds, and batch sizes |
+| Bocage vs open ground | **10.7 vs 35.6 km/day** — the hedgerows are terrain you feel |
+| Scenario load | 36–67 ms including terrain rasterisation |
 
 ## Controls
 

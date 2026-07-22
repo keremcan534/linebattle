@@ -38,15 +38,25 @@ export class InputController {
 
   private readonly canvas: HTMLCanvasElement;
   private readonly camera: Camera;
+  /**
+   * The player commands their whole coalition, not one nationality.
+   *
+   * Barbarossa hid this: playing Germany, filtering by faction and filtering
+   * by alliance give the same answer. Overlord does not — a US player must be
+   * able to order the British and Canadian divisions landing beside them, and
+   * an Eighth Army player commands Australians, New Zealanders and Indians.
+   */
+  private readonly playerAlliance: string;
 
   constructor(
     private readonly renderer: GameRenderer,
     private readonly engine: GameEngine,
     private readonly store: ViewStore,
-    private readonly playerFaction: FactionId,
+    playerFaction: FactionId,
   ) {
     this.canvas = renderer.canvas;
     this.camera = renderer.camera;
+    this.playerAlliance = engine.world.getFaction(playerFaction)?.alliance ?? '';
     this.attach();
     this.rafHandle = requestAnimationFrame(this.keyboardPanLoop);
   }
@@ -248,6 +258,11 @@ export class InputController {
 
   // ------------------------------------------------------------ selection --
 
+  /** Does the player command this faction's troops? */
+  private commands(faction: FactionId): boolean {
+    return this.engine.world.getFaction(faction)?.alliance === this.playerAlliance;
+  }
+
   /**
    * Screen-space rectangle hit test against every counter.
    *
@@ -293,7 +308,7 @@ export class InputController {
     for (const d of this.engine.world.divisions.values()) {
       // Box-select only ever grabs your own troops — dragging over the front
       // and picking up enemy divisions would be nothing but a nuisance.
-      if (d.faction !== this.playerFaction) continue;
+      if (!this.commands(d.faction)) continue;
       const { x, y } = d.position;
       if (x >= minX && x <= maxX && y >= minY && y <= maxY) hits.push(d.id);
     }
@@ -306,7 +321,7 @@ export class InputController {
   private selectAllOwnDivisions(): void {
     const ids: DivisionId[] = [];
     for (const d of this.engine.world.divisions.values()) {
-      if (d.faction === this.playerFaction) ids.push(d.id);
+      if (this.commands(d.faction)) ids.push(d.id);
     }
     this.store.setSelection(ids);
   }
@@ -314,9 +329,10 @@ export class InputController {
   // --------------------------------------------------------------- orders --
 
   private issueMoveOrder(screen: Vec2, append: boolean): void {
-    const ordered = [...this.store.selection].filter(
-      (id) => this.engine.world.getDivision(id)?.faction === this.playerFaction,
-    );
+    const ordered = [...this.store.selection].filter((id) => {
+      const d = this.engine.world.getDivision(id);
+      return !!d && this.commands(d.faction);
+    });
     if (!ordered.length) return;
 
     const destination = this.camera.screenToWorld(screen.x, screen.y);

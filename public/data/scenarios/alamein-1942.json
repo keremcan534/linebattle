@@ -1,0 +1,109 @@
+{
+  "formatVersion": 1,
+  "id": "alamein-1942",
+  "name": "Second Battle of El Alamein",
+  "description": "21:40, 23 October 1942. A forty-mile front between the sea and the Qattara Depression — the one stretch of Egypt that cannot be outflanked. Eighth Army has to go straight through.",
+  "startDate": "1942-10-23T21:40:00Z",
+  "playerFaction": "uk",
+
+  "map": {
+    "projection": { "type": "lcc", "lon0": 15, "lat0": 37, "lat1": 30, "lat2": 43 },
+    "bounds": { "minLon": -6.5, "minLat": 27.5, "maxLon": 36.5, "maxLat": 46.5 },
+    "terrainCellSizeKm": 4,
+    "layers": {
+      "land": "../geo/mediterranean/land.geojson",
+      "lakes": "../geo/mediterranean/lakes.geojson",
+      "rivers": "../geo/mediterranean/rivers.geojson",
+      "cities": "../geo/mediterranean/cities.geojson",
+      "overlays": "../geo/mediterranean/terrain-overlays.geojson"
+    }
+  },
+
+  "factions": [
+    { "id": "uk", "name": "Commonwealth", "alliance": "allies", "color": "#4a5f7a", "accentColor": "#eaf0f6" },
+    { "id": "germany", "name": "Germany", "alliance": "axis", "color": "#5c6b7a", "accentColor": "#e8eef4" },
+    { "id": "italy", "name": "Italy", "alliance": "axis", "color": "#6f7a52", "accentColor": "#f2f4e8" }
+  ],
+
+  "templates": {
+    "commonwealth-infantry": {
+      "branch": "infantry", "maxManpower": 17500, "maxOrganisation": 52, "speedKmh": 1.4,
+      "softAttack": 30, "hardAttack": 12, "defence": 34, "hardness": 0.06,
+      "experience": 0.5, "morale": 0.85, "supply": 0.95
+    },
+    "commonwealth-armoured": {
+      "branch": "armoured", "maxManpower": 13000, "maxOrganisation": 54, "speedKmh": 3.1,
+      "softAttack": 40, "hardAttack": 38, "defence": 30, "hardness": 0.6,
+      "experience": 0.45, "morale": 0.82, "supply": 0.95
+    },
+    "commonwealth-motorised": {
+      "branch": "motorised", "maxManpower": 12000, "maxOrganisation": 50, "speedKmh": 2.9,
+      "softAttack": 28, "hardAttack": 14, "defence": 28, "hardness": 0.12,
+      "experience": 0.5, "morale": 0.85, "supply": 0.95
+    },
+    "afrika-panzer": {
+      "branch": "armoured", "maxManpower": 12500, "maxOrganisation": 52, "speedKmh": 3.0,
+      "softAttack": 42, "hardAttack": 44, "defence": 34, "hardness": 0.62,
+      "experience": 0.7, "morale": 0.85, "supply": 0.35
+    },
+    "afrika-light": {
+      "branch": "motorised", "maxManpower": 10000, "maxOrganisation": 48, "speedKmh": 2.8,
+      "softAttack": 30, "hardAttack": 18, "defence": 30, "hardness": 0.15,
+      "experience": 0.65, "morale": 0.82, "supply": 0.35
+    },
+    "afrika-fallschirm": {
+      "branch": "airborne", "maxManpower": 5000, "maxOrganisation": 50, "speedKmh": 1.3,
+      "softAttack": 22, "hardAttack": 8, "defence": 36, "hardness": 0.02,
+      "experience": 0.7, "morale": 0.9, "supply": 0.35
+    },
+    "italian-infantry": {
+      "branch": "infantry", "maxManpower": 13000, "maxOrganisation": 34, "speedKmh": 1.2,
+      "softAttack": 18, "hardAttack": 5, "defence": 24, "hardness": 0.03,
+      "experience": 0.35, "morale": 0.6, "supply": 0.3
+    },
+    "italian-armoured": {
+      "branch": "armoured", "maxManpower": 8600, "maxOrganisation": 40, "speedKmh": 2.7,
+      "softAttack": 26, "hardAttack": 20, "defence": 22, "hardness": 0.5,
+      "experience": 0.5, "morale": 0.75, "supply": 0.3
+    },
+    "italian-airborne": {
+      "branch": "airborne", "maxManpower": 5000, "maxOrganisation": 46, "speedKmh": 1.3,
+      "softAttack": 20, "hardAttack": 5, "defence": 32, "hardness": 0.02,
+      "experience": 0.6, "morale": 0.85, "supply": 0.3
+    }
+  },
+
+  "divisions": [
+    { "id": "uk-9aus", "template": "commonwealth-infantry", "faction": "uk", "name": "9th Australian Division", "shortName": "9.Aus", "formation": "XXX Corps", "lon": 28.985, "lat": 30.870 },
+    { "id": "uk-51hd", "template": "commonwealth-infantry", "faction": "uk", "name": "51st (Highland) Division", "shortName": "51.HD", "formation": "XXX Corps", "lon": 28.90, "lat": 30.83 },
+    { "id": "uk-2nz", "template": "commonwealth-infantry", "faction": "uk", "name": "2nd New Zealand Division", "shortName": "2.NZ", "formation": "XXX Corps", "lon": 28.83, "lat": 30.75 },
+    { "id": "uk-1sa", "template": "commonwealth-infantry", "faction": "uk", "name": "1st South African Division", "shortName": "1.SA", "formation": "XXX Corps", "lon": 28.76, "lat": 30.67 },
+    { "id": "uk-4ind", "template": "commonwealth-infantry", "faction": "uk", "name": "4th Indian Division", "shortName": "4.Ind", "formation": "XXX Corps", "lon": 28.70, "lat": 30.58 },
+    { "id": "uk-1ad", "template": "commonwealth-armoured", "faction": "uk", "name": "1st Armoured Division", "shortName": "1.AD", "formation": "X Corps", "lon": 29.140, "lat": 30.845 },
+    { "id": "uk-10ad", "template": "commonwealth-armoured", "faction": "uk", "name": "10th Armoured Division", "shortName": "10.AD", "formation": "X Corps", "lon": 29.18, "lat": 30.78 },
+    { "id": "uk-8ad", "template": "commonwealth-armoured", "faction": "uk", "name": "8th Armoured Division", "shortName": "8.AD", "formation": "X Corps", "lon": 29.26, "lat": 30.70 },
+    { "id": "uk-7ad", "template": "commonwealth-armoured", "faction": "uk", "name": "7th Armoured Division", "shortName": "7.AD", "formation": "XIII Corps", "lon": 28.72, "lat": 30.40 },
+    { "id": "uk-44id", "template": "commonwealth-infantry", "faction": "uk", "name": "44th (Home Counties) Division", "shortName": "44.ID", "formation": "XIII Corps", "lon": 28.66, "lat": 30.48 },
+    { "id": "uk-50id", "template": "commonwealth-infantry", "faction": "uk", "name": "50th (Northumbrian) Division", "shortName": "50.ID", "formation": "XIII Corps", "lon": 28.62, "lat": 30.33 },
+    { "id": "uk-1gb", "template": "commonwealth-motorised", "faction": "uk", "name": "1st Greek Brigade", "shortName": "1.Gk", "formation": "XXX Corps", "lon": 29.05, "lat": 30.98, "strength": 0.4 },
+    { "id": "uk-1ff", "template": "commonwealth-motorised", "faction": "uk", "name": "1st Free French Brigade", "shortName": "1.FF", "formation": "XIII Corps", "lon": 28.58, "lat": 30.26, "strength": 0.4 },
+
+    { "id": "ger-15pz", "template": "afrika-panzer", "faction": "germany", "name": "15. Panzer-Division", "shortName": "15.Pz", "formation": "Deutsches Afrikakorps", "lon": 29.012, "lat": 30.825, "strength": 0.45, "organisation": 0.7 },
+    { "id": "ger-21pz", "template": "afrika-panzer", "faction": "germany", "name": "21. Panzer-Division", "shortName": "21.Pz", "formation": "Deutsches Afrikakorps", "lon": 28.86, "lat": 30.48, "strength": 0.45, "organisation": 0.7 },
+    { "id": "ger-90le", "template": "afrika-light", "faction": "germany", "name": "90. leichte Afrika-Division", "shortName": "90.le", "formation": "Panzerarmee Afrika", "lon": 29.10, "lat": 30.96, "strength": 0.6 },
+    { "id": "ger-164le", "template": "afrika-light", "faction": "germany", "name": "164. leichte Afrika-Division", "shortName": "164.le", "formation": "Panzerarmee Afrika", "lon": 28.935, "lat": 30.860, "strength": 0.7 },
+    { "id": "ger-ramcke", "template": "afrika-fallschirm", "faction": "germany", "name": "Fallschirmjäger-Brigade Ramcke", "shortName": "Ramcke", "formation": "Panzerarmee Afrika", "lon": 28.66, "lat": 30.38 },
+
+    { "id": "ita-ariete", "template": "italian-armoured", "faction": "italy", "name": "132ª Divisione corazzata Ariete", "shortName": "Ariete", "formation": "XX Corpo d'Armata", "lon": 28.78, "lat": 30.42, "strength": 0.6 },
+    { "id": "ita-littorio", "template": "italian-armoured", "faction": "italy", "name": "133ª Divisione corazzata Littorio", "shortName": "Littorio", "formation": "XX Corpo d'Armata", "lon": 28.98, "lat": 30.80, "strength": 0.55 },
+    { "id": "ita-trieste", "template": "italian-armoured", "faction": "italy", "name": "101ª Divisione motorizzata Trieste", "shortName": "Trieste", "formation": "XX Corpo d'Armata", "lon": 29.20, "lat": 30.62, "strength": 0.6 },
+    { "id": "ita-trento", "template": "italian-infantry", "faction": "italy", "name": "102ª Divisione Trento", "shortName": "Trento", "formation": "XXI Corpo d'Armata", "lon": 28.90, "lat": 30.86, "strength": 0.65 },
+    { "id": "ita-bologna", "template": "italian-infantry", "faction": "italy", "name": "25ª Divisione Bologna", "shortName": "Bologna", "formation": "XXI Corpo d'Armata", "lon": 28.80, "lat": 30.66, "strength": 0.65 },
+    { "id": "ita-brescia", "template": "italian-infantry", "faction": "italy", "name": "27ª Divisione Brescia", "shortName": "Brescia", "formation": "X Corpo d'Armata", "lon": 28.72, "lat": 30.52, "strength": 0.6 },
+    { "id": "ita-folgore", "template": "italian-airborne", "faction": "italy", "name": "185ª Divisione paracadutisti Folgore", "shortName": "Folgore", "formation": "X Corpo d'Armata", "lon": 28.60, "lat": 30.30 },
+    { "id": "ita-pavia", "template": "italian-infantry", "faction": "italy", "name": "17ª Divisione Pavia", "shortName": "Pavia", "formation": "X Corpo d'Armata", "lon": 28.66, "lat": 30.44, "strength": 0.55 },
+
+    { "id": "ger-supply-tobruk", "template": "afrika-light", "faction": "germany", "name": "Nachschub Tobruk", "shortName": "Nsch", "formation": "Panzerarmee rear", "lon": 23.96, "lat": 32.08, "strength": 0.3 },
+    { "id": "ita-benghazi", "template": "italian-infantry", "faction": "italy", "name": "Presidio Bengasi", "shortName": "Bengasi", "formation": "Libia", "lon": 20.07, "lat": 32.11, "strength": 0.4 }
+  ]
+}

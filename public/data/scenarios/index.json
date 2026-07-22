@@ -1,0 +1,28 @@
+{
+  "scenarios": [
+    {
+      "id": "barbarossa-1941",
+      "file": "barbarossa-1941.json",
+      "name": "Operation Barbarossa",
+      "date": "22 June 1941",
+      "theatre": "Eastern Front",
+      "blurb": "Three army groups cross the Bug and the Niemen at first light."
+    },
+    {
+      "id": "alamein-1942",
+      "file": "alamein-1942.json",
+      "name": "Second Battle of El Alamein",
+      "date": "23 October 1942",
+      "theatre": "Western Desert",
+      "blurb": "Forty miles of front that cannot be outflanked. Eighth Army goes through it."
+    },
+    {
+      "id": "overlord-1944",
+      "file": "overlord-1944.json",
+      "name": "Operation Overlord",
+      "date": "6 June 1944",
+      "theatre": "Normandy",
+      "blurb": "Five divisions land, three drop in the dark, and the bocage waits inland."
+    }
+  ]
+}

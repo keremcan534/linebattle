@@ -12,9 +12,17 @@ export enum Terrain {
   Hills = 4,
   Mountains = 5,
   Urban = 6,
+  /** Open desert. North Africa is unplayable without it. */
+  Desert = 7,
+  /**
+   * Norman bocage: sunken lanes between earth banks topped with hedge, each
+   * field a walled compartment. Historically the worst ground in the west —
+   * an infantry division could spend a day taking a few hundred metres.
+   */
+  Bocage = 8,
 }
 
-export const TERRAIN_COUNT = 7;
+export const TERRAIN_COUNT = 9;
 
 export interface TerrainProfile {
   readonly name: string;
@@ -36,6 +44,10 @@ export const TERRAIN_PROFILES: Readonly<Record<Terrain, TerrainProfile>> = {
   [Terrain.Hills]: { name: 'Hills', moveMultiplier: 0.7, defenceBonus: 1.4, attritionPerDay: 0.002, color: 0x4a4a33 },
   [Terrain.Mountains]: { name: 'Mountains', moveMultiplier: 0.4, defenceBonus: 1.8, attritionPerDay: 0.008, color: 0x55503c },
   [Terrain.Urban]: { name: 'Urban', moveMultiplier: 0.8, defenceBonus: 1.6, attritionPerDay: 0.0, color: 0x5a5347 },
+  // Fast going and no cover: the desert rewards armour and punishes anyone
+  // who stops. Attrition is water and heat, not enemy action.
+  [Terrain.Desert]: { name: 'Desert', moveMultiplier: 0.9, defenceBonus: 0.85, attritionPerDay: 0.01, color: 0x7a6a45 },
+  [Terrain.Bocage]: { name: 'Bocage', moveMultiplier: 0.3, defenceBonus: 2.0, attritionPerDay: 0.004, color: 0x35442c },
 };
 
 export const isPassable = (t: Terrain): boolean => TERRAIN_PROFILES[t].moveMultiplier > 0;
