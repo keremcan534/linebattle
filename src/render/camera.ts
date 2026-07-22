@@ -23,11 +23,23 @@ export class Camera {
 
   constructor(private readonly bounds: WorldBounds) {}
 
+  /** True once the host element has a real layout size. */
+  get hasValidViewport(): boolean {
+    return this.viewportWidth > 1 && this.viewportHeight > 1;
+  }
+
   /** Frames the entire theatre, with a little margin. */
   fitToBounds(padding = 0.94): void {
     const w = this.bounds.maxX - this.bounds.minX;
     const h = this.bounds.maxY - this.bounds.minY;
-    this.zoom = Math.min(this.viewportWidth / w, this.viewportHeight / h) * padding;
+    // Clamped: a host element that has not been laid out yet reports a zero
+    // size, which would otherwise produce a nonsensical zoom (and a map drawn
+    // at 1/1000th scale) that no user input can recover from.
+    this.zoom = clamp(
+      Math.min(this.viewportWidth / w, this.viewportHeight / h) * padding,
+      ZOOM_MIN,
+      ZOOM_MAX,
+    );
     this.center = { x: (this.bounds.minX + this.bounds.maxX) / 2, y: (this.bounds.minY + this.bounds.maxY) / 2 };
     this.clampToBounds();
   }

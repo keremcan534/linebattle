@@ -156,10 +156,18 @@ export class GameRenderer {
     const apply = () => {
       const w = Math.max(1, host.clientWidth);
       const h = Math.max(1, host.clientHeight);
+      const wasDegenerate = !this.camera.hasValidViewport;
+
       this.app.renderer.resize(w, h);
       this.camera.viewportWidth = w;
       this.camera.viewportHeight = h;
-      this.camera.clampToBounds();
+
+      // The host can be laid out after the renderer is created (hidden tab,
+      // flex parent, mount inside a collapsed container). Re-frame the theatre
+      // the first time we learn a real size, otherwise the initial fit was
+      // computed against a 1x1 viewport and the map stays unusable.
+      if (wasDegenerate && this.camera.hasValidViewport) this.camera.fitToBounds();
+      else this.camera.clampToBounds();
     };
     apply();
     this.resizeObserver = new ResizeObserver(apply);
