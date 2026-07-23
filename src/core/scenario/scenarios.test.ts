@@ -87,7 +87,12 @@ describe('Barbarossa campaign plan', () => {
     expect(sovietPlan.nationalResolve?.mobilizationMultiplier).toBeGreaterThan(1);
     expect(germanPlan.halt?.combatMultiplier).toBe(1);
     expect(germanPlan.halt?.recoveryMultiplier).toBeLessThan(1);
-    expect(germanPlan.offensive?.target.lon).toBeGreaterThan(40);
+    // The Axis drives on Moscow from the opening day so the 1941 front reaches
+    // the historical line before the winter halt freezes it. (The 1942 summer
+    // offensive becomes a player choice in the Grand Operation screen.)
+    expect(germanPlan.offensive?.from).toContain('1941');
+    expect(germanPlan.offensive?.target.lon).toBeGreaterThan(35);
+    expect(germanPlan.offensive?.target.lon).toBeLessThan(40);
   });
 
   it('keeps 1941 East Prussia on the Axis side of the opening frontier', () => {

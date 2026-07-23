@@ -11,7 +11,7 @@
         "faction": "germany",
         "daysPerDivision": 7,
         "maxForceMultiplier": 1.45,
-        "divisionsPerFrontlineSegment": 0.9
+        "divisionsPerFrontlineSegment": 1.0
       },
       {
         "faction": "soviet",
@@ -67,9 +67,9 @@
           "recoveryMultiplier": 0.55
         },
         "offensive": {
-          "from": "1942-05-15T00:00:00Z",
-          "target": { "lon": 44.516, "lat": 48.708 },
-          "influenceKm": 1300
+          "from": "1941-06-22T00:00:00Z",
+          "target": { "lon": 37.6, "lat": 55.75 },
+          "influenceKm": 1400
         }
       }
     ]
