@@ -20,7 +20,9 @@ import { useGame, useViewSnapshot } from './useGame';
 export function App() {
   const hostRef = useRef<HTMLDivElement>(null);
   const [scenario, setScenario] = useState<ScenarioEntry | null>(null);
-  const scenarioUrl = scenario ? `/data/scenarios/${scenario.file}` : null;
+  const scenarioUrl = scenario
+    ? `${import.meta.env.BASE_URL}data/scenarios/${scenario.file}`
+    : null;
 
   const { loadState, sessionRef, store } = useGame(scenarioUrl, hostRef);
   const snapshot = useViewSnapshot(store);

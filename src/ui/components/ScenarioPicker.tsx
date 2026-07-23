@@ -23,7 +23,7 @@ export function ScenarioPicker({ onPick }: { onPick: (entry: ScenarioEntry) => v
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/data/scenarios/index.json')
+    fetch(`${import.meta.env.BASE_URL}data/scenarios/index.json`)
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();

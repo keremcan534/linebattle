@@ -4,7 +4,10 @@ import { fileURLToPath, URL } from 'node:url';
 
 const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 
-export default defineConfig({
+// Served as a GitHub Pages project site at /linebattle/ in production; the
+// dev server stays at the root so `npm run dev` opens cleanly.
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/linebattle/' : '/',
   plugins: [react()],
   resolve: {
     alias: {
@@ -17,4 +20,4 @@ export default defineConfig({
   },
   server: { port: 5173, open: true },
   build: { target: 'es2022', sourcemap: true },
-});
+}));
