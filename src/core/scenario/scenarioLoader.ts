@@ -4,9 +4,13 @@ import type {
   FeatureCollection,
   RiverProperties,
 } from '@core/geo/geojson';
-import type { Geometry } from '@core/geo/geojson';
 import { createProjection, type Projection } from '@core/geo/projection';
-import { buildOwnerGrid, buildTerrainGrid, type TerrainLayerSpec } from '@core/terrain/terrainBuilder';
+import {
+  CONTROL_CELL_SIZE_KM,
+  type InitialControlGrid,
+} from '@core/supply/supplyField';
+import { buildTerrainGrid, type TerrainLayerSpec } from '@core/terrain/terrainBuilder';
+import type { TerrainGrid } from '@core/terrain/terrainGrid';
 import { Terrain } from '@core/terrain/terrainTypes';
 import type { Division } from '@core/world/division';
 import { divisionId, factionId } from '@core/world/ids';
@@ -26,69 +30,6 @@ export interface LoadedScenario {
   scenario: ScenarioFile;
   world: World;
   mapData: MapData;
-}
-
-interface NationProps {
-  name?: string;
-  adm0_a3?: string;
-  iso_a3?: string;
-}
-
-/**
- * Rasterises national territory into a per-cell owner (alliance index, −1
- * neutral), remapping each modern country to its owner at the scenario's date.
- *
- * This is the "do it properly" fix: province ownership and edges come from real
- * Natural Earth borders instead of guessing from unit proximity, so a neutral
- * like Turkey stays neutral and the front falls on the true frontier. The
- * modern-to-1941 remap is elegant because post-war borders largely codified the
- * 1939–40 Soviet gains, so the modern Poland/Ukraine and Romania/Moldova
- * borders already sit almost exactly on the 1941 front.
- */
-function buildNationConfine(
-  scenario: ScenarioFile,
-  nations: FeatureCollection<NationProps>,
-  projection: Projection,
-  bounds: WorldBounds,
-  cellSize: number,
-  width: number,
-  height: number,
-): Int8Array {
-  const alliances = [...new Set(scenario.factions.map((f) => f.alliance))].sort();
-  const allianceIndex = (a: string) => alliances.indexOf(a);
-  const factionAlliance = new Map(scenario.factions.map((f) => [f.id, f.alliance]));
-
-  const spec = scenario.nations!;
-  const fallback = spec.default ?? 'neutral';
-
-  /** A country's owner as an alliance index, or −1 for neutral/unknown. */
-  const ownerOf = (props: NationProps): number => {
-    const key = props.adm0_a3 ?? props.iso_a3 ?? props.name ?? '';
-    const target = spec.owners[key] ?? fallback;
-    if (target === 'neutral') return -1;
-    const alliance = factionAlliance.get(target);
-    return alliance ? allianceIndex(alliance) : -1;
-  };
-
-  // Group countries by owner so each owner is painted as one mask (see
-  // buildOwnerGrid): neutral countries simply never paint, leaving −1.
-  const byOwner = new Map<number, { geometry: Geometry }[]>();
-  for (const f of nations.features) {
-    const owner = ownerOf(f.properties);
-    if (owner < 0) continue;
-    const list = byOwner.get(owner) ?? [];
-    list.push({ geometry: f.geometry });
-    byOwner.set(owner, list);
-  }
-
-  return buildOwnerGrid({
-    projection,
-    origin: { x: bounds.minX, y: bounds.minY },
-    cellSize,
-    width,
-    height,
-    owners: [...byOwner.entries()].sort((a, b) => a[0] - b[0]).map(([owner, features]) => ({ owner, features })),
-  });
 }
 
 export interface LoadProgress {
@@ -143,7 +84,7 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
     optionalJson<FeatureCollection<CityProperties>>(scenario.map.layers.cities, base),
     optionalJson<FeatureCollection<{ terrain?: string }>>(scenario.map.layers.overlays, base),
     optionalJson<FeatureCollection<BorderProperties>>(scenario.map.layers.borders, base),
-    optionalJson<FeatureCollection<NationProps>>(scenario.map.layers.nations, base),
+    optionalJson<FeatureCollection<{ name?: string }>>(scenario.map.layers.nations, base),
   ]);
 
   report('Projecting theatre', 0.35);
@@ -206,7 +147,100 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
     world.addDivision(instantiate(spec, template, projection));
   }
 
+  if (scenario.campaign) {
+    const allianceOf = (faction: string): string => {
+      const alliance = scenario.factions.find((f) => f.id === faction)?.alliance;
+      if (!alliance) throw new Error(`Campaign policy references unknown faction "${faction}"`);
+      return alliance;
+    };
+    world.configureCampaign(
+      (scenario.campaign.mobilization ?? []).map((policy) => ({
+        alliance: allianceOf(policy.faction),
+        daysPerDivision: policy.daysPerDivision,
+        maxForceMultiplier: policy.maxForceMultiplier,
+        divisionsPerFrontlineSegment: policy.divisionsPerFrontlineSegment ?? 0.75,
+      })),
+      (scenario.campaign.plans ?? []).map((plan) => ({
+        alliance: allianceOf(plan.faction),
+        ...(plan.openingShock
+          ? {
+              openingShock: {
+                ...(plan.openingShock.from
+                  ? { from: Date.parse(plan.openingShock.from) }
+                  : {}),
+                until: Date.parse(plan.openingShock.until),
+                combatMultiplier: plan.openingShock.combatMultiplier,
+                recoveryMultiplier: plan.openingShock.recoveryMultiplier,
+              },
+            }
+          : {}),
+        ...(plan.fallback
+          ? {
+              fallback: {
+                until: Date.parse(plan.fallback.until),
+                line: plan.fallback.line.map((point) =>
+                  projection.project(point.lon, point.lat),
+                ),
+                rearOffsetKm: plan.fallback.rearOffsetKm ?? 18,
+                influenceKm: plan.fallback.influenceKm ?? 320,
+                rearward:
+                  plan.fallback.rearward === 'west'
+                    ? { x: -1, y: 0 }
+                    : plan.fallback.rearward === 'north'
+                      ? { x: 0, y: -1 }
+                      : plan.fallback.rearward === 'south'
+                        ? { x: 0, y: 1 }
+                        : { x: 1, y: 0 },
+              },
+            }
+          : {}),
+        ...(plan.halt
+          ? {
+              halt: {
+                from: Date.parse(plan.halt.from),
+                until: Date.parse(plan.halt.until),
+                combatMultiplier: plan.halt.combatMultiplier,
+                recoveryMultiplier: plan.halt.recoveryMultiplier,
+              },
+            }
+          : {}),
+        ...(plan.offensive
+          ? {
+              offensive: {
+                from: Date.parse(plan.offensive.from),
+                target: projection.project(
+                  plan.offensive.target.lon,
+                  plan.offensive.target.lat,
+                ),
+                influenceKm: plan.offensive.influenceKm,
+              },
+            }
+          : {}),
+        ...(plan.nationalResolve
+          ? {
+              nationalResolve: {
+                maximumAtTerritoryLoss:
+                  plan.nationalResolve.maximumAtTerritoryLoss,
+                combatMultiplier: plan.nationalResolve.combatMultiplier,
+                recoveryMultiplier: plan.nationalResolve.recoveryMultiplier,
+                mobilizationMultiplier:
+                  plan.nationalResolve.mobilizationMultiplier,
+              },
+            }
+          : {}),
+      })),
+    );
+  }
+
   if (scenario.supply) {
+    const initialControl = scenario.supply.initialControl
+      ? buildInitialControlGrid(
+          scenario,
+          nations,
+          projection,
+          terrain,
+        )
+      : undefined;
     world.enableSupply(
       scenario.supply.sources.map((s) => {
         const alliance = scenario.factions.find((f) => f.id === s.faction)?.alliance;
@@ -217,21 +251,13 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
           position: projection.project(s.lon, s.lat),
           rangeKm: s.rangeKm,
           capturable: s.capturable ?? false,
+          networkRoot: s.networkRoot ?? !(s.capturable ?? false),
         };
       }),
       scenario.supply.climate ?? 'temperate',
+      initialControl,
     );
   }
-
-  // Provinces are always generated — the political map is not optional even
-  // when logistics is. When the scenario supplies national territory, ownership
-  // and province edges follow the real 1941 borders; otherwise they fall back
-  // to nearest-force Voronoi.
-  report('Partitioning territory', 0.9);
-  const confine = nations && scenario.nations
-    ? buildNationConfine(scenario, nations, projection, bounds, terrain.cellSize, terrain.width, terrain.height)
-    : undefined;
-  world.enableProvinces(confine ? { confine } : {});
 
   reportDeployment(world);
 
@@ -240,6 +266,92 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
 }
 
 // --------------------------------------------------------------- internals --
+
+function buildInitialControlGrid(
+  scenario: ScenarioFile,
+  nations: FeatureCollection<{ name?: string }> | null,
+  projection: Projection,
+  terrain: TerrainGrid,
+): InitialControlGrid {
+  const spec = scenario.supply?.initialControl;
+  if (!spec) throw new Error('Initial control requested without a control specification');
+  if (!nations) {
+    throw new Error(
+      `Scenario "${scenario.id}" declares initial control but no nations map layer`,
+    );
+  }
+
+  const allianceOf = (faction: string): string => {
+    const alliance = scenario.factions.find((entry) => entry.id === faction)
+      ?.alliance;
+    if (!alliance) {
+      throw new Error(
+        `Initial control references unknown faction "${faction}"`,
+      );
+    }
+    return alliance;
+  };
+  const alliances = [
+    ...new Set([
+      ...spec.countries.map((group) => allianceOf(group.faction)),
+      ...(spec.overrides ?? []).map((region) =>
+        allianceOf(region.faction),
+      ),
+    ]),
+  ].sort();
+  if (alliances.length > 8) {
+    throw new Error('Initial control supports at most eight alliances');
+  }
+
+  const layers: TerrainLayerSpec[] = [];
+  for (const group of spec.countries) {
+    const names = new Set(group.names);
+    const features = nations.features.filter((feature) =>
+      feature.properties.name
+        ? names.has(feature.properties.name)
+        : false,
+    );
+    const alliance = allianceOf(group.faction);
+    layers.push({
+      data: { type: 'FeatureCollection', features },
+      terrain: (alliances.indexOf(alliance) + 1) as Terrain,
+    });
+  }
+
+  for (const region of spec.overrides ?? []) {
+    const alliance = allianceOf(region.faction);
+    layers.push({
+      data: {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'Polygon',
+              coordinates: [
+                region.polygon.map(
+                  (point) => [point.lon, point.lat] as [number, number],
+                ),
+              ],
+            },
+          },
+        ],
+      },
+      terrain: (alliances.indexOf(alliance) + 1) as Terrain,
+    });
+  }
+
+  const grid = buildTerrainGrid({
+    projection,
+    origin: terrain.origin,
+    worldWidth: terrain.worldWidth,
+    worldHeight: terrain.worldHeight,
+    cellSize: CONTROL_CELL_SIZE_KM,
+    layers,
+  });
+  return { cells: grid.cells, alliances };
+}
 
 function instantiate(
   spec: ScenarioFile['divisions'][number],
@@ -262,6 +374,8 @@ function instantiate(
     heading: 0,
     order: null,
     stance: 'hold',
+    advance: null,
+    frontlineSegment: null,
     manpower,
     maxManpower: t.maxManpower,
     organisation,
@@ -269,6 +383,7 @@ function instantiate(
     morale: spec.morale ?? t.morale ?? 0.8,
     supply: spec.supply ?? t.supply ?? 1,
     encircled: false,
+    encircledTicks: 0,
     experience: spec.experience ?? t.experience ?? 0.3,
     speedKmh: t.speedKmh,
     softAttack: t.softAttack,
@@ -290,29 +405,33 @@ function computeWorldBounds(
   b: { minLon: number; minLat: number; maxLon: number; maxLat: number },
 ): WorldBounds {
   const SAMPLES = 32;
+  const boundary: { x: number; y: number }[] = [];
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
 
-  const consider = (lon: number, lat: number) => {
+  const append = (lon: number, lat: number) => {
     const p = projection.project(lon, lat);
+    boundary.push(p);
     if (p.x < minX) minX = p.x;
     if (p.y < minY) minY = p.y;
     if (p.x > maxX) maxX = p.x;
     if (p.y > maxY) maxY = p.y;
   };
 
-  for (let i = 0; i <= SAMPLES; i++) {
-    const tLon = b.minLon + ((b.maxLon - b.minLon) * i) / SAMPLES;
-    const tLat = b.minLat + ((b.maxLat - b.minLat) * i) / SAMPLES;
-    consider(tLon, b.minLat);
-    consider(tLon, b.maxLat);
-    consider(b.minLon, tLat);
-    consider(b.maxLon, tLat);
-  }
+  // Walk the perimeter once in order. Duplicate corners are deliberately
+  // omitted; Pixi closes the last edge for the theatre mask.
+  for (let i = 0; i < SAMPLES; i++)
+    append(b.minLon + ((b.maxLon - b.minLon) * i) / SAMPLES, b.minLat);
+  for (let i = 0; i < SAMPLES; i++)
+    append(b.maxLon, b.minLat + ((b.maxLat - b.minLat) * i) / SAMPLES);
+  for (let i = 0; i < SAMPLES; i++)
+    append(b.maxLon - ((b.maxLon - b.minLon) * i) / SAMPLES, b.maxLat);
+  for (let i = 0; i < SAMPLES; i++)
+    append(b.minLon, b.maxLat - ((b.maxLat - b.minLat) * i) / SAMPLES);
 
-  return { minX, minY, maxX, maxY };
+  return { minX, minY, maxX, maxY, boundary };
 }
 
 /**
@@ -368,6 +487,48 @@ function validate(s: ScenarioFile): void {
   if (!s.factions.length) throw new Error('Scenario declares no factions');
   if (!s.factions.some((f) => f.id === s.playerFaction)) {
     throw new Error(`playerFaction "${s.playerFaction}" is not among the declared factions`);
+  }
+  const factionIds = new Set(s.factions.map((f) => f.id));
+  for (const policy of s.campaign?.mobilization ?? []) {
+    if (!factionIds.has(policy.faction)) {
+      throw new Error(`Mobilization policy references unknown faction "${policy.faction}"`);
+    }
+    if (
+      policy.daysPerDivision <= 0 ||
+      policy.maxForceMultiplier < 1 ||
+      (policy.divisionsPerFrontlineSegment ?? 0.75) < 0
+    ) {
+      throw new Error(`Invalid mobilization policy for "${policy.faction}"`);
+    }
+  }
+  for (const plan of s.campaign?.plans ?? []) {
+    if (!factionIds.has(plan.faction)) {
+      throw new Error(`Campaign plan references unknown faction "${plan.faction}"`);
+    }
+    const dates = [
+      plan.openingShock?.from,
+      plan.openingShock?.until,
+      plan.fallback?.until,
+      plan.halt?.from,
+      plan.halt?.until,
+      plan.offensive?.from,
+    ];
+    if (dates.some((date) => date !== undefined && Number.isNaN(Date.parse(date)))) {
+      throw new Error(`Campaign plan for "${plan.faction}" contains an invalid date`);
+    }
+    if (plan.fallback && plan.fallback.line.length < 2) {
+      throw new Error(`Fallback plan for "${plan.faction}" needs at least two line points`);
+    }
+    if (
+      plan.nationalResolve &&
+      (plan.nationalResolve.maximumAtTerritoryLoss <= 0 ||
+        plan.nationalResolve.maximumAtTerritoryLoss > 1 ||
+        plan.nationalResolve.combatMultiplier <= 0 ||
+        plan.nationalResolve.recoveryMultiplier <= 0 ||
+        plan.nationalResolve.mobilizationMultiplier <= 0)
+    ) {
+      throw new Error(`Invalid national resolve plan for "${plan.faction}"`);
+    }
   }
 }
 

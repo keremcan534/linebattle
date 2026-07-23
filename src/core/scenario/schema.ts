@@ -33,18 +33,59 @@ export interface ScenarioFile {
    * is a legitimate choice for a short tactical scenario.
    */
   supply?: SupplySpec;
-  /**
-   * Remaps modern countries (from `map.layers.nations`) to their owner at the
-   * scenario's date, so province ownership starts on the real historical
-   * front. Keys are Natural Earth `ADM0_A3` codes; values are a faction id or
-   * `"neutral"`. Countries not listed fall to `default`.
-   */
-  nations?: NationsSpec;
+  /** Optional long-campaign production and operational phases. */
+  campaign?: CampaignSpec;
   playerFaction: string;
   factions: FactionSpec[];
   /** Reusable stat blocks, referenced by `DivisionSpec.template`. */
   templates: Record<string, DivisionTemplate>;
   divisions: DivisionSpec[];
+}
+
+export interface CampaignSpec {
+  mobilization?: MobilizationPolicySpec[];
+  plans?: AllianceCampaignPlanSpec[];
+}
+
+export interface MobilizationPolicySpec {
+  faction: string;
+  daysPerDivision: number;
+  maxForceMultiplier: number;
+  divisionsPerFrontlineSegment?: number;
+}
+
+export interface AllianceCampaignPlanSpec {
+  faction: string;
+  openingShock?: {
+    from?: string;
+    until: string;
+    combatMultiplier: number;
+    recoveryMultiplier: number;
+  };
+  fallback?: {
+    until: string;
+    line: { lon: number; lat: number }[];
+    rearOffsetKm?: number;
+    influenceKm?: number;
+    rearward?: 'east' | 'west' | 'north' | 'south';
+  };
+  halt?: {
+    from: string;
+    until: string;
+    combatMultiplier: number;
+    recoveryMultiplier: number;
+  };
+  offensive?: {
+    from: string;
+    target: { lon: number; lat: number };
+    influenceKm: number;
+  };
+  nationalResolve?: {
+    maximumAtTerritoryLoss: number;
+    combatMultiplier: number;
+    recoveryMultiplier: number;
+    mobilizationMultiplier: number;
+  };
 }
 
 export interface MapSpec {
@@ -58,6 +99,8 @@ export interface MapSpec {
     lakes?: string;
     rivers?: string;
     cities?: string;
+    /** Modern country polygons used only to seed dated political control. */
+    nations?: string;
     /** Features carrying a `terrain` property: forest, marsh, hills, mountains. */
     overlays?: string;
     /**
@@ -65,26 +108,30 @@ export interface MapSpec {
      * Purely cartographic — see BorderLayer. Borders never constrain movement.
      */
     borders?: string;
-    /**
-     * National territory polygons (Natural Earth), used to set each province's
-     * starting owner from real borders. Remapped to the scenario's date by
-     * {@link ScenarioFile.nations}.
-     */
-    nations?: string;
   };
-}
-
-export interface NationsSpec {
-  /** ADM0_A3 code → faction id, or the literal "neutral". */
-  owners: Record<string, string>;
-  /** Owner for any country not listed. Defaults to "neutral". */
-  default?: string;
 }
 
 export interface SupplySpec {
   /** Drives the seasonal model. Defaults to 'temperate'. */
   climate?: 'continental' | 'temperate' | 'desert';
   sources: SupplySourceSpec[];
+  /**
+   * Dated opening ownership. Country groups provide the broad rear areas;
+   * ordered polygon overrides correct historical frontiers that do not match
+   * modern borders.
+   */
+  initialControl?: InitialControlSpec;
+}
+
+export interface InitialControlSpec {
+  countries: {
+    faction: string;
+    names: string[];
+  }[];
+  overrides?: {
+    faction: string;
+    polygon: { lon: number; lat: number }[];
+  }[];
 }
 
 export interface SupplySourceSpec {
@@ -103,6 +150,8 @@ export interface SupplySourceSpec {
    * dumps inside the theatre should be capturable; a home port should not.
    */
   capturable?: boolean;
+  /** Capital, home port or off-map rail entry anchoring the logistics network. */
+  networkRoot?: boolean;
 }
 
 export interface FactionSpec {

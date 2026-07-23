@@ -17,7 +17,7 @@ Each milestone is a **playable build**, not a layer of plumbing. If a milestone 
 - [x] Procedural APP-6 counters with strength and organisation bars
 - [x] Selection: click, shift-click, box-select
 - [x] Movement orders with queued waypoints, terrain-modified speed, coast sliding
-- [x] Fixed 15-minute tick, five speed settings, render interpolation
+- [x] Fixed twelve-hour strategic tick, 15-minute combat substeps, five speed settings, render interpolation
 - [x] JSON scenario loading — Barbarossa, 112 divisions
 - [x] HUD: date, speed controls, cursor readout, selection panel
 
@@ -30,7 +30,7 @@ Each milestone is a **playable build**, not a layer of plumbing. If a milestone 
 - [x] Seeded xoshiro128\*\* RNG as part of world state, saveable and hashable
 - [x] `Math.random` banned in `core/` by ESLint (rule verified to fire)
 - [x] `hashWorld()` — a checksum of the whole simulation, and the primitive multiplayer desync detection will use
-- [x] Vitest suite running in plain Node with no DOM: 44 tests
+- [x] Vitest suite running in plain Node with no DOM: 196 tests
 - [x] Determinism tests: same stream → same hash; batch-size independence; seed divergence; order insensitivity
 - [x] Projection standard parallels re-tuned by measurement (1.24% → 0.55% error where the fighting is)
 - [x] Fixed a movement livelock: divisions ordered across water ground against the shore forever
@@ -78,15 +78,13 @@ Measured on Barbarossa: 44 battles over a simulated week, **0.097 ms per tick**,
 
 ## ✅ Milestone 3 — Supply, attrition and weather
 
-**Shipped.** Distance hurts. Barbarossa's real enemy was logistics, and now it is here too.
+**Shipped.** A front survives only while its territory remains connected to a capital.
 
-- [x] Supply sources — railheads, ports, depots — declared in scenario JSON
-- [x] Supply propagation by Dijkstra over a 16 km field, terrain-weighted, blocked by enemy control
-- [x] **Capturable hubs**, so an advance can carry its logistics forward
-- [x] Encirclement as a consequence of the flood, not a special case
+- [x] Capital and national logistics roots declared in scenario JSON
+- [x] Binary capital connectivity over a 16 km field, blocked by hostile control
+- [x] Encirclement as a consequence of severed territorial connectivity
 - [x] Attrition by terrain, weather and starvation — the only reliable way to destroy a division
 - [x] Weather and seasons: rasputitsa, deep winter, desert summer, derived from the date
-- [x] Supply map mode (`M`), drawn as one texture rather than 51k rectangles
 - [x] Encirclement and season surfaced in the HUD
 
 Fixed capacity was the interesting failure: it starved 56 of 57 German divisions to death inside two months with barely a shot fired. See the architecture doc — a measurement that changed a design.
@@ -107,18 +105,31 @@ Measured on Barbarossa with the AI playing the Soviets: 37 divisions moving to b
 
 ---
 
-## 🚧 Milestone 4 — Provinces
+## 🚧 Milestone 4 — Continuous operations
 
-**In progress**, chosen after playtesting: the political and territorial backbone HOI4 gets its front-line behaviour from, generated to fit our theatres rather than imported.
+**In progress.** The province experiment was retired after playtesting: it made
+territory jump in discrete chunks and contradicted the continuous-map premise.
+The liquid control field is again the authoritative political layer.
 
-- [x] Province mesh generated per theatre by multi-source Voronoi flood (4282 provinces on the Eastern Front, 84 ms at load)
-- [x] Ownership as simulation state — seizure by presence, logistics sweep behind an advance, hashed and saved
-- [x] Ownership from real Natural Earth national territory, remapped to 1941 owners — the front falls on true borders, neutrals (Turkey, Sweden) stay neutral, province edges align to frontiers
-- [x] HOI4-style province rendering: crisp coloured territory, the owner boundary drawn as the front line, faint province mosaic
-- [x] Retired the per-cell control field the provinces replaced
-- [ ] **Province-graph movement**: a division pinned while fighting for a province, blocked from slipping past a held enemy province — the fix that makes it PLAY like a front, not just look like one
+- [x] Persistent control wash seeded from deployed formations and supply hubs
+- [x] Territory flows through local domination and uncontested logistics
+- [x] Solid enemy collision and explicit RETREAT → ADVANCE post-combat sequence
+- [x] The boundary between control colours is the frontline (`P` to toggle)
+- [x] Persistent 60 km frontage segments; every division holds one assigned sector
+- [x] Operational AI executes both sides and only advances from local superiority
+- [x] Sealed pockets collapse progressively and surrender within seven days
+- [x] Three attack and three defense objectives bias nearby sector allocation
+- [x] Formed-unit zones of control with solid fallback collision for routed units
+- [x] Supply-gated field replacements for both alliances
+- [x] Capital-linked logistics network; an isolated forward hub cannot create a detached supply island
+- [x] Pocket cleanup limited to two nearby foot divisions; armour and motorised formations remain on the main front
+- [x] Encircled formations receive 50% more combat damage and operational AI attempts a breakout
+- [x] Symmetric mobilisation raises new formations when losses or a longer frontage create a deficit
+- [x] Scenario-driven continuous recruitment, with faster Soviet mobilisation and bounded force growth
+- [x] Soviet opening shock and coordinated withdrawal to a prepared historical defense line
+- [x] Axis winter halt followed by a single Stalingrad-directed grand offensive
+- [x] Marching fatigue floor and load-first sector distribution without objectives
 - [ ] Formation hierarchy: division → corps → army; "draw the plan, the divisions execute it" orders
-- [ ] AI offensives with objectives (the current AI only defends)
 - [ ] Save / load — the World is already one serialisable object
 - [ ] Replay playback from the command stream
 - [ ] Victory conditions and objectives in scenario JSON
@@ -132,7 +143,7 @@ Measured on Barbarossa with the AI playing the Soviets: 37 divisions moving to b
 - [ ] Air wings, missions, and air support modifying ground combat
 - [ ] Artillery and support brigades attaching to divisions
 - [ ] Historical unit sprites replacing procedural counters
-- [ ] Front-line rendering (the continuous coloured line of the map videos)
+- [x] Front-line rendering (the continuous coloured line of the map videos)
 - [ ] Time-lapse export
 - [ ] Additional scenarios: Case Blue, Bagration, Fall Gelb
 

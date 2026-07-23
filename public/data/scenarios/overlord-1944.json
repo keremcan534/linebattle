@@ -26,8 +26,7 @@
       "rivers": "../geo/normandy/rivers.geojson",
       "cities": "../geo/normandy/cities.geojson",
       "overlays": "../geo/normandy/terrain-overlays.geojson",
-      "borders": "../geo/normandy/borders-1944.geojson",
-      "nations": "../geo/normandy/nations.geojson"
+      "borders": "../geo/normandy/borders-1944.geojson"
     }
   },
   "factions": [
@@ -708,17 +707,5 @@
         "capturable": true
       }
     ]
-  },
-  "nations": {
-    "owners": {
-      "FRA": "germany",
-      "BEL": "germany",
-      "NLD": "germany",
-      "GGY": "germany",
-      "JEY": "germany",
-      "GBR": "uk",
-      "IRL": "neutral"
-    },
-    "default": "neutral"
   }
 }

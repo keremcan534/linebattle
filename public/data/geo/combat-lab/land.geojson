@@ -1,0 +1,23 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Combat Laboratory"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-1.8, -1.8],
+            [1.8, -1.8],
+            [1.8, 1.8],
+            [-1.8, 1.8],
+            [-1.8, -1.8]
+          ]
+        ]
+      }
+    }
+  ]
+}

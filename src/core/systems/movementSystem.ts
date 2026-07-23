@@ -1,21 +1,44 @@
 import { distance, type Vec2 } from '@core/math/vec2';
-import { effectiveSpeedKmh, type Division } from '@core/world/division';
+import {
+  effectiveSpeedKmh,
+  organisationRatio,
+  strengthRatio,
+  type Division,
+} from '@core/world/division';
 import type { TerrainGrid } from '@core/terrain/terrainGrid';
+import { ticksForHours } from '@core/time/gameClock';
+import type { World } from '@core/world/world';
 import type { System, TickContext } from './system';
 
 /** How close a division must get to a waypoint to count as having reached it. */
 const ARRIVAL_TOLERANCE_KM = 1.5;
+
+/** Every division occupies a solid operational circle. */
+export const UNIT_COLLISION_RADIUS_KM = 6;
+/** Hostile collision circles may touch, but may never overlap. */
+export const ENEMY_MIN_SEPARATION_KM = UNIT_COLLISION_RADIUS_KM * 2;
+/**
+ * A formed division controls more than the footprint of its counter.
+ *
+ * Two 7 km operational zones make a coherent 14 km frontage while leaving
+ * genuine gaps for mobile formations to exploit. A routed or shattered unit
+ * falls back to the smaller solid collision circle: it can be pursued, but it
+ * can still never be crossed.
+ */
+export const FORMED_UNIT_ZOC_RADIUS_KM = 7;
+export const FORMED_ENEMY_MIN_SEPARATION_KM = FORMED_UNIT_ZOC_RADIUS_KM * 2;
+const COLLISION_EPSILON_KM = 0.01;
 
 /** Progress smaller than this does not count as progress. */
 const PROGRESS_EPSILON_KM = 0.05;
 
 /**
  * Ticks of zero progress before an order is judged impossible.
- * Eight ticks is two game-hours — long enough to survive squeezing along a
+ * Two game-hours is long enough to survive squeezing along a
  * coastline, short enough that a division never bleeds a day of organisation
  * into a lake it cannot cross.
  */
-const STALL_LIMIT_TICKS = 8;
+const STALL_LIMIT_TICKS = ticksForHours(2);
 
 /**
  * Continuous movement across the map.
@@ -44,6 +67,7 @@ export class MovementSystem implements System {
 
       let budgetKm = effectiveSpeedKmh(d, world.weather.movement) * hours;
       if (budgetKm <= 0) continue;
+      let enemyBlocked = false;
 
       while (budgetKm > 0 && order.cursor < order.waypoints.length) {
         const target = order.waypoints[order.cursor]!;
@@ -55,6 +79,7 @@ export class MovementSystem implements System {
           order.stalledTicks = 0;
           if (order.cursor >= order.waypoints.length) {
             d.order = null;
+            d.advance = null;
             d.stance = 'hold';
             events.emit({ type: 'destinationReached', division: d.id });
           }
@@ -78,14 +103,23 @@ export class MovementSystem implements System {
           y: d.position.y + dirY * advanceKm,
         };
 
-        if (world.terrain.isPassableAt(next)) {
-          d.position = next;
-        } else if (!this.slide(d, next, dirX, dirY, advanceKm, world.terrain)) {
+        const terrainSafe = world.terrain.isPassableAt(next)
+          ? next
+          : this.slidePoint(d.position, dirX, dirY, advanceKm, world.terrain);
+        if (!terrainSafe) {
           // Boxed in by water on every axis — abandon the order rather than
           // vibrating against the coastline forever.
           d.order = null;
+          d.advance = null;
           d.stance = 'hold';
           events.emit({ type: 'orderBlocked', division: d.id, reason: 'impassable' });
+          break;
+        }
+
+        const collision = this.clipAgainstEnemies(d, terrainSafe, world);
+        d.position = collision.position;
+        if (collision.blocked) {
+          enemyBlocked = true;
           break;
         }
 
@@ -99,11 +133,17 @@ export class MovementSystem implements System {
         const target = d.order.waypoints[d.order.cursor]!;
         const remaining = distance(d.position, target);
 
-        if (remaining < d.order.bestDistance - PROGRESS_EPSILON_KM) {
+        if (enemyBlocked) {
+          // Enemy contact blocks geometry, not intent. Preserve the order for
+          // combat resolution without letting the formation tunnel through.
+          d.order.bestDistance = Math.min(d.order.bestDistance, remaining);
+          d.order.stalledTicks = 0;
+        } else if (remaining < d.order.bestDistance - PROGRESS_EPSILON_KM) {
           d.order.bestDistance = remaining;
           d.order.stalledTicks = 0;
         } else if (++d.order.stalledTicks >= STALL_LIMIT_TICKS) {
           d.order = null;
+          d.advance = null;
           d.stance = 'hold';
           events.emit({ type: 'orderBlocked', division: d.id, reason: 'impassable' });
         }
@@ -115,24 +155,83 @@ export class MovementSystem implements System {
    * Wall-sliding: when the direct step hits water, try the two axis-aligned
    * components separately so units follow a coastline instead of stalling.
    */
-  private slide(
-    d: Division,
-    _blocked: Vec2,
+  private slidePoint(
+    current: Vec2,
     dirX: number,
     dirY: number,
     advanceKm: number,
     terrain: TerrainGrid,
-  ): boolean {
-    const alongX = { x: d.position.x + dirX * advanceKm, y: d.position.y };
-    if (terrain.isPassableAt(alongX)) {
-      d.position = alongX;
-      return true;
+  ): Vec2 | null {
+    const alongX = { x: current.x + dirX * advanceKm, y: current.y };
+    if (terrain.isPassableAt(alongX)) return alongX;
+    const alongY = { x: current.x, y: current.y + dirY * advanceKm };
+    return terrain.isPassableAt(alongY) ? alongY : null;
+  }
+
+  /**
+   * Clips a movement segment against every hostile collision circle.
+   *
+   * Segment intersection, rather than checking only the endpoint, is what
+   * makes crossing impossible even for a fast unit or a large simulation tick.
+   */
+  private clipAgainstEnemies(
+    d: Division,
+    proposed: Vec2,
+    world: World,
+  ): { position: Vec2; blocked: boolean } {
+    const start = d.position;
+    const dx = proposed.x - start.x;
+    const dy = proposed.y - start.y;
+    const segmentLength = Math.hypot(dx, dy);
+    if (segmentLength <= 1e-9) return { position: { ...start }, blocked: false };
+
+    let maxT = 1;
+    for (const enemy of world.divisions.values()) {
+      if (enemy.id === d.id || !world.hostile(d.faction, enemy.faction)) continue;
+      const minimumSeparation = this.exertsZoneOfControl(enemy)
+        ? FORMED_ENEMY_MIN_SEPARATION_KM
+        : ENEMY_MIN_SEPARATION_KM;
+
+      const sx = start.x - enemy.position.x;
+      const sy = start.y - enemy.position.y;
+      const startDistance = Math.hypot(sx, sy);
+      const endDistance = distance(proposed, enemy.position);
+
+      // Rescue legacy/hand-authored overlaps by allowing only motion that
+      // increases separation. No movement may deepen or cross an overlap.
+      if (startDistance < minimumSeparation - COLLISION_EPSILON_KM) {
+        const outward = startDistance <= COLLISION_EPSILON_KM || sx * dx + sy * dy > 0;
+        if (outward && endDistance > startDistance) continue;
+        maxT = 0;
+        break;
+      }
+
+      const a = dx * dx + dy * dy;
+      const b = 2 * (sx * dx + sy * dy);
+      const c = sx * sx + sy * sy - minimumSeparation * minimumSeparation;
+      const discriminant = b * b - 4 * a * c;
+      if (discriminant < 0) continue;
+
+      const entry = (-b - Math.sqrt(discriminant)) / (2 * a);
+      if (entry < 0 || entry > maxT) continue;
+      maxT = Math.max(0, entry - COLLISION_EPSILON_KM / segmentLength);
     }
-    const alongY = { x: d.position.x, y: d.position.y + dirY * advanceKm };
-    if (terrain.isPassableAt(alongY)) {
-      d.position = alongY;
-      return true;
-    }
-    return false;
+
+    if (maxT >= 1) return { position: proposed, blocked: false };
+    return {
+      position: {
+        x: start.x + dx * maxT,
+        y: start.y + dy * maxT,
+      },
+      blocked: true,
+    };
+  }
+
+  private exertsZoneOfControl(d: Division): boolean {
+    return (
+      d.stance !== 'retreat' &&
+      strengthRatio(d) >= 0.2 &&
+      organisationRatio(d) >= 0.2
+    );
   }
 }

@@ -2,8 +2,14 @@ import type { Branch, Stance } from '@core/world/division';
 import type { DivisionId } from '@core/world/ids';
 import type { World } from '@core/world/world';
 import { effectiveSpeedKmh, organisationRatio, strengthRatio } from '@core/world/division';
-import { formatGameDate, MINUTES_PER_TICK } from '@core/time/gameClock';
+import { formatGameDate, MINUTES_PER_TICK, TICKS_PER_DAY } from '@core/time/gameClock';
 import { TERRAIN_PROFILES } from '@core/terrain/terrainTypes';
+import type { StrategicObjectiveKind } from '@core/world/strategicObjective';
+import {
+  activeFallback,
+  activeHalt,
+  activeOffensive,
+} from '@core/world/campaign';
 
 /**
  * The bridge between the 60fps simulation and React.
@@ -36,7 +42,9 @@ export interface DivisionSummary {
   speedKmh: number;
   terrain: string;
   encircled: boolean;
+  encircledDays: number;
   hasOrder: boolean;
+  frontlineSegment: string | null;
   lon: number;
   lat: number;
 }
@@ -60,6 +68,13 @@ export interface BattleSummary {
   attacking: boolean;
 }
 
+export interface StrategicObjectiveSummary {
+  id: string;
+  kind: StrategicObjectiveKind;
+  x: number;
+  y: number;
+}
+
 export interface ViewSnapshot {
   selection: readonly DivisionId[];
   selectedDetails: readonly DivisionSummary[];
@@ -71,8 +86,12 @@ export interface ViewSnapshot {
   zoom: number;
   cursor: { lon: number; lat: number; terrain: string } | null;
   divisionCount: number;
+  frontlineSegmentCount: number;
+  objectives: readonly StrategicObjectiveSummary[];
+  objectivePlacement: StrategicObjectiveKind | null;
   battles: readonly BattleSummary[];
   weather: string;
+  campaignPhase: string;
   /** Divisions of the player's own alliance currently cut off. */
   encircled: number;
 }
@@ -88,8 +107,12 @@ const EMPTY_SNAPSHOT: ViewSnapshot = {
   zoom: 0.1,
   cursor: null,
   divisionCount: 0,
+  frontlineSegmentCount: 0,
+  objectives: [],
+  objectivePlacement: null,
   battles: [],
   weather: '',
+  campaignPhase: '',
   encircled: 0,
 };
 
@@ -99,6 +122,7 @@ export class ViewStore {
   hovered: DivisionId | null = null;
   dragBox: { x0: number; y0: number; x1: number; y1: number } | null = null;
   cursorWorld: { x: number; y: number } | null = null;
+  objectivePlacement: StrategicObjectiveKind | null = null;
 
   private world: World | null = null;
   /** Set at boot; battles are reported from this side's point of view. */
@@ -109,6 +133,13 @@ export class ViewStore {
 
   attach(world: World): void {
     this.world = world;
+    // A new campaign must not inherit selection or cursor state from the
+    // scenario that was just left through the menu.
+    this.selection.clear();
+    this.hovered = null;
+    this.dragBox = null;
+    this.cursorWorld = null;
+    this.objectivePlacement = null;
     this.dirty = true;
   }
 
@@ -138,6 +169,11 @@ export class ViewStore {
   clearSelection(): void {
     if (this.selection.size === 0) return;
     this.selection.clear();
+    this.dirty = true;
+  }
+
+  setObjectivePlacement(kind: StrategicObjectiveKind | null): void {
+    this.objectivePlacement = kind;
     this.dirty = true;
   }
 
@@ -180,7 +216,9 @@ export class ViewStore {
         speedKmh: effectiveSpeedKmh(d, world.weather.movement),
         terrain: TERRAIN_PROFILES[world.terrain.sample(d.position)].name,
         encircled: d.encircled,
+        encircledDays: d.encircledTicks / TICKS_PER_DAY,
         hasOrder: d.order !== null,
+        frontlineSegment: d.frontlineSegment,
         lon,
         lat,
       });
@@ -222,6 +260,27 @@ export class ViewStore {
     // Worst first: the player should see where they are losing.
     battles.sort((a, b) => a.progress - b.progress);
 
+    const objectives = [...world.strategicObjectives.values()]
+      .filter((objective) => objective.alliance === this.playerAlliance)
+      .sort((a, b) => a.createdTick - b.createdTick || (a.id < b.id ? -1 : 1))
+      .map((objective) => ({
+        id: objective.id,
+        kind: objective.kind,
+        x: objective.position.x,
+        y: objective.position.y,
+      }));
+
+    const plans = [...world.campaignPlans.values()];
+    const campaignPhase = plans.some((plan) =>
+      activeFallback(plan, world.clock.date),
+    )
+      ? 'Strategic withdrawal'
+      : plans.some((plan) => activeHalt(plan, world.clock.date))
+        ? 'Winter quarters'
+        : plans.some((plan) => activeOffensive(plan, world.clock.date))
+          ? 'Grand offensive'
+          : '';
+
     this.snapshot = {
       selection: [...this.selection],
       selectedDetails: details,
@@ -233,8 +292,12 @@ export class ViewStore {
       zoom,
       cursor,
       divisionCount: world.divisions.size,
+      frontlineSegmentCount: world.frontlineSegments.size,
+      objectives,
+      objectivePlacement: this.objectivePlacement,
       battles,
       weather: world.weather.season,
+      campaignPhase,
       encircled: [...world.divisions.values()].filter(
         (d) => d.encircled && world.getFaction(d.faction)?.alliance === this.playerAlliance,
       ).length,

@@ -21,6 +21,7 @@
 import { mkdir, writeFile, readFile, access } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import polygonClipping from 'polygon-clipping';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CACHE = join(ROOT, 'scripts', '.cache');
@@ -42,7 +43,7 @@ const THEATRES = [
   {
     id: 'eastern-front',
     label: 'Operation Barbarossa and the Eastern Front',
-    bbox: [5, 36, 53, 68],
+    bbox: [-11, 35, 51, 63.5],
     scale: '50m',
     tolerance: 0.02,
     cityRank: 7,
@@ -112,6 +113,17 @@ async function fetchCached(name) {
 
 const makeClipper = (bbox) => {
   const [minLon, minLat, maxLon, maxLat] = bbox;
+  const clipWindow = [
+    [
+      [
+        [minLon, minLat],
+        [maxLon, minLat],
+        [maxLon, maxLat],
+        [minLon, maxLat],
+        [minLon, minLat],
+      ],
+    ],
+  ];
 
   const inside = (p, edge) =>
     edge === 0 ? p[0] >= minLon : edge === 1 ? p[0] <= maxLon : edge === 2 ? p[1] >= minLat : p[1] <= maxLat;
@@ -151,6 +163,16 @@ const makeClipper = (bbox) => {
 
   const within = (p) => p[0] >= minLon && p[0] <= maxLon && p[1] >= minLat && p[1] <= maxLat;
 
+  /*
+   * A concave continent can enter and leave a theatre window several times.
+   * Sutherland-Hodgman returns one ring, so using it here joined those separate
+   * pieces across the clipping edge and produced the enormous diagonal "land"
+   * bands visible south of Turkey. polygon-clipping preserves every resulting
+   * island/piece as a proper MultiPolygon.
+   */
+  const clipPolygon = (coordinates) =>
+    polygonClipping.intersection(coordinates, clipWindow);
+
   const clipLine = (coords) => {
     const pieces = [];
     let cur = [];
@@ -165,7 +187,7 @@ const makeClipper = (bbox) => {
     return pieces.filter((p) => p.length >= 2);
   };
 
-  return { clipRing, clipLine, within };
+  return { clipRing, clipLine, clipPolygon, within };
 };
 
 /** Ramer-Douglas-Peucker. Iterative, so long rings cannot blow the stack. */
@@ -208,22 +230,28 @@ function simplify(points, tolerance) {
 const round = (p) => [Math.round(p[0] * 1e4) / 1e4, Math.round(p[1] * 1e4) / 1e4];
 
 function processGeometry(geom, clip, tolerance) {
-  const poly = (rings) => {
+  const polygons = (coordinates) => {
+    const clipped = clip.clipPolygon(coordinates);
     const out = [];
-    for (const ring of rings) {
-      const clipped = simplify(clip.clipRing(ring), tolerance).map(round);
-      if (clipped.length >= 4) out.push(clipped);
+    for (const polygon of clipped) {
+      const rings = polygon
+        .map((ring) => simplify(ring, tolerance).map(round))
+        .filter((ring) => ring.length >= 4);
+      if (rings.length) out.push(rings);
     }
-    return out.length ? out : null;
+    return out;
   };
 
   switch (geom.type) {
     case 'Polygon': {
-      const p = poly(geom.coordinates);
-      return p && { type: 'Polygon', coordinates: p };
+      const parts = polygons([geom.coordinates]);
+      if (!parts.length) return null;
+      return parts.length === 1
+        ? { type: 'Polygon', coordinates: parts[0] }
+        : { type: 'MultiPolygon', coordinates: parts };
     }
     case 'MultiPolygon': {
-      const parts = geom.coordinates.map(poly).filter(Boolean);
+      const parts = polygons(geom.coordinates);
       return parts.length ? { type: 'MultiPolygon', coordinates: parts } : null;
     }
     case 'LineString': {

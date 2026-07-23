@@ -28,6 +28,7 @@
     "@typescript-eslint/parser": "^8.18.0",
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^8.57.1",
+    "polygon-clipping": "^0.15.7",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
     "vitest": "^2.1.9"

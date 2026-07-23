@@ -50,6 +50,7 @@ html, body, #root {
 .topbar > * { pointer-events: auto; }
 
 .topbar__scenario { display: flex; flex-direction: column; }
+.topbar__scenarioLine { display: flex; align-items: center; gap: 8px; }
 .topbar__title { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.04em; }
 .topbar__count { font-size: 11px; color: var(--text-dim); }
 
@@ -88,7 +89,36 @@ html, body, #root {
 .btn:hover:not(:disabled) { background: rgba(52, 68, 86, 0.95); }
 .btn:disabled { opacity: 0.35; cursor: default; }
 .btn.is-active { background: var(--accent); border-color: var(--accent); color: var(--ink); font-weight: 600; }
+.btn--menu { min-width: 0; padding: 3px 7px; font-size: 10px; color: var(--accent); }
 .btn--wide { width: 100%; padding: 7px; }
+
+/* ------------------------------------------------------------ objectives */
+
+.objectives {
+  position: absolute;
+  top: 64px;
+  left: 12px;
+  width: 176px;
+  padding: 9px;
+  display: grid;
+  gap: 6px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  backdrop-filter: blur(3px);
+}
+.objectives__title {
+  color: var(--text-dim);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.objectives__row { display: flex; gap: 4px; }
+.objectives__place { flex: 1; text-align: left; }
+.objectives__place--attack { border-left: 3px solid #e0645a; }
+.objectives__place--defense { border-left: 3px solid #6aa9d0; }
+.objectives__clear { min-width: 26px; padding-inline: 6px; }
+.objectives__hint { color: var(--text-dim); font-size: 9px; line-height: 1.3; }
 
 /* ------------------------------------------------------------------- panel */
 
@@ -130,6 +160,7 @@ html, body, #root {
 .panel__facts dd { margin: 0; font-family: var(--font-mono); text-transform: capitalize; }
 .panel__alarm { color: #e0645a; font-weight: 600; }
 .topbar__alarm { color: #e0645a; }
+.topbar__phase { color: var(--gold); }
 
 .panel__roster { list-style: none; margin: 12px 0 0; padding: 0; font-size: 11px; }
 .panel__roster li { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }

@@ -69,8 +69,20 @@ export function hashWorld(world: World): number {
     h.float(d.organisation);
     h.float(d.morale);
     h.float(d.supply);
+    h.int(d.encircledTicks);
     h.float(d.experience);
     h.text(d.stance);
+    if (d.frontlineSegment) h.text(d.frontlineSegment);
+    else h.byte(0);
+
+    if (d.advance) {
+      h.text(d.advance.phase);
+      h.float(d.advance.target.x);
+      h.float(d.advance.target.y);
+      for (const blocker of [...d.advance.blockedBy].sort()) h.text(blocker);
+    } else {
+      h.byte(0);
+    }
 
     if (d.order) {
       h.text(d.order.kind);
@@ -87,6 +99,7 @@ export function hashWorld(world: World): number {
   // Battles are simulation state — two runs that agree on unit positions but
   // disagree on who is fighting whom have already diverged.
   h.int(world.nextBattleSerial);
+  h.int(world.nextMobilizationSerial);
   for (const id of [...world.battles.keys()].sort()) {
     const battle = world.battles.get(id)!;
     h.text(id);
@@ -101,11 +114,90 @@ export function hashWorld(world: World): number {
     }
   }
 
-  // Province ownership is the political map — simulation state that a save
-  // must reproduce and a desync must be caught by. Geometry is immutable and
-  // deterministic, so only the owner array needs hashing.
-  if (world.provinces) {
-    for (let i = 0; i < world.provinces.owner.length; i++) h.int(world.provinces.owner[i]!);
+  for (const id of [...world.frontlineSegments.keys()].sort()) {
+    const segment = world.frontlineSegments.get(id)!;
+    h.text(id);
+    h.text(segment.alliances[0]);
+    h.text(segment.alliances[1]);
+    h.float(segment.position.x);
+    h.float(segment.position.y);
+    h.float(segment.normal.x);
+    h.float(segment.normal.y);
+    h.float(segment.lengthKm);
+    h.int(segment.updatedTick);
+  }
+
+  h.int(world.nextObjectiveSerial);
+  h.int(world.objectiveRevision);
+  for (const id of [...world.strategicObjectives.keys()].sort()) {
+    const objective = world.strategicObjectives.get(id)!;
+    h.text(id);
+    h.text(objective.alliance);
+    h.text(objective.kind);
+    h.float(objective.position.x);
+    h.float(objective.position.y);
+    h.int(objective.createdTick);
+  }
+
+  for (const alliance of [...world.mobilizationProgress.keys()].sort()) {
+    h.text(alliance);
+    h.float(world.mobilizationProgress.get(alliance)!);
+  }
+  for (const alliance of [...world.mobilizationPolicies.keys()].sort()) {
+    const policy = world.mobilizationPolicies.get(alliance)!;
+    h.text(alliance);
+    h.float(policy.daysPerDivision);
+    h.float(policy.maxForceMultiplier);
+    h.float(policy.divisionsPerFrontlineSegment);
+  }
+  for (const alliance of [...world.campaignPlans.keys()].sort()) {
+    const plan = world.campaignPlans.get(alliance)!;
+    h.text(alliance);
+    if (plan.openingShock) {
+      h.float(plan.openingShock.from ?? Number.NEGATIVE_INFINITY);
+      h.float(plan.openingShock.until);
+      h.float(plan.openingShock.combatMultiplier);
+      h.float(plan.openingShock.recoveryMultiplier);
+    } else h.byte(0);
+    if (plan.fallback) {
+      h.float(plan.fallback.until);
+      h.float(plan.fallback.rearOffsetKm);
+      h.float(plan.fallback.rearward.x);
+      h.float(plan.fallback.rearward.y);
+      h.float(plan.fallback.influenceKm);
+      for (const point of plan.fallback.line) {
+        h.float(point.x);
+        h.float(point.y);
+      }
+    } else h.byte(0);
+    if (plan.halt) {
+      h.float(plan.halt.from);
+      h.float(plan.halt.until);
+      h.float(plan.halt.combatMultiplier);
+      h.float(plan.halt.recoveryMultiplier);
+    } else h.byte(0);
+    if (plan.offensive) {
+      h.float(plan.offensive.from);
+      h.float(plan.offensive.target.x);
+      h.float(plan.offensive.target.y);
+      h.float(plan.offensive.influenceKm);
+    } else h.byte(0);
+  }
+
+  for (const source of [...world.supplySources].sort((a, b) =>
+    a.name < b.name ? -1 : a.name > b.name ? 1 : 0
+  )) {
+    h.text(source.name);
+    h.text(source.alliance);
+    h.byte((source.networkRoot ?? !source.capturable) ? 1 : 0);
+  }
+
+  // Liquid control ownership is simulation state: if two peers disagree on a
+  // frontline cell, their supply sweeps and later advances will diverge.
+  if (world.supply) {
+    for (let i = 0; i < world.supply.control.length; i++) {
+      h.byte(world.supply.control[i]!);
+    }
   }
 
   return h.value;

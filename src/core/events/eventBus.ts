@@ -14,12 +14,17 @@ export type GameEvent =
   | { type: 'tick'; tick: number }
   | { type: 'orderIssued'; division: DivisionId }
   | { type: 'destinationReached'; division: DivisionId }
-  | { type: 'orderBlocked'; division: DivisionId; reason: 'impassable' | 'unreachable' }
+  | {
+      type: 'orderBlocked';
+      division: DivisionId;
+      reason: 'impassable' | 'unreachable' | 'sector-locked';
+    }
   | { type: 'battleStarted'; battle: BattleId; position: Vec2 }
   | { type: 'battleDecided'; battle: BattleId; position: Vec2; winner: FactionId | null }
   | { type: 'battleEnded'; battle: BattleId; position: Vec2 }
   | { type: 'divisionRetreating'; division: DivisionId }
   | { type: 'divisionDestroyed'; division: DivisionId; position: Vec2 }
+  | { type: 'divisionRaised'; division: DivisionId; position: Vec2 }
   | { type: 'divisionEncircled'; division: DivisionId }
   | { type: 'divisionRelieved'; division: DivisionId }
   | { type: 'supplyHubCaptured'; name: string; alliance: string };

@@ -1,6 +1,7 @@
 import type { Vec2 } from '@core/math/vec2';
 import type { Stance } from '@core/world/division';
 import type { DivisionId } from '@core/world/ids';
+import type { StrategicObjectiveKind } from '@core/world/strategicObjective';
 
 /**
  * Every mutation of the world enters through a Command.
@@ -13,9 +14,26 @@ import type { DivisionId } from '@core/world/ids';
  *   - "what did the player do?" is one place, not scattered across the UI.
  */
 export type Command =
-  | { type: 'move'; divisions: DivisionId[]; destination: Vec2; append: boolean }
+  | {
+      type: 'move';
+      divisions: DivisionId[];
+      destination: Vec2;
+      append: boolean;
+      issuer?: 'player' | 'operational-ai' | 'debug';
+    }
   | { type: 'stop'; divisions: DivisionId[] }
-  | { type: 'setStance'; divisions: DivisionId[]; stance: Stance };
+  | { type: 'setStance'; divisions: DivisionId[]; stance: Stance }
+  | {
+      type: 'setObjective';
+      alliance: string;
+      kind: StrategicObjectiveKind;
+      position: Vec2;
+    }
+  | {
+      type: 'clearObjectives';
+      alliance: string;
+      kind?: StrategicObjectiveKind;
+    };
 
 export class CommandQueue {
   private pending: Command[] = [];

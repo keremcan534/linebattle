@@ -7,7 +7,7 @@ import type { DivisionId } from './ids';
  * Milestone 1 answered "who is near this point?" with a linear scan, which was
  * honest at the time: it ran only on player clicks. Contact detection changes
  * that — it asks the same question for every division, every tick. At 400
- * divisions and 96 ticks a day, a linear scan is 15 million distance tests per
+ * divisions and 24 ticks a day, a linear scan is 3.8 million distance tests per
  * simulated day, and it grows quadratically with the order of battle.
  *
  * Rebuilt from scratch each tick rather than maintained incrementally. With a

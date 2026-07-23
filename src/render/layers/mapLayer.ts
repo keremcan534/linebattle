@@ -59,7 +59,17 @@ export class MapLayer {
   private drawSea(): void {
     const { minX, minY, maxX, maxY } = this.bounds;
     this.seaGfx.clear();
-    this.seaGfx.rect(minX, minY, maxX - minX, maxY - minY).fill(theme.map.sea);
+    const first = this.bounds.boundary?.[0];
+    if (first) {
+      this.seaGfx.moveTo(first.x, first.y);
+      for (let i = 1; i < this.bounds.boundary!.length; i++) {
+        const p = this.bounds.boundary![i]!;
+        this.seaGfx.lineTo(p.x, p.y);
+      }
+      this.seaGfx.closePath().fill(theme.map.sea);
+    } else {
+      this.seaGfx.rect(minX, minY, maxX - minX, maxY - minY).fill(theme.map.sea);
+    }
   }
 
   private drawLand(zoom: number): void {

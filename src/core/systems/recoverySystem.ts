@@ -14,17 +14,52 @@ export class RecoverySystem implements System {
 
   update(ctx: TickContext): void {
     const hours = ctx.dtSeconds / 3600;
+    const engaged = new Set(
+      [...ctx.world.battles.values()].flatMap((battle) =>
+        battle.sides.flatMap((side) => side.divisions),
+      ),
+    );
 
     for (const d of ctx.world.divisions.values()) {
-      const resting = d.order === null;
-      // Marching costs cohesion; sitting still restores it. Both scale with
-      // supply, because a formation without fuel or rations recovers slowly —
-      // and with weather, because a camp in a December field is not rest.
-      const ratePerDay = resting ? 0.25 * d.supply * ctx.world.weather.recovery : -0.05;
-      d.organisation = Math.max(
-        0,
-        Math.min(d.maxOrganisation, d.organisation + d.maxOrganisation * ratePerDay * (hours / 24)),
-      );
+      // An ADVANCE formation waiting for retreat clearance has no route yet,
+      // but it is not resting. Counting it as resting refunded the winner's
+      // combat organisation in the same 12-hour strategic tick.
+      const resting = d.order === null && d.stance === 'hold';
+      const ratio = organisationRatio(d);
+      const alliance = ctx.world.getFaction(d.faction)?.alliance;
+      const campaignRecovery = alliance
+        ? ctx.world.campaignModifiers(alliance).recovery
+        : 1;
+      if (!engaged.has(d.id)) {
+        // Normal marching creates fatigue, but cannot dissolve an army by
+        // itself. Operational AI makes frequent short alignment moves, so an
+        // unconditional marching drain eventually emptied every organisation
+        // bar even on a quiet front. Below 55% a moving formation regroups;
+        // above 70% it sheds only a small amount of parade-ground cohesion.
+        let ratePerDay = 0;
+        if (resting) {
+          ratePerDay =
+            0.25 *
+            d.supply *
+            ctx.world.weather.recovery *
+            campaignRecovery;
+        } else if (ratio > 0.7) {
+          ratePerDay = -0.015;
+        } else if (ratio < 0.55) {
+          ratePerDay =
+            0.05 *
+            d.supply *
+            ctx.world.weather.recovery *
+            campaignRecovery;
+        }
+        d.organisation = Math.max(
+          0,
+          Math.min(
+            d.maxOrganisation,
+            d.organisation + d.maxOrganisation * ratePerDay * (hours / 24),
+          ),
+        );
+      }
 
       const target = 0.4 + 0.6 * organisationRatio(d);
       d.morale += (target - d.morale) * 0.02 * hours;

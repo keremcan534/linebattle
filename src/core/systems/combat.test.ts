@@ -5,6 +5,7 @@ import { organisationRatio } from '@core/world/division';
 import { divisionId, factionId } from '@core/world/ids';
 import { TICKS_PER_DAY } from '@core/time/gameClock';
 import { ENGAGEMENT_RANGE_KM } from './contactSystem';
+import { ENEMY_MIN_SEPARATION_KM } from './movementSystem';
 
 const RED = factionId('red');
 const BLUE = factionId('blue');
@@ -85,6 +86,86 @@ describe('ContactSystem', () => {
 });
 
 describe('CombatSystem', () => {
+  it('preserves the winner combat cost through the post-combat advance wait', () => {
+    const world = createTestWorld({ seed: 'winner-cost' });
+    const attacker = addTestDivision(world, 'attacker', 200, 200, {
+      faction: RED,
+      softAttack: 42,
+      defence: 40,
+    });
+    addTestDivision(world, 'defender', 208, 200, {
+      faction: BLUE,
+      softAttack: 16,
+      defence: 18,
+      organisation: 12,
+    });
+    attacker.order = {
+      kind: 'move',
+      waypoints: [{ x: 400, y: 200 }],
+      cursor: 0,
+      bestDistance: Infinity,
+      stalledTicks: 0,
+    };
+    attacker.stance = 'move';
+    const manpowerBefore = attacker.manpower;
+    const organisationBefore = attacker.organisation;
+
+    new GameEngine(world).step();
+
+    expect(attacker.manpower).toBeLessThan(manpowerBefore);
+    expect(attacker.organisation).toBeLessThan(organisationBefore);
+  });
+
+  it('applies the scenario opening-shock combat debuff to the affected army', () => {
+    const defenderOrganisation = (shocked: boolean) => {
+      const world = createTestWorld({ seed: 'opening-shock' });
+      addTestDivision(world, 'defender', 208, 200, { faction: RED });
+      addTestDivision(world, 'attacker', 200, 200, {
+        faction: BLUE,
+        softAttack: 28,
+      });
+      if (shocked) {
+        world.configureCampaign([], [
+          {
+            alliance: 'b',
+            openingShock: {
+              until: Date.parse('1941-08-15T00:00:00Z'),
+              combatMultiplier: 0.7,
+              recoveryMultiplier: 0.7,
+            },
+          },
+        ]);
+      }
+      new GameEngine(world).step();
+      return world.getDivision(divisionId('defender'))!.organisation;
+    };
+
+    expect(defenderOrganisation(true)).toBeGreaterThan(
+      defenderOrganisation(false),
+    );
+  });
+
+  it('applies fifty percent more combat damage to an encircled target', () => {
+    const remaining = (encircled: boolean) => {
+      const world = createTestWorld({ seed: 'encircled-damage' });
+      addTestDivision(world, 'attacker', 200, 200, {
+        faction: RED,
+        softAttack: 18,
+      });
+      const defender = addTestDivision(world, 'defender', 208, 200, {
+        faction: BLUE,
+        encircled,
+      });
+      new GameEngine(world).step();
+      return defender.organisation;
+    };
+
+    const normalLoss = 50 - remaining(false);
+    const pocketLoss = 50 - remaining(true);
+    expect(pocketLoss / normalLoss).toBeGreaterThan(1.49);
+    expect(pocketLoss / normalLoss).toBeLessThan(1.8);
+  });
+
   it('is decided by strength, not by luck', () => {
     // The headline fairness claim. A strong, supplied, veteran division must
     // beat a weak one every time, across many seeds — not most of the time.
@@ -115,21 +196,32 @@ describe('CombatSystem', () => {
     expect(strongWon).toBe(trials);
   });
 
-  it('varies how long a battle takes, not who wins it', () => {
-    // The other half of the claim: randomness must actually do something.
-    const durations = new Set<number>();
+  it('varies attrition inside a twelve-hour battle window', () => {
+    const remaining = new Set<number>();
     for (let t = 0; t < 8; t++) {
-      const { ticks } = fight(
+      const { world } = fight(
         (w) => {
-          addTestDivision(w, 'a', 200, 200, { faction: RED, softAttack: 30, defence: 30 });
-          addTestDivision(w, 'b', 206, 200, { faction: BLUE, softAttack: 26, defence: 26 });
+          addTestDivision(w, 'a', 200, 200, {
+            faction: RED,
+            softAttack: 6,
+            defence: 80,
+          });
+          addTestDivision(w, 'b', 206, 200, {
+            faction: BLUE,
+            softAttack: 6,
+            defence: 80,
+          });
         },
-        20,
+        1,
         `duration-${t}`,
       );
-      durations.add(ticks);
+      remaining.add(
+        Math.round(
+          (world.getDivision(divisionId('b'))?.organisation ?? 0) * 1000,
+        ),
+      );
     }
-    expect(durations.size).toBeGreaterThan(1);
+    expect(remaining.size).toBeGreaterThan(1);
   });
 
   it('spends organisation far faster than manpower', () => {
@@ -146,6 +238,65 @@ describe('CombatSystem', () => {
       if (orgLost > 0.2) expect(menLost).toBeLessThan(orgLost);
       expect(menLost).toBeLessThan(0.6);
     }
+  });
+
+  it('lets one local sector collapse without routing the whole front', () => {
+    // All four divisions belong to one connected battle, but each strong unit
+    // faces a weak opponent in a different frontage slot. Aggregate side
+    // averages are identical, so a global combat calculation would produce a
+    // stalemate or route an entire side. Local pressure should open two holes
+    // while both sound formations remain in the line.
+    const { world } = fight(
+      (w) => {
+        addTestDivision(w, 'red-strong', 200, 200, {
+          faction: RED, softAttack: 45, defence: 45, morale: 0.95,
+        });
+        addTestDivision(w, 'blue-weak', 208, 200, {
+          faction: BLUE, softAttack: 12, defence: 12, morale: 0.45, supply: 0.45,
+        });
+        addTestDivision(w, 'red-weak', 200, 217, {
+          faction: RED, softAttack: 12, defence: 12, morale: 0.45, supply: 0.45,
+        });
+        addTestDivision(w, 'blue-strong', 208, 217, {
+          faction: BLUE, softAttack: 45, defence: 45, morale: 0.95,
+        });
+      },
+      10,
+      'local-collapse',
+    );
+
+    expect(world.getDivision(divisionId('red-weak'))?.position.x).toBeLessThan(195);
+    expect(world.getDivision(divisionId('blue-weak'))?.position.x).toBeGreaterThan(213);
+    expect(world.getDivision(divisionId('red-strong'))?.stance).not.toBe('retreat');
+    expect(world.getDivision(divisionId('blue-strong'))?.stance).not.toBe('retreat');
+  });
+
+  it('uses the defence stat to absorb incoming pressure', () => {
+    const remainingOrganisation = (defence: number) => {
+      const world = createTestWorld({ seed: 'defence-stat' });
+      const attacker = addTestDivision(world, 'attacker', 200, 200, {
+        faction: RED, softAttack: 32, defence: 20,
+      });
+      const defender = addTestDivision(world, 'defender', 208, 200, {
+        faction: BLUE, defence,
+      });
+      attacker.order = {
+        kind: 'move',
+        waypoints: [{ x: 260, y: 200 }],
+        cursor: 0,
+        bestDistance: Infinity,
+        stalledTicks: 0,
+      };
+      attacker.stance = 'move';
+
+      const engine = new GameEngine(world);
+      // Measure absorption before a broken defender leaves contact and begins
+      // recovering organisation during its retreat.
+      engine.step();
+      return organisationRatio(defender);
+    };
+
+    expect(remainingOrganisation(45)).toBeGreaterThan(remainingOrganisation(12));
   });
 
   it('rewards defending in good terrain', () => {
@@ -182,7 +333,7 @@ describe('CombatSystem', () => {
     const weak = world.getDivision(divisionId('weak'));
     // It survived, broken but reconstitutable — that is the point.
     expect(weak).toBeDefined();
-    expect(weak!.stance).toBe('retreat');
+    expect(weak!.position.x).toBeGreaterThan(220);
   });
 
   it('lets a retreating division actually escape', () => {
@@ -205,6 +356,100 @@ describe('CombatSystem', () => {
     expect(gap).toBeGreaterThan(ENGAGEMENT_RANGE_KM);
     // And it must not be dragged straight back into a new battle.
     expect(world.battles.size).toBe(0);
+  });
+
+  it('waits for a physical retreat, then starts a new advance into the vacated ground', () => {
+    const world = createTestWorld({ seed: 'post-combat-transition' });
+    const attacker = addTestDivision(world, 'attacker', 200, 200, {
+      faction: RED,
+      softAttack: 45,
+      defence: 45,
+      morale: 0.95,
+      speedKmh: 4,
+    });
+    const defender = addTestDivision(world, 'defender', 212.5, 200, {
+      faction: BLUE,
+      softAttack: 12,
+      defence: 14,
+      morale: 0.4,
+      supply: 0.3,
+      speedKmh: 4,
+    });
+    const oldDestination = { x: 500, y: 200 };
+    attacker.order = {
+      kind: 'move',
+      waypoints: [oldDestination],
+      cursor: 0,
+      bestDistance: Infinity,
+      stalledTicks: 0,
+    };
+    attacker.stance = 'move';
+
+    const engine = new GameEngine(world);
+    let attackerAtBreak: { x: number; y: number } | null = null;
+    let vacated: { x: number; y: number } | null = null;
+    let retreatFinished = false;
+    let advanceMoved = false;
+
+    for (let i = 0; i < TICKS_PER_DAY * 20; i++) {
+      engine.step();
+
+      const separation = Math.hypot(
+        defender.position.x - attacker.position.x,
+        defender.position.y - attacker.position.y,
+      );
+      expect(separation).toBeGreaterThanOrEqual(ENEMY_MIN_SEPARATION_KM);
+      expect(attacker.position.x).toBeLessThan(defender.position.x);
+
+      if (!attackerAtBreak && defender.stance === 'retreat') {
+        attackerAtBreak = { ...attacker.position };
+        vacated = { ...defender.position };
+        expect(attacker.stance).toBe('advance');
+        expect(attacker.order).toBeNull();
+        expect(attacker.advance).toEqual({
+          target: vacated,
+          blockedBy: [defender.id],
+          phase: 'waiting',
+        });
+        continue;
+      }
+
+      if (attackerAtBreak && defender.stance === 'retreat') {
+        // RETREAT is physical: until it is over, the winner is frozen in the
+        // exact position where combat ended.
+        expect(attacker.position).toEqual(attackerAtBreak);
+        expect(attacker.order).toBeNull();
+        expect(attacker.advance?.phase).toBe('waiting');
+        continue;
+      }
+
+      if (attackerAtBreak) {
+        retreatFinished = true;
+        if (Math.hypot(
+          attacker.position.x - attackerAtBreak.x,
+          attacker.position.y - attackerAtBreak.y,
+        ) > 0.05) {
+          advanceMoved = true;
+        }
+        if (advanceMoved && world.getDivision(attacker.id)?.stance === 'hold') break;
+      }
+    }
+
+    expect(attackerAtBreak).not.toBeNull();
+    expect(vacated).not.toBeNull();
+    expect(retreatFinished).toBe(true);
+    expect(advanceMoved).toBe(true);
+    expect(attacker.stance).toBe('hold');
+    expect(attacker.order).toBeNull();
+    expect(attacker.advance).toBeNull();
+    expect(Math.hypot(
+      attacker.position.x - vacated!.x,
+      attacker.position.y - vacated!.y,
+    )).toBeLessThan(1.5);
+    expect(Math.hypot(
+      attacker.position.x - oldDestination.x,
+      attacker.position.y - oldDestination.y,
+    )).toBeGreaterThan(200);
   });
 
   it('ends the battle once the sides separate', () => {

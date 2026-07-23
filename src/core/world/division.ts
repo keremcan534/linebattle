@@ -1,5 +1,6 @@
 import type { Vec2 } from '@core/math/vec2';
 import type { DivisionId, FactionId } from './ids';
+import type { FrontlineSegmentId } from './frontline';
 
 /**
  * Combat arm. Drives the NATO symbol drawn on the counter and, later, the
@@ -17,11 +18,19 @@ export type Branch =
   | 'security';
 
 /**
- * `retreat` is a real state, not a flavour of `move`: ContactSystem refuses to
- * enrol a retreating division in a new battle, which is what stops a broken
- * formation walking 500 m, coming back into range and being ground to nothing.
+ * `retreat` and `advance` are post-combat states, not flavours of a player
+ * move. The loser must physically clear the contact while the winner waits,
+ * then the winner advances only into the ground that was actually vacated.
  */
-export type Stance = 'move' | 'hold' | 'entrench' | 'retreat';
+export type Stance = 'move' | 'hold' | 'entrench' | 'retreat' | 'advance';
+
+export interface PostCombatAdvance {
+  /** The position occupied by the defender when it broke. */
+  target: Vec2;
+  /** Retreating enemies that must physically clear before the advance starts. */
+  blockedBy: DivisionId[];
+  phase: 'waiting' | 'moving';
+}
 
 /**
  * A movement order: an ordered list of world-space waypoints.
@@ -80,6 +89,10 @@ export interface Division {
 
   order: Order | null;
   stance: Stance;
+  /** Present only during the post-combat ADVANCE transition. */
+  advance: PostCombatAdvance | null;
+  /** Operational sector this formation must hold; only frontline AI reassigns it. */
+  frontlineSegment: FrontlineSegmentId | null;
 
   // --- Fighting power -------------------------------------------------------
   /** Current men under arms. */
@@ -97,6 +110,8 @@ export interface Division {
    * attrition multiplier and the warning on the counter.
    */
   encircled: boolean;
+  /** Consecutive simulation ticks spent encircled; relief resets it to zero. */
+  encircledTicks: number;
   /** 0..1 — veterancy. */
   experience: number;
 
@@ -120,18 +135,19 @@ export const organisationRatio = (d: Division): number =>
 /**
  * Effective speed in km/h before terrain is applied.
  *
- * Low supply and shattered organisation both slow a division down: a formation
- * out of fuel does not advance at parade speed. Kept here rather than in the
- * movement system so the UI can show the same number the sim uses.
+ * Organisation and manpower are fighting capacity, not road speed. A battered
+ * formation keeps its rated movement; otherwise one defeat mechanically
+ * creates a slower victim and an unavoidable chain-overrun.
  */
 export function effectiveSpeedKmh(d: Division, weatherMovement = 1): number {
+  if (d.stance === 'retreat') {
+    // Disengagement has priority over baggage and frontage dressing. It must
+    // open space faster than an ordinary advance can consume it.
+    const retreatSupply = 0.8 + 0.2 * d.supply;
+    return d.speedKmh * 1.65 * retreatSupply * weatherMovement;
+  }
+  if (d.stance !== 'move' && d.stance !== 'advance') return 0;
+
   const supplyFactor = 0.35 + 0.65 * d.supply;
-  const orgFactor = 0.5 + 0.5 * organisationRatio(d);
-  // A broken formation still moves — that is the whole point of retreating —
-  // and men in flight are not slow. What a rout lacks is cohesion, and the
-  // organisation factor above already collapses for a broken division; taxing
-  // the stance as well made routers so slow that pursuers drove straight over
-  // them, which read as "the enemy retreats in slow motion".
-  const stanceFactor = d.stance === 'move' ? 1 : d.stance === 'retreat' ? 0.9 : 0;
-  return d.speedKmh * supplyFactor * orgFactor * stanceFactor * weatherMovement;
+  return d.speedKmh * supplyFactor * weatherMovement;
 }

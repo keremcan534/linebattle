@@ -1,11 +1,54 @@
 import { describe, expect, it } from 'vitest';
 import { GameEngine } from '@core/engine/gameEngine';
 import { addTestDivision, createTestWorld } from '@core/testing/testWorld';
-import { divisionId } from '@core/world/ids';
+import { divisionId, factionId } from '@core/world/ids';
 import { TICKS_PER_DAY } from '@core/time/gameClock';
 import { Terrain, TERRAIN_PROFILES } from '@core/terrain/terrainTypes';
+import { effectiveSpeedKmh } from '@core/world/division';
+import {
+  ENEMY_MIN_SEPARATION_KM,
+  FORMED_ENEMY_MIN_SEPARATION_KM,
+  MovementSystem,
+} from './movementSystem';
 
 describe('MovementSystem', () => {
+  it('does not turn organisation or strength loss into a movement-speed penalty', () => {
+    const world = createTestWorld();
+    const fresh = addTestDivision(world, 'fresh', 100, 100, {
+      speedKmh: 3,
+      organisation: 50,
+      manpower: 10_000,
+    });
+    const battered = addTestDivision(world, 'battered', 100, 200, {
+      speedKmh: 3,
+      organisation: 3,
+      manpower: 2_000,
+    });
+    fresh.stance = 'move';
+    battered.stance = 'move';
+
+    expect(effectiveSpeedKmh(battered)).toBe(effectiveSpeedKmh(fresh));
+  });
+
+  it('moves a retreating formation faster than an ordinary advance', () => {
+    const world = createTestWorld();
+    const advancing = addTestDivision(world, 'advancing', 100, 100, {
+      speedKmh: 3,
+      supply: 1,
+    });
+    const retreating = addTestDivision(world, 'retreating', 100, 200, {
+      speedKmh: 3,
+      supply: 0,
+      organisation: 1,
+    });
+    advancing.stance = 'advance';
+    retreating.stance = 'retreat';
+
+    expect(effectiveSpeedKmh(retreating)).toBeGreaterThan(
+      effectiveSpeedKmh(advancing),
+    );
+  });
+
   it('advances a division at roughly its rated speed on plains', () => {
     const world = createTestWorld();
     const d = addTestDivision(world, 'a', 100, 100, { speedKmh: 3 });
@@ -152,11 +195,118 @@ describe('MovementSystem', () => {
     engine.step();
     engine.step();
     expect(d.prevPosition.x).toBeLessThan(d.position.x);
-    expect(d.position.x - d.prevPosition.x).toBeLessThan(2); // one tick of travel
+    expect(d.position.x - d.prevPosition.x).toBeLessThan(36.1); // one twelve-hour tick
+  });
+
+  it('treats every enemy as a solid circle and never crosses its centre', () => {
+    // Use a coarse grid and a very fast mover so one tick could otherwise
+    // tunnel completely through the defender.
+    const world = createTestWorld({ cellSize: 100 });
+    const attacker = addTestDivision(world, 'attacker', 100, 100, {
+      faction: factionId('red'),
+      speedKmh: 200,
+    });
+    const defender = addTestDivision(world, 'defender', 125, 100, {
+      faction: factionId('blue'),
+    });
+    attacker.order = {
+      kind: 'move',
+      waypoints: [{ x: 200, y: 100 }],
+      cursor: 0,
+      bestDistance: Infinity,
+      stalledTicks: 0,
+    };
+    attacker.stance = 'move';
+
+    const engine = new GameEngine(world, { systems: [new MovementSystem()] });
+    for (let i = 0; i < 20; i++) {
+      engine.step();
+      const separation = Math.hypot(
+        defender.position.x - attacker.position.x,
+        defender.position.y - attacker.position.y,
+      );
+      expect(separation).toBeGreaterThanOrEqual(FORMED_ENEMY_MIN_SEPARATION_KM);
+      expect(attacker.position.x).toBeLessThan(defender.position.x);
+    }
+
+    // Enemy geometry blocks movement, but does not silently cancel the intent
+    // before combat gets a chance to resolve it.
+    expect(attacker.order).not.toBeNull();
+  });
+
+  it('lets mobile formations exploit a real gap between hostile zones of control', () => {
+    const world = createTestWorld({ cellSize: 100 });
+    const attacker = addTestDivision(world, 'attacker', 100, 100, {
+      faction: factionId('red'),
+      branch: 'armoured',
+      speedKmh: 200,
+    });
+    addTestDivision(world, 'north', 150, 80, { faction: factionId('blue') });
+    addTestDivision(world, 'south', 150, 120, { faction: factionId('blue') });
+    attacker.order = {
+      kind: 'move',
+      waypoints: [{ x: 200, y: 100 }],
+      cursor: 0,
+      bestDistance: Infinity,
+      stalledTicks: 0,
+    };
+    attacker.stance = 'move';
+
+    new GameEngine(world, { systems: [new MovementSystem()] }).step();
+
+    expect(attacker.position.x).toBeGreaterThan(150);
+  });
+
+  it('keeps a shattered enemy solid after its wider zone of control collapses', () => {
+    const world = createTestWorld({ cellSize: 100 });
+    const attacker = addTestDivision(world, 'attacker', 100, 100, {
+      faction: factionId('red'),
+      speedKmh: 200,
+    });
+    const shattered = addTestDivision(world, 'shattered', 150, 100, {
+      faction: factionId('blue'),
+      organisation: 5,
+    });
+    attacker.order = {
+      kind: 'move',
+      waypoints: [{ x: 200, y: 100 }],
+      cursor: 0,
+      bestDistance: Infinity,
+      stalledTicks: 0,
+    };
+    attacker.stance = 'move';
+
+    new GameEngine(world, { systems: [new MovementSystem()] }).step();
+
+    const separation = Math.hypot(
+      shattered.position.x - attacker.position.x,
+      shattered.position.y - attacker.position.y,
+    );
+    expect(separation).toBeGreaterThanOrEqual(ENEMY_MIN_SEPARATION_KM);
+    expect(separation).toBeLessThan(FORMED_ENEMY_MIN_SEPARATION_KM);
+    expect(attacker.position.x).toBeLessThan(shattered.position.x);
   });
 });
 
 describe('OrderSystem', () => {
+  it('translates a group while preserving its formation', () => {
+    const world = createTestWorld();
+    const north = addTestDivision(world, 'north', 100, 100);
+    const south = addTestDivision(world, 'south', 100, 200);
+    const engine = new GameEngine(world);
+
+    engine.issue({
+      type: 'move',
+      divisions: [north.id, south.id],
+      destination: { x: 300, y: 150 },
+      append: false,
+    });
+    engine.step();
+
+    expect(north.order?.waypoints.at(-1)).toEqual({ x: 300, y: 100 });
+    expect(south.order?.waypoints.at(-1)).toEqual({ x: 300, y: 200 });
+  });
+
   it('ignores commands for unknown divisions', () => {
     const world = createTestWorld();
     const engine = new GameEngine(world);

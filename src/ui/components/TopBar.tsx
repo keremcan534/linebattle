@@ -6,17 +6,38 @@ interface Props {
   scenarioName: string;
   onSetSpeed: (speed: number) => void;
   onTogglePause: () => void;
+  onReturnToMenu: () => void;
 }
 
 /** Date, speed controls and cursor readout — the caption bar of the map animation. */
-export function TopBar({ snapshot, scenarioName, onSetSpeed, onTogglePause }: Props) {
+export function TopBar({
+  snapshot,
+  scenarioName,
+  onSetSpeed,
+  onTogglePause,
+  onReturnToMenu,
+}: Props) {
   return (
     <header className="topbar">
       <div className="topbar__scenario">
-        <span className="topbar__title">{scenarioName}</span>
+        <div className="topbar__scenarioLine">
+          <button
+            className="btn btn--menu"
+            onClick={onReturnToMenu}
+            title="Return to scenario menu"
+          >
+            Menu
+          </button>
+          <span className="topbar__title">{scenarioName}</span>
+        </div>
         <span className="topbar__count">
           {snapshot.divisionCount} divisions
+          {' · '}
+          {snapshot.frontlineSegmentCount} sectors
           {snapshot.weather && <> · {snapshot.weather}</>}
+          {snapshot.campaignPhase && (
+            <span className="topbar__phase"> · {snapshot.campaignPhase}</span>
+          )}
           {snapshot.encircled > 0 && (
             <span className="topbar__alarm"> · {snapshot.encircled} encircled</span>
           )}

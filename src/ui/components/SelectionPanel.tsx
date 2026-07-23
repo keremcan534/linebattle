@@ -39,9 +39,21 @@ export function SelectionPanel({ selected, onStop }: Props) {
             <div><dt>Speed</dt><dd>{d.speedKmh.toFixed(2)} km/h</dd></div>
             <div><dt>Terrain</dt><dd>{d.terrain}</dd></div>
             {d.encircled && (
-              <div><dt>Status</dt><dd className="panel__alarm">Encircled</dd></div>
+              <div>
+                <dt>Status</dt>
+                <dd className="panel__alarm">
+                  Encircled · day {Math.max(1, Math.ceil(d.encircledDays))}
+                </dd>
+              </div>
             )}
-            <div><dt>Stance</dt><dd>{d.hasOrder ? 'Moving' : d.stance}</dd></div>
+            <div>
+              <dt>Stance</dt>
+              <dd>{d.stance === 'advance' ? 'Advance' : d.hasOrder ? 'Moving' : d.stance}</dd>
+            </div>
+            <div>
+              <dt>Frontline</dt>
+              <dd>{d.frontlineSegment ? 'Assigned sector' : 'Unassigned'}</dd>
+            </div>
             <div><dt>Position</dt><dd>{d.lat.toFixed(2)}°N {d.lon.toFixed(2)}°E</dd></div>
           </dl>
         </div>

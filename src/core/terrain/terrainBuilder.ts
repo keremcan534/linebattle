@@ -90,61 +90,14 @@ export function buildTerrainGrid(opts: BuildTerrainOptions): TerrainGrid {
   return new TerrainGrid(opts.origin, opts.cellSize, width, height, cells, rivers);
 }
 
-// --------------------------------------------------------------- internals --
-
-export interface OwnerGridOptions {
-  projection: Projection;
-  origin: Vec2;
-  cellSize: number;
-  width: number;
-  height: number;
-  /** One entry per owner (e.g. alliance). Painted as its own mask. */
-  owners: { owner: number; features: { geometry: Geometry }[] }[];
-}
-
-/**
- * Rasterises national territory into a per-cell owner id (−1 where no owner
- * paints the cell — sea, or land inside a neutral country).
- *
- * Mask-per-owner and threshold, for exactly the reason the terrain builder
- * does: painting owners as distinct greys and decoding by value fringes every
- * international border with whatever owner id happens to sit numerically
- * between the two that actually meet — an "allies" stripe along every
- * axis/neutral frontier. A mask per owner makes each edge pixel a clean
- * choice between the two owners that truly border there.
- *
- * Later owners in the list win overlaps, which should not happen for a proper
- * country partition but keeps the result deterministic if two polygons touch.
- */
-export function buildOwnerGrid(opts: OwnerGridOptions): Int8Array {
-  const { width, height } = opts;
-  const out = new Int8Array(width * height).fill(-1);
-
-  for (const { owner, features } of opts.owners) {
-    const mask = rasterisePaint(width, height, opts, (ctx, toPx) => {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, width, height);
-      ctx.fillStyle = '#fff';
-      for (const f of features) {
-        ctx.beginPath();
-        fillGeometry(ctx, f.geometry, toPx);
-        ctx.fill('evenodd');
-      }
-    });
-    for (let i = 0; i < out.length; i++) {
-      if (mask[i]! >= COVERAGE_THRESHOLD) out[i] = owner;
-    }
-  }
-  return out;
-}
-
 type ToPixel = (lon: number, lat: number) => [number, number];
 
-/** Shared canvas rasterise for callers that carry their own projection/origin. */
-function rasterisePaint(
+// --------------------------------------------------------------- internals --
+
+function rasterise(
   width: number,
   height: number,
-  frame: { projection: Projection; origin: Vec2; cellSize: number },
+  opts: BuildTerrainOptions,
   paint: (ctx: CanvasRenderingContext2D, toPx: ToPixel) => void,
 ): Uint8Array {
   const canvas = document.createElement('canvas');
@@ -154,8 +107,8 @@ function rasterisePaint(
   if (!ctx) throw new Error('2D canvas unavailable; cannot rasterise');
 
   const toPx: ToPixel = (lon, lat) => {
-    const w = frame.projection.project(lon, lat);
-    return [(w.x - frame.origin.x) / frame.cellSize, (w.y - frame.origin.y) / frame.cellSize];
+    const w = opts.projection.project(lon, lat);
+    return [(w.x - opts.origin.x) / opts.cellSize, (w.y - opts.origin.y) / opts.cellSize];
   };
   paint(ctx, toPx);
 
@@ -163,15 +116,6 @@ function rasterisePaint(
   const out = new Uint8Array(width * height);
   for (let i = 0; i < out.length; i++) out[i] = data[i * 4]!;
   return out;
-}
-
-function rasterise(
-  width: number,
-  height: number,
-  opts: BuildTerrainOptions,
-  paint: (ctx: CanvasRenderingContext2D, toPx: ToPixel) => void,
-): Uint8Array {
-  return rasterisePaint(width, height, opts, paint);
 }
 
 function tracePolygon(ctx: CanvasRenderingContext2D, rings: Position[][], toPx: ToPixel): void {

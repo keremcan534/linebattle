@@ -58,6 +58,13 @@ export const theme = {
     waypointRadiusPx: 3,
   },
 
+  objective: {
+    attack: 0xe0645a,
+    defense: 0x6aa9d0,
+    radiusPx: 12,
+    widthPx: 2,
+  },
+
   selectionBox: {
     fill: 0x8fd0ff,
     fillAlpha: 0.12,

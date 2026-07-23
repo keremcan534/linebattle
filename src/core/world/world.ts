@@ -4,14 +4,23 @@ import { Pathfinder } from '@core/pathfinding/pathfinder';
 import type { TerrainGrid } from '@core/terrain/terrainGrid';
 import { GameClock } from '@core/time/gameClock';
 import { computeWeather, type Climate, type Weather } from '@core/weather/weather';
-import { SupplyField } from '@core/supply/supplyField';
-import { generateProvinces } from '@core/province/provinceGenerator';
-import type { ProvinceMap } from '@core/province/provinceMap';
+import {
+  SupplyField,
+  type InitialControlGrid,
+} from '@core/supply/supplyField';
 import type { Battle } from './battle';
 import type { Division } from './division';
 import type { Faction } from './faction';
+import type { FrontlineSegment, FrontlineSegmentId } from './frontline';
 import type { BattleId, DivisionId, FactionId } from './ids';
+import type { StrategicObjective, StrategicObjectiveId } from './strategicObjective';
 import { SpatialIndex } from './spatialIndex';
+import {
+  campaignModifiers,
+  type AllianceCampaignPlan,
+  type CampaignModifiers,
+  type MobilizationPolicy,
+} from './campaign';
 
 /** A depot, railhead or port that supply flows out of. */
 export interface SupplySource {
@@ -27,6 +36,11 @@ export interface SupplySource {
   rangeKm: number;
   /** Can the other side take it? Home ports and rail heads usually cannot. */
   capturable: boolean;
+  /**
+   * Root of the logistics network: capital, home port or off-map rail entry.
+   * Forward hubs only work while connected to one of these.
+   */
+  networkRoot?: boolean;
 }
 
 export interface WorldBounds {
@@ -34,7 +48,30 @@ export interface WorldBounds {
   minY: number;
   maxX: number;
   maxY: number;
+  /**
+   * Projected outline of the geographic theatre.
+   *
+   * LCC turns a lon/lat rectangle into a curved trapezium. The enclosing
+   * numeric bounds remain useful to the camera and grids, while render layers
+   * use this outline to avoid exposing the unused corners of that rectangle.
+   */
+  boundary?: readonly { x: number; y: number }[];
 }
+
+export type MobilizationCadre = Pick<
+  Division,
+  | 'faction'
+  | 'branch'
+  | 'maxManpower'
+  | 'maxOrganisation'
+  | 'morale'
+  | 'experience'
+  | 'speedKmh'
+  | 'softAttack'
+  | 'hardAttack'
+  | 'defence'
+  | 'hardness'
+>;
 
 /**
  * The complete simulation state.
@@ -60,8 +97,27 @@ export class World {
   readonly rng: Rng;
 
   readonly battles = new Map<BattleId, Battle>();
+  /** The living front is simulation state; divisions are assigned into it. */
+  readonly frontlineSegments = new Map<FrontlineSegmentId, FrontlineSegment>();
+  /** Player/AI strategic intent; operational HQ translates it into sector bias. */
+  readonly strategicObjectives = new Map<StrategicObjectiveId, StrategicObjective>();
+  nextObjectiveSerial = 1;
+  /** Incremented whenever intent changes so frontage can rebalance immediately. */
+  objectiveRevision = 0;
   /** Monotonic, so battle ids are stable across identical runs. */
   nextBattleSerial = 1;
+  /** Monotonic id source for newly raised formations. */
+  nextMobilizationSerial = 1;
+  /** Starting force and production state, keyed by alliance. */
+  readonly initialDivisionCounts = new Map<string, number>();
+  readonly mobilizationProgress = new Map<string, number>();
+  readonly mobilizationCadres = new Map<string, MobilizationCadre>();
+  readonly mobilizationPolicies = new Map<string, MobilizationPolicy>();
+  readonly campaignPlans = new Map<string, AllianceCampaignPlan>();
+  /** Immutable opening control used to measure occupied homeland. */
+  private initialControl: Uint8Array | null = null;
+  private territoryLossCacheTick = -1;
+  private readonly territoryLossCache = new Map<string, number>();
 
   /** Rebuilt every tick by ContactSystem; see SpatialIndex for why. */
   readonly index: SpatialIndex;
@@ -71,9 +127,6 @@ export class World {
   supply: SupplyField | null = null;
   readonly supplySources: SupplySource[] = [];
   climate: Climate = 'temperate';
-
-  /** The province mesh and its ownership. Null until enabled at load. */
-  provinces: ProvinceMap | null = null;
 
   /** Derived from the clock every tick — never stored, so it cannot drift. */
   weather: Weather;
@@ -99,42 +152,131 @@ export class World {
     return [...new Set([...this.factions.values()].map((f) => f.alliance))].sort();
   }
 
-  enableSupply(sources: SupplySource[], climate: Climate): void {
+  enableSupply(
+    sources: SupplySource[],
+    climate: Climate,
+    initialControl?: InitialControlGrid,
+  ): void {
     this.supplySources.push(...sources);
     this.climate = climate;
-    this.supply = new SupplyField(this.terrain);
+    this.supply = new SupplyField(this.terrain, this.alliances);
     this.weather = computeWeather(this.clock.date, climate);
+
+    if (initialControl) {
+      this.supply.initControlGrid(initialControl);
+    } else {
+      // Small synthetic/test scenarios may omit a dated political map.
+      const seeds: { x: number; y: number; alliance: string }[] = [];
+      for (const d of this.divisions.values()) {
+        const alliance = this.getFaction(d.faction)?.alliance;
+        if (alliance) {
+          seeds.push({
+            x: d.position.x,
+            y: d.position.y,
+            alliance,
+          });
+        }
+      }
+      for (const s of sources) {
+        seeds.push({
+          x: s.position.x,
+          y: s.position.y,
+          alliance: s.alliance,
+        });
+      }
+      this.supply.initControl(seeds);
+    }
+    this.initialControl = this.supply.control.slice();
+    this.prepareMobilization();
+  }
+
+  configureCampaign(
+    mobilization: readonly MobilizationPolicy[],
+    plans: readonly AllianceCampaignPlan[],
+  ): void {
+    this.mobilizationPolicies.clear();
+    this.campaignPlans.clear();
+    for (const policy of mobilization) {
+      this.mobilizationPolicies.set(policy.alliance, policy);
+    }
+    for (const plan of plans) this.campaignPlans.set(plan.alliance, plan);
+  }
+
+  campaignModifiers(alliance: string): CampaignModifiers {
+    return campaignModifiers(
+      this.campaignPlans.get(alliance),
+      this.clock.date,
+      this.territoryLossRatio(alliance),
+    );
   }
 
   /**
-   * Generates the province mesh and seeds initial ownership.
-   *
-   * Independent of supply on purpose — a scenario can have a political map
-   * without a logistics model — but it must run AFTER divisions and supply
-   * sources are placed, since those are the ownership seeds. The loader
-   * guarantees that order.
+   * Fraction of opening homeland cells no longer controlled by the alliance.
+   * Conquests elsewhere never cancel this surrender/resolve progress.
    */
-  enableProvinces(opts: { confine?: Int8Array; spacingKm?: number } = {}): void {
-    const alliances = this.alliances;
-    this.provinces = generateProvinces(this.terrain, alliances, {
-      ...(opts.spacingKm ? { spacingKm: opts.spacingKm } : {}),
-      ...(opts.confine ? { confine: opts.confine } : {}),
-    });
-
-    // With a confine grid (real national territory) ownership is already set
-    // from the map and follows the true borders. Without it — the test world,
-    // or a scenario with no nations layer — fall back to nearest-force Voronoi.
-    if (opts.confine) return;
-
-    const seeds: { x: number; y: number; alliance: string }[] = [];
-    for (const d of this.divisions.values()) {
-      const alliance = this.getFaction(d.faction)?.alliance;
-      if (alliance) seeds.push({ x: d.position.x, y: d.position.y, alliance });
+  territoryLossRatio(alliance: string): number {
+    if (!this.supply || !this.initialControl) return 0;
+    if (this.territoryLossCacheTick !== this.clock.tick) {
+      this.territoryLossCacheTick = this.clock.tick;
+      this.territoryLossCache.clear();
     }
-    for (const s of this.supplySources) {
-      seeds.push({ x: s.position.x, y: s.position.y, alliance: s.alliance });
+    const cached = this.territoryLossCache.get(alliance);
+    if (cached !== undefined) return cached;
+
+    const owner = this.supply.allianceIndex(alliance) + 1;
+    if (owner <= 0) return 0;
+
+    let initial = 0;
+    let lost = 0;
+    for (let i = 0; i < this.initialControl.length; i++) {
+      if (this.initialControl[i] !== owner) continue;
+      initial++;
+      if (this.supply.control[i] !== owner) lost++;
     }
-    this.provinces.seedOwnership(seeds, Number.POSITIVE_INFINITY);
+    const ratio = initial > 0 ? lost / initial : 0;
+    this.territoryLossCache.set(alliance, ratio);
+    return ratio;
+  }
+
+  private prepareMobilization(): void {
+    for (const alliance of this.alliances) {
+      const candidates = [...this.divisions.values()]
+        .filter((d) => this.getFaction(d.faction)?.alliance === alliance)
+        .sort(
+          (a, b) =>
+            this.cadreScore(b) - this.cadreScore(a) ||
+            (a.id < b.id ? -1 : 1),
+        );
+      this.initialDivisionCounts.set(alliance, candidates.length);
+      this.mobilizationProgress.set(alliance, 0);
+      const d = candidates[0];
+      if (!d) continue;
+      this.mobilizationCadres.set(alliance, {
+        faction: d.faction,
+        branch: d.branch,
+        maxManpower: d.maxManpower,
+        maxOrganisation: d.maxOrganisation,
+        morale: d.morale,
+        experience: d.experience,
+        speedKmh: d.speedKmh,
+        softAttack: d.softAttack,
+        hardAttack: d.hardAttack,
+        defence: d.defence,
+        hardness: d.hardness,
+      });
+    }
+  }
+
+  private cadreScore(d: Division): number {
+    const branch =
+      d.branch === 'infantry'
+        ? 100
+        : d.branch === 'security'
+          ? 60
+          : d.branch === 'mountain'
+            ? 40
+            : 0;
+    return branch + d.maxManpower / 100_000;
   }
 
   /** The battle this division is committed to, if any. */

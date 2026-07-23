@@ -5,6 +5,75 @@
   "description": "03:15, 22 June 1941. Three army groups cross the Bug and the Niemen. A representative order of battle — not every division that existed, but every formation that mattered on the first morning.",
   "startDate": "1941-06-22T03:15:00Z",
   "playerFaction": "germany",
+  "campaign": {
+    "mobilization": [
+      {
+        "faction": "germany",
+        "daysPerDivision": 7,
+        "maxForceMultiplier": 1.45,
+        "divisionsPerFrontlineSegment": 0.9
+      },
+      {
+        "faction": "soviet",
+        "daysPerDivision": 1.5,
+        "maxForceMultiplier": 2.5,
+        "divisionsPerFrontlineSegment": 1.15
+      }
+    ],
+    "plans": [
+      {
+        "faction": "soviet",
+        "openingShock": {
+          "until": "1941-12-01T00:00:00Z",
+          "combatMultiplier": 0.72,
+          "recoveryMultiplier": 0.7
+        },
+        "fallback": {
+          "until": "1941-12-01T00:00:00Z",
+          "rearward": "east",
+          "rearOffsetKm": 22,
+          "influenceKm": 1200,
+          "line": [
+            { "lon": 31, "lat": 62.5 },
+            { "lon": 30.5, "lat": 60.5 },
+            { "lon": 28.8, "lat": 58 },
+            { "lon": 27.8, "lat": 56 },
+            { "lon": 27.3, "lat": 54 },
+            { "lon": 27, "lat": 52 },
+            { "lon": 27.4, "lat": 50 },
+            { "lon": 26.4, "lat": 48 },
+            { "lon": 27.5, "lat": 46 }
+          ]
+        },
+        "halt": {
+          "from": "1941-12-01T00:00:00Z",
+          "until": "1942-05-15T00:00:00Z",
+          "combatMultiplier": 1,
+          "recoveryMultiplier": 1
+        },
+        "nationalResolve": {
+          "maximumAtTerritoryLoss": 0.5,
+          "combatMultiplier": 1.2,
+          "recoveryMultiplier": 1.35,
+          "mobilizationMultiplier": 3
+        }
+      },
+      {
+        "faction": "germany",
+        "halt": {
+          "from": "1941-12-01T00:00:00Z",
+          "until": "1942-05-15T00:00:00Z",
+          "combatMultiplier": 1,
+          "recoveryMultiplier": 0.55
+        },
+        "offensive": {
+          "from": "1942-05-15T00:00:00Z",
+          "target": { "lon": 44.516, "lat": 48.708 },
+          "influenceKm": 1300
+        }
+      }
+    ]
+  },
   "map": {
     "projection": {
       "type": "lcc",
@@ -14,10 +83,10 @@
       "lat2": 59
     },
     "bounds": {
-      "minLon": 6,
-      "minLat": 38,
+      "minLon": -11,
+      "minLat": 35,
       "maxLon": 51,
-      "maxLat": 66
+      "maxLat": 63.5
     },
     "terrainCellSizeKm": 4,
     "layers": {
@@ -25,9 +94,9 @@
       "lakes": "../geo/eastern-front/lakes.geojson",
       "rivers": "../geo/eastern-front/rivers.geojson",
       "cities": "../geo/eastern-front/cities.geojson",
+      "nations": "../geo/eastern-front/nations.geojson",
       "overlays": "../geo/eastern-front/terrain-overlays.geojson",
-      "borders": "../geo/eastern-front/borders-1941.geojson",
-      "nations": "../geo/eastern-front/nations.geojson"
+      "borders": "../geo/eastern-front/borders-1941.geojson"
     }
   },
   "factions": [
@@ -1457,14 +1526,124 @@
   ],
   "supply": {
     "climate": "continental",
+    "initialControl": {
+      "countries": [
+        {
+          "faction": "germany",
+          "names": [
+            "Germany",
+            "Austria",
+            "Poland",
+            "Czechia",
+            "Slovakia",
+            "Hungary",
+            "Romania",
+            "Bulgaria",
+            "Finland",
+            "Denmark",
+            "Norway",
+            "Netherlands",
+            "Belgium",
+            "Luxembourg",
+            "France",
+            "Italy",
+            "Albania",
+            "Slovenia",
+            "Croatia",
+            "Bosnia and Herz.",
+            "Serbia",
+            "Montenegro",
+            "North Macedonia",
+            "Greece"
+          ]
+        },
+        {
+          "faction": "soviet",
+          "names": [
+            "Russia",
+            "Belarus",
+            "Ukraine",
+            "Moldova",
+            "Lithuania",
+            "Latvia",
+            "Estonia",
+            "Armenia",
+            "Azerbaijan",
+            "Georgia",
+            "Kazakhstan"
+          ]
+        }
+      ],
+      "overrides": [
+        {
+          "faction": "soviet",
+          "polygon": [
+            { "lon": 21.05, "lat": 55.95 },
+            { "lon": 21.85, "lat": 55.75 },
+            { "lon": 22.5, "lat": 55.2 },
+            { "lon": 22.95, "lat": 54.38 },
+            { "lon": 22.7, "lat": 53.95 },
+            { "lon": 22.35, "lat": 53.55 },
+            { "lon": 21.95, "lat": 53.2 },
+            { "lon": 21.6, "lat": 52.9 },
+            { "lon": 21.75, "lat": 52.62 },
+            { "lon": 22.3, "lat": 52.35 },
+            { "lon": 23.1, "lat": 52.25 },
+            { "lon": 23.65, "lat": 52.08 },
+            { "lon": 23.58, "lat": 51.6 },
+            { "lon": 23.75, "lat": 51.1 },
+            { "lon": 23.9, "lat": 50.85 },
+            { "lon": 23.7, "lat": 50.4 },
+            { "lon": 23.25, "lat": 50.05 },
+            { "lon": 22.85, "lat": 49.8 },
+            { "lon": 22.6, "lat": 49.45 },
+            { "lon": 22.5, "lat": 49.1 },
+            { "lon": 23.2, "lat": 48.9 },
+            { "lon": 24.1, "lat": 48.55 },
+            { "lon": 25, "lat": 48.2 },
+            { "lon": 25.9, "lat": 47.95 },
+            { "lon": 26.8, "lat": 47.45 },
+            { "lon": 27.7, "lat": 46.9 },
+            { "lon": 28.65, "lat": 46.2 },
+            { "lon": 29.65, "lat": 45.2 },
+            { "lon": 51, "lat": 45.2 },
+            { "lon": 51, "lat": 55.95 }
+          ]
+        },
+        {
+          "faction": "germany",
+          "polygon": [
+            { "lon": 18.8, "lat": 53.2 },
+            { "lon": 18.8, "lat": 55.8 },
+            { "lon": 21.05, "lat": 55.95 },
+            { "lon": 21.85, "lat": 55.78 },
+            { "lon": 22.55, "lat": 55.35 },
+            { "lon": 22.85, "lat": 54.9 },
+            { "lon": 22.95, "lat": 54.38 },
+            { "lon": 22.6, "lat": 53.8 },
+            { "lon": 22.2, "lat": 53.2 }
+          ]
+        }
+      ]
+    },
     "sources": [
+      {
+        "name": "Berlin capital",
+        "faction": "germany",
+        "lon": 13.405,
+        "lat": 52.52,
+        "rangeKm": 1,
+        "capturable": false,
+        "networkRoot": true
+      },
       {
         "name": "Königsberg railhead",
         "faction": "germany",
         "lon": 20.51,
         "lat": 54.71,
         "rangeKm": 430,
-        "capturable": false
+        "capturable": false,
+        "networkRoot": false
       },
       {
         "name": "Warsaw railhead",
@@ -1472,7 +1651,8 @@
         "lon": 21.01,
         "lat": 52.23,
         "rangeKm": 470,
-        "capturable": false
+        "capturable": false,
+        "networkRoot": false
       },
       {
         "name": "Lublin railhead",
@@ -1480,7 +1660,8 @@
         "lon": 22.57,
         "lat": 51.25,
         "rangeKm": 430,
-        "capturable": false
+        "capturable": false,
+        "networkRoot": false
       },
       {
         "name": "Kraków railhead",
@@ -1488,7 +1669,8 @@
         "lon": 19.94,
         "lat": 50.06,
         "rangeKm": 400,
-        "capturable": false
+        "capturable": false,
+        "networkRoot": false
       },
       {
         "name": "Bucharest depot",
@@ -1496,7 +1678,8 @@
         "lon": 26.1,
         "lat": 44.43,
         "rangeKm": 380,
-        "capturable": false
+        "capturable": false,
+        "networkRoot": true
       },
       {
         "name": "Helsinki depot",
@@ -1504,7 +1687,8 @@
         "lon": 24.94,
         "lat": 60.17,
         "rangeKm": 360,
-        "capturable": false
+        "capturable": false,
+        "networkRoot": true
       },
       {
         "name": "Riga",
@@ -1600,7 +1784,8 @@
         "lon": 37.62,
         "lat": 55.75,
         "rangeKm": 520,
-        "capturable": true
+        "capturable": true,
+        "networkRoot": true
       },
       {
         "name": "Rostov",
@@ -1611,48 +1796,5 @@
         "capturable": true
       }
     ]
-  },
-  "nations": {
-    "owners": {
-      "DEU": "germany",
-      "POL": "germany",
-      "CZE": "germany",
-      "SVK": "germany",
-      "AUT": "germany",
-      "HUN": "germany",
-      "BGR": "germany",
-      "ITA": "germany",
-      "FRA": "germany",
-      "BEL": "germany",
-      "NLD": "germany",
-      "LUX": "germany",
-      "DNK": "germany",
-      "NOR": "germany",
-      "HRV": "germany",
-      "SRB": "germany",
-      "BIH": "germany",
-      "SVN": "germany",
-      "MNE": "germany",
-      "MKD": "germany",
-      "ALB": "germany",
-      "GRC": "germany",
-      "KOS": "germany",
-      "ROU": "romania",
-      "FIN": "finland",
-      "ALA": "finland",
-      "RUS": "soviet",
-      "UKR": "soviet",
-      "BLR": "soviet",
-      "LTU": "soviet",
-      "LVA": "soviet",
-      "EST": "soviet",
-      "MDA": "soviet",
-      "GEO": "soviet",
-      "ARM": "soviet",
-      "AZE": "soviet",
-      "KAZ": "soviet",
-      "TKM": "soviet"
-    },
-    "default": "neutral"
   }
 }

@@ -29,19 +29,21 @@ npm run dev
 | **Borders** | Hand-authored period boundaries and country labels — drawn, never enforced (toggle with `B`) |
 | **Camera** | Free pan and zoom, 0.02–4 px/km, level-of-detail city labels |
 | **Units** | 112 divisions, procedural APP-6 counters, strength and organisation bars |
-| **Movement** | Continuous, terrain-modified, with A* pathfinding around obstacles and waypoint queues |
+| **Movement** | Continuous, terrain-modified, with A* pathfinding, solid enemy collision and formed-unit zones of control |
 | **Combat** | Automatic on contact — organisation-based, terrain and supply driven, retreat and pursuit, combat bubbles |
-| **Supply** | Depots and capturable rail hubs, terrain-weighted propagation, encirclement as a consequence rather than a rule, supply map mode |
-| **Enemy AI** | A command producer like the player: blocks, defends, counterattacks — a front line emerges |
-| **Provinces** | HOI4-style province mesh per theatre; ownership from real Natural Earth borders remapped to the scenario's date — neutrals stay neutral, the front falls on true frontiers |
+| **Supply** | Binary capital connectivity: friendly territory is supplied only while a land route to a logistics root remains open; seven-day pocket collapse |
+| **Operational AI** | Executes persistent sectors and scenario phases: defensive opening doctrine, winter halts and a single-theatre Schwerpunkt without individual-unit scripting |
+| **Liquid frontline** | Scenario-authored opening control plus a persistent 16 km wash driven by physical presence; its moving boundary is divided into stable 60 km operational segments |
+| **Strategic intent** | Place up to three attack and three defense objectives; nearby headquarters concentrate sectors without turning divisions into free agents |
 | **Weather** | Rasputitsa, deep winter and desert summer, derived from the date and the scenario's climate |
-| **Simulation** | Fixed 15-minute tick, deterministic, decoupled from frame rate |
+| **Recruitment** | Continuous formation raising with scenario-specific cadence and force ceilings; recruits rapidly deploy behind the least-loaded connected front sector |
+| **Simulation** | Fixed twelve-hour strategic tick with 15-minute combat substeps, deterministic and decoupled from frame rate |
 | **Randomness** | Seeded, saveable RNG; `Math.random` banned in `core/` at lint level |
 | **Scenarios** | Pure JSON — order of battle, stats, projection and map layers are all data |
-| **Tests** | 156 tests in plain Node, no DOM — determinism, combat fairness, pathfinding, projection, scenarios |
+| **Tests** | 196 tests in plain Node, no DOM — determinism, combat fairness, pathfinding, projection, scenarios |
 
 ```bash
-npm test      # 156 tests
+npm test      # 196 tests
 npm run check # lint + typecheck + tests
 ```
 
@@ -68,8 +70,6 @@ npm run check # lint + typecheck + tests
 | Left click | Select division |
 | Left drag | Box-select your divisions |
 | Shift + click | Add to selection |
-| Right click | Move order |
-| Shift + right click | Queue a waypoint |
 | Right drag / middle drag | Pan |
 | Wheel | Zoom |
 | W A S D / arrows | Pan |
@@ -77,7 +77,6 @@ npm run check # lint + typecheck + tests
 | 1 – 5 | Game speed |
 | H | Halt selected |
 | P | Political map / front line |
-| M | Supply map mode |
 | B | Period borders (approximate, off by default) |
 | Ctrl + A | Select all your divisions |
 | Home | Fit theatre |

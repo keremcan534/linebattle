@@ -5,10 +5,10 @@ import type { ViewStore } from '@app/viewStore';
 import { Camera } from './camera';
 import { BattleLayer } from './layers/battleLayer';
 import { BorderLayer } from './layers/borderLayer';
-import { ProvinceLayer } from './layers/provinceLayer';
-import { SupplyOverlay } from './layers/supplyOverlay';
+import { ControlOverlay } from './layers/controlOverlay';
 import { MapLayer } from './layers/mapLayer';
 import { OrderLayer } from './layers/orderLayer';
+import { ObjectiveLayer } from './layers/objectiveLayer';
 import { UnitLayer } from './layers/unitLayer';
 import { theme } from './theme';
 
@@ -45,9 +45,9 @@ export class GameRenderer {
   private readonly borderLayer: BorderLayer | null;
   private readonly unitLayer: UnitLayer;
   private readonly orderLayer: OrderLayer;
+  private readonly objectiveLayer: ObjectiveLayer;
   private readonly battleLayer: BattleLayer;
-  private readonly supplyOverlay: SupplyOverlay | null;
-  private readonly provinceLayer: ProvinceLayer | null;
+  private readonly controlOverlay: ControlOverlay | null;
   private resizeObserver: ResizeObserver | null = null;
   private uiClock = 0;
   private rafHandle = 0;
@@ -66,42 +66,51 @@ export class GameRenderer {
     this.mapLayer = new MapLayer(mapData, world.projection, world.bounds);
     this.borderLayer = mapData.borders ? new BorderLayer(mapData.borders, world.projection) : null;
     this.orderLayer = new OrderLayer(world);
+    this.objectiveLayer = new ObjectiveLayer(world);
     this.unitLayer = new UnitLayer(world);
     this.battleLayer = new BattleLayer(world);
-    this.supplyOverlay = world.supply ? new SupplyOverlay(world) : null;
-    this.provinceLayer = world.provinces ? new ProvinceLayer(world) : null;
+    this.controlOverlay = world.supply ? new ControlOverlay(world) : null;
 
     // The hand-drawn period borders are approximations and the computed
-    // province map has superseded them as the political read, so they start
+    // liquid control map has superseded them as the political read, so they start
     // hidden; B brings them back for anyone who wants the treaty lines.
     this.borderLayer?.setVisible(false);
-    // The province wash is the default political view — the front line lives
+    // The control wash is the default political view — the front line lives
     // in it — so it starts on.
-    this.provinceLayer?.setVisible(true);
+    this.controlOverlay?.setVisible(true);
 
     // Draw order. Borders sit above the terrain but below anything the player
     // manipulates, so a dashed frontier can never obscure a counter. Battle
     // bubbles go on top of everything: a fight is the most urgent thing on
     // the map and must never be hidden behind a counter.
     this.worldRoot.addChild(this.mapLayer.container);
-    // Washes sit directly on the terrain, under the unit layers, so they read
-    // as properties of the ground. Provinces first, supply mode above them.
-    if (this.provinceLayer) this.worldRoot.addChild(this.provinceLayer.container);
-    if (this.supplyOverlay) this.worldRoot.addChild(this.supplyOverlay.container);
+    // The political wash sits directly on terrain and below every unit layer.
+    if (this.controlOverlay) this.worldRoot.addChild(this.controlOverlay.container);
     if (this.borderLayer) this.worldRoot.addChild(this.borderLayer.container);
     this.worldRoot.addChild(
+      this.objectiveLayer.container,
       this.orderLayer.container,
       this.unitLayer.container,
       this.battleLayer.container,
     );
 
-    // Clip every world layer to the playable bounds. The map DATA is clipped to
-    // a looser bbox than a scenario's playable area (so a theatre can crop the
-    // Aegean or the Sahara out of a 3000 km front), which left the map layer
-    // drawing bare, untinted land and city labels in the strip between the two.
-    // A bounds-rectangle mask hides that overflow cleanly for every theatre.
+    // Clip every world layer to the true projected theatre. Under LCC the
+    // geographic lon/lat rectangle is a curved trapezium, not the camera's
+    // enclosing rectangle; using that rectangle exposed unused corner strips.
     const b = world.bounds;
-    const mask = new Graphics().rect(b.minX, b.minY, b.maxX - b.minX, b.maxY - b.minY).fill(0xffffff);
+    const mask = new Graphics();
+    const first = b.boundary?.[0];
+    if (first) {
+      mask.moveTo(first.x, first.y);
+      for (let i = 1; i < b.boundary!.length; i++) {
+        const p = b.boundary![i]!;
+        mask.lineTo(p.x, p.y);
+      }
+      mask.closePath().fill(0xffffff);
+    } else {
+      // Synthetic test worlds only declare the numeric rectangle.
+      mask.rect(b.minX, b.minY, b.maxX - b.minX, b.maxY - b.minY).fill(0xffffff);
+    }
     this.worldRoot.addChild(mask);
     this.worldRoot.mask = mask;
 
@@ -140,23 +149,11 @@ export class GameRenderer {
     return this.app.canvas;
   }
 
-  /** Which side's logistics the supply overlay shows. */
-  setSupplyAlliance(alliance: string): void {
-    this.supplyOverlay?.setAlliance(alliance);
-  }
-
-  /** Toggles the province political map. Returns the new visibility. */
+  /** Toggles the liquid political map. Returns the new visibility. */
   toggleControlOverlay(): boolean {
-    if (!this.provinceLayer) return false;
-    this.provinceLayer.setVisible(!this.provinceLayer.visible);
-    return this.provinceLayer.visible;
-  }
-
-  /** Toggles the supply map mode. Returns the new visibility. */
-  toggleSupplyOverlay(): boolean {
-    if (!this.supplyOverlay) return false;
-    this.supplyOverlay.setVisible(!this.supplyOverlay.visible);
-    return this.supplyOverlay.visible;
+    if (!this.controlOverlay) return false;
+    this.controlOverlay.setVisible(!this.controlOverlay.visible);
+    return this.controlOverlay.visible;
   }
 
   /** Toggles the political overlay. Returns the new visibility. */
@@ -185,9 +182,9 @@ export class GameRenderer {
     this.borderLayer?.destroy();
     this.unitLayer.destroy();
     this.orderLayer.destroy();
+    this.objectiveLayer.destroy();
     this.battleLayer.destroy();
-    this.supplyOverlay?.destroy();
-    this.provinceLayer?.destroy();
+    this.controlOverlay?.destroy();
     this.app.destroy(true, { children: true });
   }
 
@@ -213,8 +210,8 @@ export class GameRenderer {
     const alpha = this.engine.world.clock.subTickAlpha;
     this.mapLayer.update(zoom);
     this.borderLayer?.update(zoom);
-    this.provinceLayer?.update();
-    this.supplyOverlay?.update();
+    this.controlOverlay?.update();
+    this.objectiveLayer.update(zoom);
     this.orderLayer.update(zoom, this.store.selection, this.store.dragBox);
     this.unitLayer.update(zoom, alpha, this.store.selection, this.store.hovered);
     this.battleLayer.update(zoom, deltaMS);

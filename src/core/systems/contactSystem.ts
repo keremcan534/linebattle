@@ -4,6 +4,7 @@ import type { Division } from '@core/world/division';
 import type { DivisionId } from '@core/world/ids';
 import { TERRAIN_PROFILES } from '@core/terrain/terrainTypes';
 import type { System, TickContext } from './system';
+import { FORMED_ENEMY_MIN_SEPARATION_KM } from './movementSystem';
 
 /**
  * How close two hostile divisions must be to be in contact, in km.
@@ -13,7 +14,7 @@ import type { System, TickContext } from './system';
  * the front line: too small and units slip past each other, too large and
  * battles merge into one continental brawl.
  */
-export const ENGAGEMENT_RANGE_KM = 14;
+export const ENGAGEMENT_RANGE_KM = FORMED_ENEMY_MIN_SEPARATION_KM + 0.1;
 
 /** Hysteresis — a battle survives until the sides are this far apart. */
 export const DISENGAGE_RANGE_KM = 20;

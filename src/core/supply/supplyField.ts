@@ -2,8 +2,18 @@ import type { Vec2 } from '@core/math/vec2';
 import type { TerrainGrid } from '@core/terrain/terrainGrid';
 import { Terrain, type TerrainProfile, TERRAIN_PROFILES } from '@core/terrain/terrainTypes';
 
+export interface InitialControlGrid {
+  /** One byte per control cell: 0 = neutral, otherwise 1 + alliance index. */
+  cells: Uint8Array;
+  /** Alliance lookup used by `cells`, independent of the field's sort order. */
+  alliances: readonly string[];
+}
+
+export const CONTROL_CELL_SIZE_KM = 16;
+
 /**
- * Per-alliance supply and control, on a coarse grid.
+ * Historical rationale for the coarse logistics grid (the heat field itself
+ * has since been replaced by binary capital connectivity).
  *
  * DELIBERATELY COARSER THAN TERRAIN. Supply is an operational-scale
  * phenomenon — you are never asking "can this truck reach that hedgerow", you
@@ -23,26 +33,109 @@ import { Terrain, type TerrainProfile, TERRAIN_PROFILES } from '@core/terrain/te
  * pocket whose every land route is enemy-dominated simply stops being reached
  * by the flood, and its divisions starve. That is what a Kessel *is*.
  */
+/**
+ * Presence, persistent political control and capital connectivity on 16 km
+ * cells. `network` is binary: connected land is supplied, disconnected land
+ * is not.
+ */
 export class SupplyField {
   readonly width: number;
   readonly height: number;
   readonly origin: Vec2;
 
-  private readonly supply = new Map<string, Float32Array>();
   private readonly presence = new Map<string, Float32Array>();
+  /** Cells with an unbroken land route back to an alliance logistics root. */
+  private readonly network = new Map<string, Uint8Array>();
 
   /** Terrain cost multiplier per cell, precomputed: 0 means impassable. */
   readonly throughput: Float32Array;
 
+  /**
+   * Who holds each cell: 0 = nobody, otherwise 1 + alliance index.
+   *
+   * This is the liquid political map. Ownership persists until another side
+   * actually dominates the cell, so the coloured boundary moves
+   * continuously with the armies instead of jumping province by province.
+   */
+  readonly control: Uint8Array;
+  readonly controlAlliances: readonly string[];
+
   constructor(
     private readonly terrain: TerrainGrid,
-    readonly cellSize = 16,
+    alliances: readonly string[],
+    readonly cellSize = CONTROL_CELL_SIZE_KM,
   ) {
     this.width = Math.ceil(terrain.worldWidth / cellSize);
     this.height = Math.ceil(terrain.worldHeight / cellSize);
     this.origin = terrain.origin;
     this.throughput = new Float32Array(this.width * this.height);
+    this.control = new Uint8Array(this.width * this.height);
+    this.controlAlliances = [...alliances].sort();
     this.bakeThroughput();
+  }
+
+  allianceIndex(alliance: string): number {
+    return this.controlAlliances.indexOf(alliance);
+  }
+
+  /**
+   * Seeds the initial line from the nearest deployed formation or supply hub.
+   * Open water remains neutral because its throughput is zero.
+   */
+  initControl(
+    seeds: readonly { x: number; y: number; alliance: string }[],
+    maxRangeKm = 350,
+  ): void {
+    const indexed = seeds
+      .map((s) => ({ x: s.x, y: s.y, idx: this.allianceIndex(s.alliance) }))
+      .filter((s) => s.idx >= 0);
+    const maxDistanceSq = maxRangeKm * maxRangeKm;
+
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        const i = y * this.width + x;
+        if (this.throughput[i]! <= 0) continue;
+
+        const cx = this.origin.x + (x + 0.5) * this.cellSize;
+        const cy = this.origin.y + (y + 0.5) * this.cellSize;
+        let bestAlliance = -1;
+        let bestDistanceSq = maxDistanceSq;
+
+        for (const seed of indexed) {
+          const dx = seed.x - cx;
+          const dy = seed.y - cy;
+          const distanceSq = dx * dx + dy * dy;
+          if (distanceSq < bestDistanceSq) {
+            bestDistanceSq = distanceSq;
+            bestAlliance = seed.idx;
+          }
+        }
+
+        if (bestAlliance >= 0) this.control[i] = bestAlliance + 1;
+      }
+    }
+  }
+
+  /**
+   * Loads scenario-authored political control instead of guessing the opening
+   * frontier from the locations of deployed units and depots.
+   */
+  initControlGrid(initial: InitialControlGrid): void {
+    if (initial.cells.length !== this.control.length) {
+      throw new Error(
+        `Initial control grid has ${initial.cells.length} cells; expected ${this.control.length}`,
+      );
+    }
+
+    this.control.fill(0);
+    for (let i = 0; i < initial.cells.length; i++) {
+      if (this.throughput[i]! <= 0) continue;
+      const sourceAlliance = initial.alliances[initial.cells[i]! - 1];
+      const targetIndex = sourceAlliance
+        ? this.allianceIndex(sourceAlliance)
+        : -1;
+      if (targetIndex >= 0) this.control[i] = targetIndex + 1;
+    }
   }
 
   /**
@@ -93,20 +186,20 @@ export class SupplyField {
     }
   }
 
-  fieldFor(alliance: string): Float32Array {
-    let field = this.supply.get(alliance);
-    if (!field) this.supply.set(alliance, (field = new Float32Array(this.width * this.height)));
-    return field;
-  }
-
   presenceFor(alliance: string): Float32Array {
     let field = this.presence.get(alliance);
     if (!field) this.presence.set(alliance, (field = new Float32Array(this.width * this.height)));
     return field;
   }
 
+  networkFor(alliance: string): Uint8Array {
+    let field = this.network.get(alliance);
+    if (!field) this.network.set(alliance, (field = new Uint8Array(this.width * this.height)));
+    return field;
+  }
+
   get alliances(): string[] {
-    return [...this.supply.keys()].sort();
+    return [...this.controlAlliances];
   }
 
   indexAt(p: Vec2): number {
@@ -125,14 +218,42 @@ export class SupplyField {
     };
   }
 
-  supplyAt(alliance: string, p: Vec2): number {
-    const i = this.indexAt(p);
-    return i < 0 ? 0 : this.fieldFor(alliance)[i]!;
-  }
-
   presenceAt(alliance: string, p: Vec2): number {
     const i = this.indexAt(p);
     return i < 0 ? 0 : this.presenceFor(alliance)[i]!;
+  }
+
+  networkAt(alliance: string, p: Vec2): boolean {
+    const i = this.indexAt(p);
+    return i >= 0 && this.networkFor(alliance)[i] === 1;
+  }
+
+  /**
+   * Closest secure cell on the capital-linked logistics network.
+   *
+   * Used by operational AI to withdraw a formation from a closing pocket.
+   * A full scan is cheap on the coarse field and only happens for threatened
+   * formations during the three-hour AI review.
+   */
+  nearestNetworkPoint(alliance: string, p: Vec2): Vec2 | null {
+    const network = this.networkFor(alliance);
+    const owner = this.allianceIndex(alliance) + 1;
+    let best = -1;
+    let bestDistanceSq = Infinity;
+
+    for (let i = 0; i < network.length; i++) {
+      if (network[i] !== 1 || this.control[i] !== owner) continue;
+      const centre = this.centreOf(i);
+      const dx = centre.x - p.x;
+      const dy = centre.y - p.y;
+      const distanceSq = dx * dx + dy * dy;
+      if (distanceSq < bestDistanceSq) {
+        bestDistanceSq = distanceSq;
+        best = i;
+      }
+    }
+
+    return best >= 0 ? this.centreOf(best) : null;
   }
 }
 

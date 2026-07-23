@@ -22,14 +22,14 @@ The dependency graph is a **tree, not a knot**. `core/` compiles and runs under 
 
 ## 2. Fixed timestep
 
-One tick = **15 game-minutes**, always. Speed controls change how many ticks run per real second (`SPEED_TABLE`), never the size of a tick.
+One strategic tick = **twelve game-hours**, always. Speed controls change how many ticks run per real second (`SPEED_TABLE`), never the size of a tick. Combat still resolves the interval in deterministic 15-minute substeps, preserving the proven casualty and break-off cadence without putting quarter-hour timestamps back in the campaign clock.
 
 Why this matters more than it looks: with a variable timestep, a player on a 144 Hz monitor gets different combat results than one on 30 fps, saves cannot be reproduced, and replays are impossible. Determinism is nearly free if designed in on day one and close to unaffordable to retrofit — every system written against variable `dt` has to be rewritten.
 
 Consequences we accepted deliberately:
 - The clock stores an integer `tick`; the date is **derived**, never stored, so it cannot drift.
 - `advance()` caps ticks per frame so a backgrounded tab does not enter a death spiral on return.
-- Rendering interpolates between `prevPosition` and `position` (`subTickAlpha`), so units glide at 60 fps while the sim steps 4×/game-hour.
+- Rendering interpolates between `prevPosition` and `position` (`subTickAlpha`), so units glide at 60 fps while the campaign clock advances in half-days.
 
 ---
 
@@ -165,7 +165,7 @@ The brief asked for results driven by unit statistics, terrain, supply, organisa
 
 **Organisation is the currency, not manpower.** Divisions break long before they are destroyed: a formation that has lost cohesion stops being able to fight and falls back, having lost perhaps a tenth of its men. A full bar of organisation is worth about 13% of a division's strength, so *a single battle cannot annihilate anyone* — which is why encirclement (Milestone 3) will be so much deadlier than frontal assault, and why a broken army can be reconstituted.
 
-**A battle is a relationship, not a place.** It owns no ground and no units, only ids. Divisions keep marching, taking losses and being ordered around while it exists. Battles form by transitive clustering — any two hostile divisions in range join the same engagement, and so does anyone in range of them — so a continuous front behaves like a front instead of a hundred separate duels. They are rebuilt from scratch each tick and inherit the id of the battle they most overlap, so the UI sees one continuous engagement rather than a new one every fifteen minutes.
+**A battle is a relationship, not a place.** It owns no ground and no units, only ids. Divisions keep marching, taking losses and being ordered around while it exists. Battles form by transitive clustering — any two hostile divisions in range join the same engagement, and so does anyone in range of them — so a continuous front behaves like a front instead of a hundred separate duels. They are rebuilt from scratch each strategic tick and inherit the id of the battle they most overlap, so the UI sees one continuous engagement rather than a new one every hour.
 
 **Attacking is a state, not an intent.** A side attacks when it has a live move order. That is what earns the other side its terrain bonus, and it is why sitting in a forest is worth doing.
 
@@ -193,15 +193,25 @@ Raw grid paths are staircases of hundreds of cells, so the result is string-pull
 
 **Supply is deliberately coarser than terrain** — 16 km cells against 4 km, ~51k cells instead of 821k. You are never asking "can this truck reach that hedgerow", you are asking "is this corps in supply". Finer resolution would be sixteen times the work for an answer nobody can act on.
 
-**Encirclement is not special-cased.** Supply floods outward from depots by Dijkstra and simply cannot enter cells the enemy dominates. A pocket whose every land route is enemy-held stops being reached, and its divisions starve. That *is* what a Kessel is, and getting it as a consequence rather than as a rule means it works for shapes nobody anticipated.
+**Encirclement is connectivity, not low supply.** A cardinal flood from each alliance's capital/root network crosses only passable neutral or friendly-controlled cells and cannot cut diagonally through touching enemy zones. Forward depots distribute supply only when this root network reaches them. A spearhead beyond a hub's range is therefore undersupplied but not automatically encircled; only a formation physically disconnected from its rear network is a pocket.
 
 **Supply is read from the slack left in the line, not from distance travelled.** While a route still has 150 km of reach in hand the formation at the end wants for nothing; below that it goes short, hitting zero at the limit. The obvious alternative — supply proportional to remaining range — taxes a division 70 km behind its own railhead at 18%, which is nonsense, and has to be normalised against some nominal range so scenarios with shorter depots could never reach full supply anywhere.
 
 **Supply lags.** A division carries days of stores, so being cut off is a strangulation rather than a switch — and a spearhead can outrun its trucks briefly and get away with it, which is the decision the whole campaign turns on.
 
-**Attrition is what makes encirclement lethal.** Combat cannot destroy a division (organisation breaks first), so starvation in a pocket is the only reliable way to remove one from the map — exactly how 1941 actually worked.
+**Attrition and local cleanup make encirclement lethal.** Isolation is continuous state: the first day is a grace period, then manpower, morale and organisation collapse progressively. Encircled targets also receive 50% more combat damage. Pocket contours are excluded from the main frontline; at most two nearby foot divisions clear each one while armour and motorised formations keep exploiting the living front. A formation still sealed, unsupplied and broken after seven days surrenders and is removed. Reopening a route resets the isolation clock completely.
 
-### Hubs had to become capturable
+**Reinforcement has two symmetric layers.** A surviving, supplied formation receives returning wounded and replacement drafts whether it belongs to the player or AI. Holding formations absorb them fastest, moving formations at half rate; engaged, retreating, encircled or disconnected formations receive none. Separately, mobilisation continuously organises new formations up to a scenario-declared force ceiling or the density required by a growing liquid frontage. Cadence is data: Barbarossa raises a Soviet division every 1.5 days and an Axis division every seven days. New formations rapidly deploy behind the least-loaded capital-connected sector and immediately inherit that assignment.
+
+**Campaign phases are strategic constraints, not scripted unit paths.** A scenario may declare an opening-shock modifier, a defensive fallback doctrine, an operational halt and one later grand-offensive target. Operational HQ still assigns and moves every formation normally. During Barbarossa the Soviet opening phase raises the local superiority threshold without ordering every division toward one shared fallback point; the Axis holds winter quarters, then nearby sectors and formations concentrate toward the Stalingrad Schwerpunkt. Dates derive the phase, so no mutable campaign flag can drift between deterministic runs.
+
+### Why the old hub flood was removed
+
+The following measurements describe the retired range-based model. It was
+replaced because depot reach still produced false starvation corridors and
+detached heat islands. Logistics is now binary: friendly-held land either has
+a passable, non-interdicted route to Berlin, Moscow, Bucharest or Helsinki, or
+it is disconnected. Forward cities no longer manufacture supply.
 
 The first version had fixed depots, and measuring it exposed a fundamental error rather than a tuning problem. A general German advance on Barbarossa:
 
@@ -220,7 +230,7 @@ The Wehrmacht destroyed itself in two months without the Red Army doing much of 
 
 with hubs falling as the front passes them — Lviv 24 Jun, Vilnius 26 Jun, Kyiv 6 Jul, Minsk 21 Jul, Smolensk 19 Aug. **This is the clearest case in the project of a measurement changing a design rather than confirming one.**
 
-### Cost
+### Former flood cost
 
 The flood is the most expensive thing in the simulation: 5.7 ms per pass, amortised to **1.36 ms/tick** against 0.10 ms for everything else. It runs once a game-hour, not every tick — supply fronts move at the speed of armies. Reusing the scratch buffers instead of allocating per alliance per pass took it from 2.46 to 1.36 ms/tick; the same generation-buffer technique as the pathfinder, for the same reason. `RECOMPUTE_INTERVAL` is the knob if it ever needs to be cheaper.
 
@@ -232,35 +242,54 @@ The flood is the most expensive thing in the simulation: 5.7 ms per pass, amorti
 
 Three changes driven directly by the first real playtest ("the enemy retreats in slow motion and we drive over them; there is no front line; the borders are wrong").
 
-**The AI is just another command producer.** `AiSystem` pushes into the same queue the player uses — the payoff of the Milestone 1 command-pattern decision, collected on schedule. It never touches a division directly, consumes no randomness, and visits divisions in sorted order, so it is a pure deterministic function of world state and replays don't even need to record it. Doctrine is minimal and defensive: stand when engaged (dropping any move order, because a side with orders counts as *attacking* and forfeits the terrain bonus), block approaching enemies at a standoff, counterattack only from clear local superiority, and hold quiet sectors. A claim limit stops defenders dogpiling one spearhead — which is what makes a *front* emerge instead of a scrum.
+**The AI is just another command producer.** `AiSystem` pushes into the same queue used by post-combat transitions and debug tools. It never touches a division directly, consumes no randomness, and visits divisions in sorted order, so it is a pure deterministic function of world state. In shipped scenarios it operates both sides: the player supplies strategic intent while operational headquarters turns persistent frontage assignments into movement orders.
 
 **Exclusion from battle must not mean immunity.** Retreating divisions are excluded from battles by design, but the first version made that literal invulnerability: you could drive a panzer division through a routing enemy and neither noticed. Now a router caught within 10 km of a formed enemy takes one-sided overrun losses. Pursuit is where beaten armies actually died, and now it is worth doing. Rout speed also stopped double-taxing the stance — a fleeing mob is not slow, it is incoherent, and the organisation factor already models that.
 
-**The political map is computed, not drawn.** Control of each 16 km cell seeds from a nearest-presence Voronoi over starting units and depots, then updates two ways: *domination* (your troops clearly outweigh everyone else's there) and the *logistics sweep* (nobody stands there and exactly one side's supply reaches it — which paints the ground behind an advance and, for free, keeps pockets their defender's colour until they die). The tinted wash is HOI4-style; the boundary between tints IS the front line, and it can never disagree with the game state, which hand-authored border lines by construction could — and did. The hand-drawn 1941 treaty lines survive as an optional overlay (`B`), clearly labelled approximate, hidden by default.
+**The political map starts historical, then becomes physical.** Scenario country groups and ordered frontier overrides rasterise dated opening ownership directly onto the 16 km field; reserve placement can no longer drag the 22 June border toward Moscow. From the first tick onward, clear local presence changes control and empty rear areas retain their owner. The tinted wash is HOI4-style; the boundary between tints IS the front line. The hand-drawn 1941 treaty lines survive as an optional overlay (`B`), clearly labelled approximate, hidden by default.
 
 A latent bug surfaced here: supply throughput sampled terrain by integer cell ratio, correct only when the supply cell divides evenly by the terrain cell. The shipped scenarios divided evenly *by accident*; the 10 km test world did not, and a third of its map baked as impassable to supply. Overlap is now computed in world coordinates.
 
 ---
 
-## 7f. Provinces
+## 7f. Liquid frontline, not provinces
 
-The political map is a **province mesh**, not a fuzzy per-cell control field and not hand-drawn lines. This is the HOI4 backbone, but generated to fit our theatres rather than imported — a pasted screenshot of HOI4's map is not usable data, and its whole-world Mercator grid would not match our three regional projections anyway.
+The province experiment was removed after playtesting. Discrete ownership
+polygons made a continuous campaign advance in visible chunks and introduced a
+second spatial model that could disagree with divisions moving in kilometres.
 
-**Generation** (`provinceGenerator.ts`): scatter seeds on a jittered grid over passable terrain, then grow every seed at once with a multi-source breadth-first flood. Each land cell joins whichever front reaches it first — a Manhattan-metric Voronoi, chunky and contiguous, in one O(cells) pass. Water is left unassigned so the sea is nobody's ground. Jitter comes from a local RNG, not `world.rng`, so the mesh is reproducible AND generating it never perturbs the simulation stream. Measured: 4282 provinces for the Eastern Front in 84 ms at load, one time.
+`SupplyField.control` is again authoritative. Each 16 km cell keeps its owner
+until one side clearly dominates it, while empty ground follows uncontested
+logistical reach. This gives gains persistence, fills the rear of an advance,
+and lets pockets retain their colour while their supply is cut.
 
-**Geometry is immutable; ownership is simulation state.** `ProvinceMap` splits the two: the shapes never change (regenerating would invalidate every save), only the `owner` array moves, and that array is hashed and saved with everything else. `provinces[k].id === k` is an invariant — empty seeds are compacted out and neighbour ids remapped — so every consumer can index directly.
+`ControlOverlay` renders that field as a translucent wash. A cell bordering a
+different non-neutral owner is painted as the dark contour, so the political
+boundary and frontline are the same data. There is no province graph, capture
+step, or polygon seam; movement, collision and post-combat advance all remain
+continuous.
 
-**Ownership** (`provinceSystem.ts`) changes two ways: **seizure** (your divisions in a province clearly outweigh everyone else's — the front physically moving) and the **logistics sweep** (nobody stands there, but exactly one side's supply reaches it and it touches ground that side holds — which paints the rear behind an advance and keeps a pocket its defender's colour until they die, since supply cannot enter a Kessel). Initial ownership seeds by nearest force or depot with no range cap: depots sit at national centres (Moscow, Berlin, Bucharest), so the whole theatre fills from the start and the boundary between the two clusters falls naturally along the historical front. Verified: Berlin/Warsaw/Bucharest axis, Moscow/Kyiv/Leningrad/Brest Soviet — no hand-authored nationality data anywhere.
+The boundary is also the operational object. `FrontlineSystem` samples it into
+stable 60 km segments and assigns every division to one of them. Assignments
+persist while the line moves and are rebalanced only by operational AI.
+`AiSystem` targets the assigned segment's hold or advance point, never an enemy
+counter. Local enemy strength changes whether the sector holds or advances,
+but cannot lure a division away from its frontage. Player-issued division
+movement is sector-locked; the player will influence these assignments through
+strategic priorities rather than tactical micro.
 
-**Rendering** (`provinceLayer.ts`): one texture at terrain resolution, cell → province → owner → colour. The boundary between two owners is drawn bold and opaque — that IS the front line, no separate geometry, and it can never disagree with the game state the way drawn borders did. Faint internal province seams give the familiar HOI4 mosaic.
+With no strategic objectives, assignment is strictly load-first per alliance:
+every empty sector is filled before a second division is stacked. Attack and
+defense objectives deliberately relax that equality locally.
 
-This retired the per-cell control field and its overlay entirely; the hand-drawn treaty borders survive only behind `B`, labelled approximate.
-
-**Ownership comes from real national territory, not unit proximity.** The first version seeded ownership by nearest force/depot — which split neutral Turkey half-Axis half-Soviet and put the front on a Voronoi line rather than a real border. The fix is data-driven: Natural Earth's modern country polygons (`nations.geojson`), remapped to each country's owner at the scenario's date by a small table in the scenario JSON (`nations.owners`, keyed by `ADM0_A3`). This is historically elegant because post-war borders largely codified the 1939–40 Soviet gains, so the modern Poland/Ukraine and Romania/Moldova borders already sit almost exactly on the 1941 front — the Baltics and Bessarabia come out Soviet, Turkey and Sweden neutral, all without a hand-drawn 1940s frontier.
-
-The country grid also *confines generation*: a province may not cross an owner boundary, so every province edge along a frontier falls exactly on it and a province's initial owner is read straight off the region it sits in. The old nearest-seed path survives only as a fallback for worlds with no nations layer (the test harness). Verified across all three theatres: Berlin/Warsaw axis, Moscow/Riga/Kishinev Soviet, Ankara/Stockholm/Dublin/Algiers neutral.
-
-**What this is NOT, yet.** Provinces are the political and territorial backbone, but movement is still continuous and units can still pass between each other — province-graph movement (a division pinned in a province it is fighting for, blocked from slipping past a held enemy province) is the next step. This commit is the foundation the "full province system" decision asked for; the gameplay layer builds on it.
+Strategic objectives are persistent World state and enter through the same
+command stream. Each alliance may hold three attack and three defense points.
+They are not movement destinations: `FrontlineSystem` lowers assignment cost
+for nearby sectors and allows those sectors to carry more formations.
+`AiSystem` then lowers the local superiority threshold near an attack target
+or refuses opportunistic advances near a defense target. The physical sector
+remains the destination in both cases, so objectives bend the living front
+without making divisions chase map coordinates.
 
 ---
 
@@ -276,7 +305,7 @@ See [SCENARIO_FORMAT.md](SCENARIO_FORMAT.md).
 
 ## 9. Testing
 
-`npm test` runs 44 tests in **plain Node with no DOM**. That environment is itself an assertion: if a test in `core/` ever needs jsdom, a browser dependency has leaked into the simulation.
+`npm test` runs 196 tests in **plain Node with no DOM**. That environment is itself an assertion: if a test in `core/` ever needs jsdom, a browser dependency has leaked into the simulation.
 
 The suite is weighted towards claims that are expensive to discover being wrong:
 

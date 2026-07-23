@@ -1,12 +1,20 @@
 import type { CommandQueue } from '@core/commands/commands';
 import { distanceSq } from '@core/math/vec2';
-import type { Division } from '@core/world/division';
+import { organisationRatio, strengthRatio, type Division } from '@core/world/division';
+import { directionForAlliance, type FrontlineSegment } from '@core/world/frontline';
 import type { DivisionId } from '@core/world/ids';
+import type { World } from '@core/world/world';
+import { ticksForHours } from '@core/time/gameClock';
 import { ENGAGEMENT_RANGE_KM } from './contactSystem';
 import type { System, TickContext } from './system';
+import {
+  activeFallback,
+  activeHalt,
+  activeOffensive,
+} from '@core/world/campaign';
 
-/** Ticks between AI decisions. 12 = one order review every three game-hours. */
-const AI_INTERVAL_TICKS = 12;
+/** One order review every three game-hours, independent of tick granularity. */
+const AI_INTERVAL_TICKS = ticksForHours(3);
 /** How far a division "sees" threats, in km. */
 const PERCEPTION_KM = 200;
 /** React by moving once an enemy is this close; further away, hold ground. */
@@ -17,37 +25,30 @@ const STANDOFF_KM = 8;
 const CLAIM_LIMIT = 3;
 /** Radius for judging local superiority before counterattacking. */
 const LOCAL_KM = 45;
+/** Position held just behind the liquid control boundary. */
+const SECTOR_HOLD_DEPTH_KM = 7;
+/** Limited penetration on superiority; combat advances the line beyond this. */
+const SECTOR_ADVANCE_DEPTH_KM = 12;
+/** Avoid path churn once a formation is effectively in its frontage slot. */
+const SECTOR_TOLERANCE_KM = 5;
+/** Local power ratio required before a segment is allowed to advance. */
+const ADVANCE_POWER_RATIO = 1.3;
+const OBJECTIVE_INFLUENCE_KM = 900;
+const POCKET_CLEANUP_RADIUS_KM = 220;
+const POCKET_CLEANERS_PER_TARGET = 2;
 
 /**
- * The opposing side's brain.
+ * Deterministic operational headquarters for every managed alliance.
  *
- * It is deliberately nothing more than another producer of Commands into the
- * same queue the player uses — the payoff of the command-pattern decision made
- * in Milestone 1. It never mutates the world, never touches a division
- * directly, and a replay of the command stream doesn't even need to record it,
- * because it is a pure, deterministic function of world state: divisions are
- * visited in sorted id order and no randomness is consumed.
+ * A division with a frontline assignment treats that segment—not an enemy
+ * counter—as its destination. Nearby combat power only decides whether it
+ * holds behind the boundary or advances a limited distance through it. This
+ * preserves sector ownership and prevents tactical targets from pulling units
+ * out of line. The legacy threat response below remains only as a safe fallback
+ * for synthetic worlds that have no liquid-control frontage.
  *
- * The doctrine is minimal and defensive, which fits every shipped scenario
- * (the player holds the historical initiative in all three):
- *
- *  - enemy adjacent        → stand. Drop any move order, because a side with
- *                            orders counts as ATTACKING and forfeits the
- *                            terrain bonus. Standing still is the AI fighting
- *                            well, not the AI doing nothing.
- *  - enemy within reach    → move to a blocking position just short of it —
- *                            or onto it, when friends clearly outnumber the
- *                            local enemy (the counterattack).
- *  - nobody in perception  → hold. An AI that repositions idle divisions
- *                            turns the rear into a washing machine.
- *
- * The claim limit is what makes a *front* emerge instead of a dogpile: each
- * enemy spearhead can only attract so many defenders, so the rest spread to
- * the next threat along the line.
- *
- * What it is not, yet: it mounts no offensives of its own and guards no
- * specific objectives. That is the Milestone 4 operational layer, and it will
- * be built on formations, not divisions.
+ * The system produces Commands and never mutates divisions directly. Sorted
+ * traversal and zero randomness keep replays deterministic.
  */
 export class AiSystem implements System {
   readonly name = 'ai';
@@ -76,9 +77,31 @@ export class AiSystem implements System {
     own.sort((a, b) => (a.id < b.id ? -1 : 1));
 
     const claims = new Map<DivisionId, number>();
+    const cleanupClaims = new Map<DivisionId, number>();
 
     for (const d of own) {
-      if (d.stance === 'retreat') continue;
+      // Post-combat RETREAT and ADVANCE own their transitions; operational AI
+      // must not overwrite either with a fresh strategic order mid-sequence.
+      if (d.stance === 'retreat' || d.stance === 'advance') continue;
+
+      const alliance = world.getFaction(d.faction)?.alliance;
+      if (!alliance) continue;
+
+      // A pocketed formation tries to reopen contact with its capital-linked
+      // supply network. Waiting in place made Soviet counters calmly watch the
+      // ring close around them; a breakout is now an operational priority.
+      if (d.encircled) {
+        if (!this.withdrawToNetwork(d, alliance, world) && d.order) {
+          this.queue.push({ type: 'stop', divisions: [d.id] });
+        }
+        continue;
+      }
+
+      // Scenario-level operational phases sit above tactical contact. During
+      // the Soviet withdrawal, a division disengages toward the prepared line
+      // instead of waiting to be enveloped; during winter quarters an army
+      // holds its assigned sector and does not begin fresh attacks.
+      if (this.executeCampaignDirective(d, alliance, world)) continue;
 
       if (engaged.has(d.id)) {
         // Committed to a battle: fight it as a defender, not as an attacker
@@ -87,9 +110,31 @@ export class AiSystem implements System {
         continue;
       }
 
+      // Pocket contours are not part of the main frontage. At most two nearby
+      // foot formations clean each trapped enemy; armour and motorised troops
+      // remain available for exploitation on the living front.
+      const pocket = this.claimPocketTarget(d, world, cleanupClaims);
+      if (pocket) {
+        this.orderToward(d, pocket.position);
+        continue;
+      }
+
+      const segment = d.frontlineSegment
+        ? world.frontlineSegments.get(d.frontlineSegment)
+        : undefined;
+      if (alliance && segment && segment.alliances.includes(alliance)) {
+        this.operateAssignedSegment(d, alliance, segment, world);
+        continue;
+      }
+
       const threats = world
         .divisionsNear(d.position.x, d.position.y, PERCEPTION_KM)
-        .filter((o) => o.stance !== 'retreat' && world.hostile(d.faction, o.faction))
+        .filter(
+          (o) =>
+            !o.encircled &&
+            o.stance !== 'retreat' &&
+            world.hostile(d.faction, o.faction),
+        )
         .sort(
           (a, b) =>
             distanceSq(d.position, a.position) - distanceSq(d.position, b.position) ||
@@ -125,7 +170,221 @@ export class AiSystem implements System {
       const last = d.order?.waypoints[d.order.waypoints.length - 1];
       if (last && distanceSq(last, destination) < 10 * 10) continue;
 
-      this.queue.push({ type: 'move', divisions: [d.id], destination, append: false });
+      this.queue.push({
+        type: 'move',
+        divisions: [d.id],
+        destination,
+        append: false,
+        issuer: 'operational-ai',
+      });
     }
+  }
+
+  private claimPocketTarget(
+    d: Division,
+    world: World,
+    claims: Map<DivisionId, number>,
+  ): Division | null {
+    if (
+      d.branch === 'armoured' ||
+      d.branch === 'mechanised' ||
+      d.branch === 'motorised' ||
+      organisationRatio(d) < 0.4 ||
+      d.supply < 0.3
+    ) {
+      return null;
+    }
+
+    const targets = [...world.divisions.values()]
+      .filter(
+        (enemy) =>
+          enemy.encircled &&
+          world.hostile(d.faction, enemy.faction) &&
+          (claims.get(enemy.id) ?? 0) < POCKET_CLEANERS_PER_TARGET &&
+          distanceSq(d.position, enemy.position) <= POCKET_CLEANUP_RADIUS_KM ** 2,
+      )
+      .sort(
+        (a, b) =>
+          distanceSq(d.position, a.position) - distanceSq(d.position, b.position) ||
+          (a.id < b.id ? -1 : 1),
+      );
+    const target = targets[0];
+    if (!target) return null;
+    claims.set(target.id, (claims.get(target.id) ?? 0) + 1);
+    return target;
+  }
+
+  private withdrawToNetwork(
+    d: Division,
+    alliance: string,
+    world: World,
+  ): boolean {
+    const destination = world.supply?.nearestNetworkPoint(alliance, d.position);
+    if (!destination || distanceSq(d.position, destination) < SECTOR_TOLERANCE_KM ** 2) {
+      return false;
+    }
+    this.orderToward(d, destination);
+    return true;
+  }
+
+  private orderToward(d: Division, destination: { x: number; y: number }): void {
+    const last = d.order?.waypoints[d.order.waypoints.length - 1];
+    if (last && distanceSq(last, destination) < SECTOR_TOLERANCE_KM ** 2) return;
+    this.queue.push({
+      type: 'move',
+      divisions: [d.id],
+      destination,
+      append: false,
+      issuer: 'operational-ai',
+    });
+  }
+
+  private executeCampaignDirective(
+    d: Division,
+    alliance: string,
+    world: World,
+  ): boolean {
+    const plan = world.campaignPlans.get(alliance);
+    if (
+      activeFallback(plan, world.clock.date) ||
+      activeHalt(plan, world.clock.date)
+    ) {
+      const segment = d.frontlineSegment
+        ? world.frontlineSegments.get(d.frontlineSegment)
+        : undefined;
+      if (segment?.alliances.includes(alliance)) {
+        this.operateAssignedSegment(d, alliance, segment, world, 'defense');
+      } else if (d.order) {
+        this.queue.push({ type: 'stop', divisions: [d.id] });
+      }
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Executes one frontage assignment without selecting an enemy formation as
+   * a destination. Local enemies affect the advance/hold decision only.
+   */
+  private operateAssignedSegment(
+    d: Division,
+    alliance: string,
+    segment: FrontlineSegment,
+    world: World,
+    forcedDoctrine?: 'defense',
+  ): void {
+    const direction = directionForAlliance(segment, alliance);
+    if (direction === null) return;
+
+    const nearby = world.divisionsNear(segment.position.x, segment.position.y, LOCAL_KM);
+    let ownPower = 0;
+    let enemyPower = 0;
+    for (const other of nearby) {
+      if (other.stance === 'retreat') continue;
+      const power = this.operationalPower(other, world);
+      const otherAlliance = world.getFaction(other.faction)?.alliance;
+      if (otherAlliance === alliance) ownPower += power;
+      else if (otherAlliance && segment.alliances.includes(otherAlliance)) enemyPower += power;
+    }
+
+    const doctrine = forcedDoctrine
+      ? { kind: forcedDoctrine, influence: 1 } as const
+      : this.segmentDoctrine(world, alliance, segment);
+    const fallback = activeFallback(
+      world.campaignPlans.get(alliance),
+      world.clock.date,
+    );
+    // Strategic withdrawal is a bias, never a scripted destination. Soviet
+    // sectors still exploit overwhelming local superiority and never abandon
+    // their assigned frontage to march toward one shared map point.
+    const fallbackCaution =
+      fallback && doctrine.kind === 'balanced' ? 0.28 : 0;
+    const requiredRatio = doctrine.kind === 'attack'
+      ? ADVANCE_POWER_RATIO - doctrine.influence * 0.22
+      : ADVANCE_POWER_RATIO + doctrine.influence * 0.7 + fallbackCaution;
+    const unopposedAttack = doctrine.kind === 'attack' && doctrine.influence > 0.15 && enemyPower === 0;
+    const advancing =
+      doctrine.kind !== 'defense' &&
+      (unopposedAttack || (enemyPower > 0 && ownPower >= enemyPower * requiredRatio));
+    const advanceDepth =
+      (fallback ? SECTOR_ADVANCE_DEPTH_KM * 0.7 : SECTOR_ADVANCE_DEPTH_KM) +
+      (doctrine.kind === 'attack' ? doctrine.influence * 10 : 0);
+    const holdDepth =
+      doctrine.kind === 'defense'
+        ? Math.max(3, SECTOR_HOLD_DEPTH_KM - doctrine.influence * 4)
+        : SECTOR_HOLD_DEPTH_KM;
+    const depth = advancing ? advanceDepth : -holdDepth;
+    const destination = {
+      x: segment.position.x + segment.normal.x * direction * depth,
+      y: segment.position.y + segment.normal.y * direction * depth,
+    };
+
+    if (distanceSq(d.position, destination) <= SECTOR_TOLERANCE_KM ** 2) {
+      if (d.order) this.queue.push({ type: 'stop', divisions: [d.id] });
+      return;
+    }
+
+    const last = d.order?.waypoints[d.order.waypoints.length - 1];
+    if (last && distanceSq(last, destination) < SECTOR_TOLERANCE_KM ** 2) return;
+
+    this.queue.push({
+      type: 'move',
+      divisions: [d.id],
+      destination,
+      append: false,
+      issuer: 'operational-ai',
+    });
+  }
+
+  private operationalPower(d: Division, world: World): number {
+    const attack = d.softAttack * (1 - d.hardness) + d.hardAttack * d.hardness;
+    const alliance = world.getFaction(d.faction)?.alliance;
+    const campaign = alliance
+      ? world.campaignModifiers(alliance).combat
+      : 1;
+    return (
+      attack *
+      strengthRatio(d) *
+      organisationRatio(d) *
+      (0.4 + 0.6 * d.supply) *
+      campaign
+    );
+  }
+
+  private segmentDoctrine(
+    world: World,
+    alliance: string,
+    segment: FrontlineSegment,
+  ): { kind: 'attack' | 'defense' | 'balanced'; influence: number } {
+    const offensive = activeOffensive(
+      world.campaignPlans.get(alliance),
+      world.clock.date,
+    );
+    if (offensive) {
+      const dist = Math.sqrt(distanceSq(segment.position, offensive.target));
+      if (dist >= offensive.influenceKm) {
+        return { kind: 'defense', influence: 1 };
+      }
+      return {
+        kind: 'attack',
+        influence: Math.max(0.2, 1 - dist / offensive.influenceKm),
+      };
+    }
+
+    let attack = 0;
+    let defense = 0;
+    for (const objective of world.strategicObjectives.values()) {
+      if (objective.alliance !== alliance) continue;
+      const dist = Math.sqrt(distanceSq(segment.position, objective.position));
+      if (dist >= OBJECTIVE_INFLUENCE_KM) continue;
+      const influence = 1 - dist / OBJECTIVE_INFLUENCE_KM;
+      if (objective.kind === 'attack') attack = Math.max(attack, influence);
+      else defense = Math.max(defense, influence);
+    }
+
+    if (defense > attack) return { kind: 'defense', influence: defense };
+    if (attack > 0) return { kind: 'attack', influence: attack };
+    return { kind: 'balanced', influence: 0 };
   }
 }

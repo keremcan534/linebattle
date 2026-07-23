@@ -1,4 +1,6 @@
 import { TERRAIN_PROFILES } from '@core/terrain/terrainTypes';
+import { TICKS_PER_DAY } from '@core/time/gameClock';
+import { organisationRatio } from '@core/world/division';
 import type { System, TickContext } from './system';
 
 /** Extra daily losses for a division with no supply at all. */
@@ -7,6 +9,14 @@ const STARVATION_PER_DAY = 0.055;
 const ENCIRCLEMENT_MULTIPLIER = 1.7;
 /** Organisation a starving formation loses per day. */
 const STARVATION_ORG_PER_DAY = 0.2;
+/** A sealed pocket gets one day to reopen a route before collapse accelerates. */
+const POCKET_GRACE_DAYS = 1;
+/** Additional daily losses once isolation has fully paralysed the formation. */
+const POCKET_COLLAPSE_PER_DAY = 0.12;
+/** Organisation lost per day during the final collapse of a pocket. */
+const POCKET_ORG_COLLAPSE_PER_DAY = 0.3;
+/** A continuously sealed, broken pocket surrenders after this many days. */
+export const POCKET_SURRENDER_DAYS = 7;
 
 /**
  * Losses that are nobody's fault.
@@ -38,6 +48,11 @@ export class AttritionSystem implements System {
       if (starvation > 0) {
         rate += STARVATION_PER_DAY * starvation * (d.encircled ? ENCIRCLEMENT_MULTIPLIER : 1);
       }
+      const pocketDays = d.encircledTicks / TICKS_PER_DAY;
+      const collapse = d.encircled
+        ? Math.max(0, Math.min(1, (pocketDays - POCKET_GRACE_DAYS) / 3))
+        : 0;
+      rate += POCKET_COLLAPSE_PER_DAY * collapse;
 
       if (rate > 0) {
         const lost = d.manpower * rate * days;
@@ -52,8 +67,19 @@ export class AttritionSystem implements System {
         );
         d.morale = Math.max(0, d.morale - 0.08 * starvation * days);
       }
+      if (collapse > 0) {
+        d.organisation = Math.max(
+          0,
+          d.organisation - d.maxOrganisation * POCKET_ORG_COLLAPSE_PER_DAY * collapse * days,
+        );
+        d.morale = Math.max(0, d.morale - 0.12 * collapse * days);
+      }
 
-      if (d.manpower <= d.maxManpower * 0.08) {
+      const surrendered =
+        pocketDays >= POCKET_SURRENDER_DAYS &&
+        d.supply <= 0.08 &&
+        organisationRatio(d) <= 0.12;
+      if (surrendered || d.manpower <= d.maxManpower * 0.08) {
         world.divisions.delete(d.id);
         ctx.events.emit({ type: 'divisionDestroyed', division: d.id, position: { ...d.position } });
       }

@@ -1,6 +1,14 @@
 {
   "scenarios": [
     {
+      "id": "combat-lab-1941",
+      "file": "combat-lab-1941.json",
+      "name": "Combat Laboratory 10v10",
+      "date": "22 June 1941",
+      "theatre": "Square Test Map",
+      "blurb": "Two operational headquarters hold assigned sectors and let local superiority reshape the line."
+    },
+    {
       "id": "barbarossa-1941",
       "file": "barbarossa-1941.json",
       "name": "Operation Barbarossa",

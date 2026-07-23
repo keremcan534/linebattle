@@ -58,9 +58,10 @@ export function useGame(scenarioUrl: string | null, hostRef: React.RefObject<HTM
         const playerAlliance = world.getFaction(factionId(scenario.playerFaction))?.alliance ?? '';
         store.playerAlliance = playerAlliance;
 
-        // Every alliance the player does not command is played by the AI.
+        // The player defines strategic intent; operational AI executes the
+        // frontline for every alliance, including the player's own armies.
         const engine = new GameEngine(world, {
-          aiAlliances: world.alliances.filter((a) => a !== playerAlliance),
+          aiAlliances: world.alliances,
         });
         const renderer = await GameRenderer.create(host, engine, mapData, store);
         if (cancelled) {

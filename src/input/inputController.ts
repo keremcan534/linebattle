@@ -33,6 +33,7 @@ export class InputController {
   private dragStartScreen: Vec2 | null = null;
   private dragMoved = false;
   private boxSelecting = false;
+  private placingObjective = false;
   private lastFrameTime = performance.now();
   private rafHandle = 0;
 
@@ -57,7 +58,6 @@ export class InputController {
     this.canvas = renderer.canvas;
     this.camera = renderer.camera;
     this.playerAlliance = engine.world.getFaction(playerFaction)?.alliance ?? '';
-    renderer.setSupplyAlliance(this.playerAlliance);
     this.attach();
     this.rafHandle = requestAnimationFrame(this.keyboardPanLoop);
   }
@@ -115,6 +115,10 @@ export class InputController {
     }
 
     if (e.button === 0) {
+      if (this.store.objectivePlacement) {
+        this.placingObjective = true;
+        return;
+      }
       this.boxSelecting = true;
       const world = this.camera.screenToWorld(p.x, p.y);
       this.store.dragBox = { x0: world.x, y0: world.y, x1: world.x, y1: world.y };
@@ -162,6 +166,13 @@ export class InputController {
       return;
     }
 
+    if (this.placingObjective && e.button === 0) {
+      this.placingObjective = false;
+      if (!this.dragMoved) this.issueStrategicObjective(p);
+      this.dragStartScreen = null;
+      return;
+    }
+
     if (this.boxSelecting && e.button === 0) {
       this.boxSelecting = false;
       if (this.dragMoved && this.store.dragBox) this.selectInBox(e.shiftKey);
@@ -196,7 +207,8 @@ export class InputController {
         clock.togglePause();
         break;
       case 'Escape':
-        this.store.clearSelection();
+        if (this.store.objectivePlacement) this.store.setObjectivePlacement(null);
+        else this.store.clearSelection();
         break;
       // 'H' for halt, not 'S': S is taken by WASD panning.
       case 'KeyH':
@@ -212,9 +224,6 @@ export class InputController {
         break;
       case 'KeyB':
         this.renderer.toggleBorders();
-        break;
-      case 'KeyM':
-        this.renderer.toggleSupplyOverlay();
         break;
       case 'KeyP':
         this.renderer.toggleControlOverlay();
@@ -343,7 +352,28 @@ export class InputController {
     if (!ordered.length) return;
 
     const destination = this.camera.screenToWorld(screen.x, screen.y);
-    this.engine.issue({ type: 'move', divisions: ordered, destination, append });
+    this.engine.issue({
+      type: 'move',
+      divisions: ordered,
+      destination,
+      append,
+      issuer: 'player',
+    });
+    this.store.publish(this.camera.zoom, true);
+  }
+
+  private issueStrategicObjective(screen: Vec2): void {
+    const kind = this.store.objectivePlacement;
+    if (!kind || !this.playerAlliance) return;
+
+    this.engine.issue({
+      type: 'setObjective',
+      alliance: this.playerAlliance,
+      kind,
+      position: this.camera.screenToWorld(screen.x, screen.y),
+    });
+    this.engine.flushCommandsWhilePaused();
+    this.store.setObjectivePlacement(null);
     this.store.publish(this.camera.zoom, true);
   }
 }

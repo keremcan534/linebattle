@@ -1,0 +1,317 @@
+{
+  "formatVersion": 1,
+  "id": "combat-lab-1941",
+  "name": "Combat Laboratory 10v10",
+  "description": "A controlled 400 km square for observing frontage, local superiority, retreat, pursuit and supply. Both operational headquarters execute their assigned sectors; watch where the line bends and breaks.",
+  "startDate": "1941-06-22T03:15:00Z",
+  "seed": "combat-lab-local-frontage-v1",
+  "playerFaction": "west",
+  "map": {
+    "projection": {
+      "type": "equirect",
+      "lon0": 0,
+      "lat0": 0
+    },
+    "bounds": {
+      "minLon": -1.8,
+      "minLat": -1.8,
+      "maxLon": 1.8,
+      "maxLat": 1.8
+    },
+    "terrainCellSizeKm": 4,
+    "layers": {
+      "land": "../geo/combat-lab/land.geojson"
+    }
+  },
+  "supply": {
+    "climate": "continental",
+    "sources": [
+      {
+        "name": "Western Railhead",
+        "faction": "west",
+        "lon": -1.55,
+        "lat": 0,
+        "rangeKm": 260
+      },
+      {
+        "name": "Eastern Railhead",
+        "faction": "east",
+        "lon": 1.55,
+        "lat": 0,
+        "rangeKm": 260
+      }
+    ]
+  },
+  "factions": [
+    {
+      "id": "west",
+      "name": "Western Army",
+      "alliance": "west",
+      "color": "#657a4f",
+      "accentColor": "#f0e7c8"
+    },
+    {
+      "id": "east",
+      "name": "Eastern Army",
+      "alliance": "east",
+      "color": "#8b554f",
+      "accentColor": "#f3dfd8"
+    }
+  ],
+  "templates": {
+    "west-infantry": {
+      "branch": "infantry",
+      "maxManpower": 14500,
+      "maxOrganisation": 60,
+      "speedKmh": 2.1,
+      "softAttack": 34,
+      "hardAttack": 16,
+      "defence": 34,
+      "hardness": 0.08,
+      "experience": 0.6,
+      "morale": 0.88,
+      "supply": 1
+    },
+    "west-armoured": {
+      "branch": "armoured",
+      "maxManpower": 13500,
+      "maxOrganisation": 64,
+      "speedKmh": 3.1,
+      "softAttack": 46,
+      "hardAttack": 50,
+      "defence": 36,
+      "hardness": 0.66,
+      "experience": 0.7,
+      "morale": 0.92,
+      "supply": 1
+    },
+    "east-infantry": {
+      "branch": "infantry",
+      "maxManpower": 17000,
+      "maxOrganisation": 50,
+      "speedKmh": 1.8,
+      "softAttack": 29,
+      "hardAttack": 13,
+      "defence": 38,
+      "hardness": 0.06,
+      "experience": 0.32,
+      "morale": 0.78,
+      "supply": 0.92
+    },
+    "east-armoured": {
+      "branch": "armoured",
+      "maxManpower": 15000,
+      "maxOrganisation": 54,
+      "speedKmh": 2.8,
+      "softAttack": 40,
+      "hardAttack": 42,
+      "defence": 34,
+      "hardness": 0.56,
+      "experience": 0.4,
+      "morale": 0.82,
+      "supply": 0.9
+    }
+  },
+  "divisions": [
+    {
+      "id": "west-1id",
+      "template": "west-infantry",
+      "faction": "west",
+      "name": "West 1st Infantry Division",
+      "shortName": "W1.ID",
+      "formation": "North Corps",
+      "lon": -0.32,
+      "lat": 1.2
+    },
+    {
+      "id": "west-2id",
+      "template": "west-infantry",
+      "faction": "west",
+      "name": "West 2nd Infantry Division",
+      "shortName": "W2.ID",
+      "formation": "North Corps",
+      "lon": -0.32,
+      "lat": 0.93
+    },
+    {
+      "id": "west-1pz",
+      "template": "west-armoured",
+      "faction": "west",
+      "name": "West 1st Armoured Division",
+      "shortName": "W1.PZ",
+      "formation": "North Mobile Corps",
+      "lon": -0.32,
+      "lat": 0.66
+    },
+    {
+      "id": "west-3id",
+      "template": "west-infantry",
+      "faction": "west",
+      "name": "West 3rd Infantry Division",
+      "shortName": "W3.ID",
+      "formation": "Centre Corps",
+      "lon": -0.32,
+      "lat": 0.4
+    },
+    {
+      "id": "west-4id",
+      "template": "west-infantry",
+      "faction": "west",
+      "name": "West 4th Infantry Division",
+      "shortName": "W4.ID",
+      "formation": "Centre Corps",
+      "lon": -0.32,
+      "lat": 0.13
+    },
+    {
+      "id": "west-5id",
+      "template": "west-infantry",
+      "faction": "west",
+      "name": "West 5th Infantry Division",
+      "shortName": "W5.ID",
+      "formation": "Centre Corps",
+      "lon": -0.32,
+      "lat": -0.13
+    },
+    {
+      "id": "west-2pz",
+      "template": "west-armoured",
+      "faction": "west",
+      "name": "West 2nd Armoured Division",
+      "shortName": "W2.PZ",
+      "formation": "South Mobile Corps",
+      "lon": -0.32,
+      "lat": -0.4
+    },
+    {
+      "id": "west-6id",
+      "template": "west-infantry",
+      "faction": "west",
+      "name": "West 6th Infantry Division",
+      "shortName": "W6.ID",
+      "formation": "South Corps",
+      "lon": -0.32,
+      "lat": -0.66
+    },
+    {
+      "id": "west-7id",
+      "template": "west-infantry",
+      "faction": "west",
+      "name": "West 7th Infantry Division",
+      "shortName": "W7.ID",
+      "formation": "South Corps",
+      "lon": -0.32,
+      "lat": -0.93
+    },
+    {
+      "id": "west-8id",
+      "template": "west-infantry",
+      "faction": "west",
+      "name": "West 8th Infantry Division",
+      "shortName": "W8.ID",
+      "formation": "South Corps",
+      "lon": -0.32,
+      "lat": -1.2
+    },
+    {
+      "id": "east-1id",
+      "template": "east-infantry",
+      "faction": "east",
+      "name": "East 1st Infantry Division",
+      "shortName": "E1.ID",
+      "formation": "North Army",
+      "lon": 0.32,
+      "lat": 1.2
+    },
+    {
+      "id": "east-2id",
+      "template": "east-infantry",
+      "faction": "east",
+      "name": "East 2nd Infantry Division",
+      "shortName": "E2.ID",
+      "formation": "North Army",
+      "lon": 0.32,
+      "lat": 0.93
+    },
+    {
+      "id": "east-1tk",
+      "template": "east-armoured",
+      "faction": "east",
+      "name": "East 1st Tank Division",
+      "shortName": "E1.TK",
+      "formation": "North Mobile Group",
+      "lon": 0.32,
+      "lat": 0.66
+    },
+    {
+      "id": "east-3id",
+      "template": "east-infantry",
+      "faction": "east",
+      "name": "East 3rd Infantry Division",
+      "shortName": "E3.ID",
+      "formation": "Centre Army",
+      "lon": 0.32,
+      "lat": 0.4
+    },
+    {
+      "id": "east-4id",
+      "template": "east-infantry",
+      "faction": "east",
+      "name": "East 4th Infantry Division",
+      "shortName": "E4.ID",
+      "formation": "Centre Army",
+      "lon": 0.32,
+      "lat": 0.13
+    },
+    {
+      "id": "east-5id",
+      "template": "east-infantry",
+      "faction": "east",
+      "name": "East 5th Infantry Division",
+      "shortName": "E5.ID",
+      "formation": "Centre Army",
+      "lon": 0.32,
+      "lat": -0.13
+    },
+    {
+      "id": "east-2tk",
+      "template": "east-armoured",
+      "faction": "east",
+      "name": "East 2nd Tank Division",
+      "shortName": "E2.TK",
+      "formation": "South Mobile Group",
+      "lon": 0.32,
+      "lat": -0.4
+    },
+    {
+      "id": "east-6id",
+      "template": "east-infantry",
+      "faction": "east",
+      "name": "East 6th Infantry Division",
+      "shortName": "E6.ID",
+      "formation": "South Army",
+      "lon": 0.32,
+      "lat": -0.66
+    },
+    {
+      "id": "east-7id",
+      "template": "east-infantry",
+      "faction": "east",
+      "name": "East 7th Infantry Division",
+      "shortName": "E7.ID",
+      "formation": "South Army",
+      "lon": 0.32,
+      "lat": -0.93
+    },
+    {
+      "id": "east-8id",
+      "template": "east-infantry",
+      "faction": "east",
+      "name": "East 8th Infantry Division",
+      "shortName": "E8.ID",
+      "formation": "South Army",
+      "lon": 0.32,
+      "lat": -1.2
+    }
+  ]
+}

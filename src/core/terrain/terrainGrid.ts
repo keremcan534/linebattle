@@ -7,7 +7,7 @@ import { Terrain, TERRAIN_PROFILES } from './terrainTypes';
  * Why a raster rather than testing polygons directly?
  *  - Sampling becomes O(1) array indexing instead of O(edges) point-in-polygon.
  *    Movement queries terrain every tick for every division; at 300 divisions
- *    and 96 ticks/day that is ~29k lookups per simulated day.
+ *    and 24 hourly ticks/day that is ~7k lookups per simulated day.
  *  - It composes: coastline, forest, marsh and urban layers are painted in
  *    order into the same buffer, so adding a new layer never touches the
  *    sampling code.
