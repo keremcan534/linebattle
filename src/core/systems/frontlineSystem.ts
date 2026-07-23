@@ -1,10 +1,12 @@
-import { distance } from '@core/math/vec2';
+import { distance, distanceSq } from '@core/math/vec2';
 import type { SupplyField } from '@core/supply/supplyField';
 import { activeOffensive } from '@core/world/campaign';
+import type { Division } from '@core/world/division';
 import {
   type FrontlineSegment,
   type FrontlineSegmentId,
 } from '@core/world/frontline';
+import type { DivisionId } from '@core/world/ids';
 import type { World } from '@core/world/world';
 import { TICKS_PER_DAY, ticksForHours } from '@core/time/gameClock';
 import type { System, TickContext } from './system';
@@ -65,6 +67,11 @@ export class FrontlineSystem implements System {
     const objectiveChanged = this.lastObjectiveRevision !== world.objectiveRevision;
     const rebalance = ctx.tick % REASSIGN_INTERVAL_TICKS === 0 || objectiveChanged;
     this.assignDivisions(world, rebalance);
+    // Coverage is checked every update, not just on the daily pass: a front
+    // that stretched or tore between rebalances left empty sectors open for
+    // hours, and the attacker poured through the seam and pocketed the
+    // defenders. Surplus formations slide into any gap continuously.
+    this.fillEmptySegments(world);
     this.lastObjectiveRevision = world.objectiveRevision;
   }
 
@@ -320,6 +327,62 @@ export class FrontlineSystem implements System {
       d.frontlineSegment = best!.id;
       const key = loadKey(alliance, best!.id);
       loads.set(key, (loads.get(key) ?? 0) + 1);
+    }
+  }
+
+  /**
+   * Slides surplus formations into uncovered sectors every update.
+   *
+   * {@link assignDivisions} only reshuffles held formations on the daily
+   * rebalance, so a gap that opened between passes stayed empty for hours.
+   * This lighter pass keeps the line continuous: for each empty sector it
+   * pulls the nearest spare formation from a sector that already has more than
+   * one, without disturbing sectors that are only just covered.
+   */
+  private fillEmptySegments(world: World): void {
+    for (const alliance of world.alliances) {
+      const occupants = new Map<FrontlineSegmentId, Division[]>();
+      for (const d of world.divisions.values()) {
+        if (world.getFaction(d.faction)?.alliance !== alliance) continue;
+        if (!d.frontlineSegment) continue;
+        if (d.encircled || d.stance === 'retreat' || d.stance === 'advance') continue;
+        const list = occupants.get(d.frontlineSegment);
+        if (list) list.push(d);
+        else occupants.set(d.frontlineSegment, [d]);
+      }
+
+      const empties: FrontlineSegment[] = [];
+      for (const segment of world.frontlineSegments.values()) {
+        if (!segment.alliances.includes(alliance)) continue;
+        if (!occupants.get(segment.id)?.length) empties.push(segment);
+      }
+      if (!empties.length) continue;
+
+      const donors: Division[] = [];
+      for (const list of occupants.values()) {
+        if (list.length < 2) continue;
+        list.sort((a, b) => (a.id < b.id ? -1 : 1));
+        donors.push(...list.slice(1));
+      }
+      if (!donors.length) continue;
+
+      empties.sort((a, b) => (a.id < b.id ? -1 : 1));
+      const moved = new Set<DivisionId>();
+      for (const empty of empties) {
+        let best: Division | null = null;
+        let bestDistance = Infinity;
+        for (const donor of donors) {
+          if (moved.has(donor.id)) continue;
+          const d = distanceSq(donor.position, empty.position);
+          if (d < bestDistance) {
+            bestDistance = d;
+            best = donor;
+          }
+        }
+        if (!best) break;
+        best.frontlineSegment = empty.id;
+        moved.add(best.id);
+      }
     }
   }
 

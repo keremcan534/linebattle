@@ -17,7 +17,7 @@
         "faction": "soviet",
         "daysPerDivision": 2.5,
         "maxForceMultiplier": 2.1,
-        "divisionsPerFrontlineSegment": 1.0
+        "divisionsPerFrontlineSegment": 1.15
       }
     ],
     "plans": [

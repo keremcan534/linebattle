@@ -62,7 +62,7 @@ export class MobilizationSystem implements System {
       // is deliberately modest: at ×2 a single breakthrough summoned a flood
       // that reversed the attacker before winter, killing the historical arc.
       const coverageSurge =
-        coverage < 1 ? 1 + (1 - coverage) * 0.8 : 1;
+        coverage < 1 ? 1 + (1 - coverage) * 1.2 : 1;
       const nationalMobilization =
         world.campaignModifiers(alliance).mobilization;
       const emergencyGap = Math.max(

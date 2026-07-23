@@ -36,6 +36,14 @@ const ADVANCE_POWER_RATIO = 1.3;
 const OBJECTIVE_INFLUENCE_KM = 900;
 const POCKET_CLEANUP_RADIUS_KM = 220;
 const POCKET_CLEANERS_PER_TARGET = 2;
+/** How far to look for an enemy that has worked around toward our rear. */
+const ENVELOPMENT_SCAN_KM = 70;
+/**
+ * An enemy counts as "behind us" when its bearing is within ~70° of the
+ * direction to our own supply network — i.e. it is closing the mouth of a
+ * pocket rather than pressing the front.
+ */
+const REAR_THREAT_COS = 0.35;
 
 /**
  * Deterministic operational headquarters for every managed alliance.
@@ -95,6 +103,15 @@ export class AiSystem implements System {
           this.queue.push({ type: 'stop', divisions: [d.id] });
         }
         continue;
+      }
+
+      // Slip back before the ring closes. Once an enemy has worked around to
+      // the rear, holding the sector to the last man just donates a pocket;
+      // the formation withdraws along its still-open corridor toward supply
+      // and the line reforms behind it. This is what makes the front bend
+      // like elastic under a breakthrough instead of shattering.
+      if (this.envelopmentThreatened(d, alliance, world)) {
+        if (this.withdrawToNetwork(d, alliance, world)) continue;
       }
 
       // Scenario-level operational phases sit above tactical contact. During
@@ -212,6 +229,44 @@ export class AiSystem implements System {
     if (!target) return null;
     claims.set(target.id, (claims.get(target.id) ?? 0) + 1);
     return target;
+  }
+
+  /**
+   * True when a hostile formation sits between this division and the nearest
+   * point of its own supply network — the signature of a closing pocket. The
+   * division is not encircled yet, which is exactly when withdrawal is still
+   * cheap and still possible.
+   */
+  private envelopmentThreatened(
+    d: Division,
+    alliance: string,
+    world: World,
+  ): boolean {
+    const rear = world.supply?.nearestNetworkPoint(alliance, d.position);
+    if (!rear) return false;
+    const rx = rear.x - d.position.x;
+    const ry = rear.y - d.position.y;
+    const rearLength = Math.hypot(rx, ry);
+    if (rearLength < 1e-3) return false; // already sitting on the network
+    const rearX = rx / rearLength;
+    const rearY = ry / rearLength;
+
+    const hostiles = world.divisionsNear(
+      d.position.x,
+      d.position.y,
+      ENVELOPMENT_SCAN_KM,
+    );
+    for (const enemy of hostiles) {
+      if (enemy.stance === 'retreat' || !world.hostile(d.faction, enemy.faction)) {
+        continue;
+      }
+      const ex = enemy.position.x - d.position.x;
+      const ey = enemy.position.y - d.position.y;
+      const enemyLength = Math.hypot(ex, ey);
+      if (enemyLength < 1e-3) continue;
+      if ((ex * rearX + ey * rearY) / enemyLength > REAR_THREAT_COS) return true;
+    }
+    return false;
   }
 
   private withdrawToNetwork(
