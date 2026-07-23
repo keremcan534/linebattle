@@ -115,13 +115,6 @@
       "accentColor": "#f2ead6"
     },
     {
-      "id": "finland",
-      "name": "Finland",
-      "alliance": "axis",
-      "color": "#4f7d96",
-      "accentColor": "#eaf4f8"
-    },
-    {
       "id": "soviet",
       "name": "Soviet Union",
       "alliance": "allies",
@@ -233,19 +226,6 @@
       "experience": 0.25,
       "morale": 0.7,
       "supply": 0.85
-    },
-    "finnish-infantry": {
-      "branch": "infantry",
-      "maxManpower": 14000,
-      "maxOrganisation": 48,
-      "speedKmh": 1.4,
-      "softAttack": 24,
-      "hardAttack": 5,
-      "defence": 30,
-      "hardness": 0.02,
-      "experience": 0.6,
-      "morale": 0.9,
-      "supply": 0.9
     },
     "soviet-rifle": {
       "branch": "infantry",
@@ -948,36 +928,6 @@
       "lat": 45.48
     },
     {
-      "id": "fin-6d",
-      "template": "finnish-infantry",
-      "faction": "finland",
-      "name": "6. Divisioona",
-      "shortName": "6.D",
-      "formation": "Karjalan Armeija",
-      "lon": 29.6,
-      "lat": 62.1
-    },
-    {
-      "id": "fin-12d",
-      "template": "finnish-infantry",
-      "faction": "finland",
-      "name": "12. Divisioona",
-      "shortName": "12.D",
-      "formation": "Karjalan Armeija",
-      "lon": 29.96,
-      "lat": 61.62
-    },
-    {
-      "id": "fin-2d",
-      "template": "finnish-infantry",
-      "faction": "finland",
-      "name": "2. Divisioona",
-      "shortName": "2.D",
-      "formation": "IV Armeijakunta",
-      "lon": 28.4,
-      "lat": 60.96
-    },
-    {
       "id": "sov-10rifle",
       "template": "soviet-rifle",
       "faction": "soviet",
@@ -1466,6 +1416,166 @@
       "supply": 0.7
     },
     {
+      "id": "sov-x0",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "11th Rifle Division",
+      "shortName": "11thR",
+      "formation": "Northwestern Front",
+      "lon": 25.5,
+      "lat": 57.8
+    },
+    {
+      "id": "sov-x1",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "48th Rifle Division",
+      "shortName": "48thR",
+      "formation": "Northwestern Front",
+      "lon": 27.4,
+      "lat": 57.6
+    },
+    {
+      "id": "sov-x2",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "70th Rifle Division",
+      "shortName": "70thR",
+      "formation": "Northwestern Front",
+      "lon": 28.8,
+      "lat": 58.6
+    },
+    {
+      "id": "sov-x3",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "128th Rifle Division",
+      "shortName": "128thR",
+      "formation": "Northwestern Front",
+      "lon": 30.2,
+      "lat": 59.2
+    },
+    {
+      "id": "sov-x4",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "181st Rifle Division",
+      "shortName": "181stR",
+      "formation": "Northwestern Front",
+      "lon": 26.4,
+      "lat": 56.6
+    },
+    {
+      "id": "sov-x5",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "265th Rifle Division",
+      "shortName": "265thR",
+      "formation": "Leningrad Front",
+      "lon": 29.9,
+      "lat": 60.1
+    },
+    {
+      "id": "sov-x6",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "17th Rifle Division",
+      "shortName": "17thR",
+      "formation": "Reserve",
+      "lon": 25.8,
+      "lat": 55.4
+    },
+    {
+      "id": "sov-x7",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "55th Rifle Division",
+      "shortName": "55thR",
+      "formation": "Reserve",
+      "lon": 26.6,
+      "lat": 54.6
+    },
+    {
+      "id": "sov-x8",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "121st Rifle Division",
+      "shortName": "121stR",
+      "formation": "Reserve",
+      "lon": 27.0,
+      "lat": 53.7
+    },
+    {
+      "id": "sov-x9",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "143rd Rifle Division",
+      "shortName": "143rdR",
+      "formation": "Reserve",
+      "lon": 30.2,
+      "lat": 53.9
+    },
+    {
+      "id": "sov-x10",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "137th Rifle Division",
+      "shortName": "137thR",
+      "formation": "Reserve",
+      "lon": 30.5,
+      "lat": 52.6
+    },
+    {
+      "id": "sov-x11",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "200th Rifle Division",
+      "shortName": "200thR",
+      "formation": "Reserve",
+      "lon": 25.0,
+      "lat": 50.9
+    },
+    {
+      "id": "sov-x12",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "195th Rifle Division",
+      "shortName": "195thR",
+      "formation": "Reserve",
+      "lon": 27.2,
+      "lat": 50.2
+    },
+    {
+      "id": "sov-x13",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "146th Rifle Division",
+      "shortName": "146thR",
+      "formation": "Reserve",
+      "lon": 28.4,
+      "lat": 49.6
+    },
+    {
+      "id": "sov-x14",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "164th Rifle Division",
+      "shortName": "164thR",
+      "formation": "Reserve",
+      "lon": 26.0,
+      "lat": 48.9
+    },
+    {
+      "id": "sov-x15",
+      "template": "soviet-rifle",
+      "faction": "soviet",
+      "name": "150th Rifle Division",
+      "shortName": "150thR",
+      "formation": "Reserve",
+      "lon": 29.6,
+      "lat": 47.3
+    },
+    {
       "id": "sov-51rifle",
       "template": "soviet-rifle",
       "faction": "soviet",
@@ -1539,7 +1649,6 @@
             "Hungary",
             "Romania",
             "Bulgaria",
-            "Finland",
             "Denmark",
             "Norway",
             "Netherlands",
@@ -1678,15 +1787,6 @@
         "lon": 26.1,
         "lat": 44.43,
         "rangeKm": 380,
-        "capturable": false,
-        "networkRoot": true
-      },
-      {
-        "name": "Helsinki depot",
-        "faction": "finland",
-        "lon": 24.94,
-        "lat": 60.17,
-        "rangeKm": 360,
         "capturable": false,
         "networkRoot": true
       },
