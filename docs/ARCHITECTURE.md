@@ -242,6 +242,24 @@ A latent bug surfaced here: supply throughput sampled terrain by integer cell ra
 
 ---
 
+## 7f. Provinces
+
+The political map is a **province mesh**, not a fuzzy per-cell control field and not hand-drawn lines. This is the HOI4 backbone, but generated to fit our theatres rather than imported — a pasted screenshot of HOI4's map is not usable data, and its whole-world Mercator grid would not match our three regional projections anyway.
+
+**Generation** (`provinceGenerator.ts`): scatter seeds on a jittered grid over passable terrain, then grow every seed at once with a multi-source breadth-first flood. Each land cell joins whichever front reaches it first — a Manhattan-metric Voronoi, chunky and contiguous, in one O(cells) pass. Water is left unassigned so the sea is nobody's ground. Jitter comes from a local RNG, not `world.rng`, so the mesh is reproducible AND generating it never perturbs the simulation stream. Measured: 4282 provinces for the Eastern Front in 84 ms at load, one time.
+
+**Geometry is immutable; ownership is simulation state.** `ProvinceMap` splits the two: the shapes never change (regenerating would invalidate every save), only the `owner` array moves, and that array is hashed and saved with everything else. `provinces[k].id === k` is an invariant — empty seeds are compacted out and neighbour ids remapped — so every consumer can index directly.
+
+**Ownership** (`provinceSystem.ts`) changes two ways: **seizure** (your divisions in a province clearly outweigh everyone else's — the front physically moving) and the **logistics sweep** (nobody stands there, but exactly one side's supply reaches it and it touches ground that side holds — which paints the rear behind an advance and keeps a pocket its defender's colour until they die, since supply cannot enter a Kessel). Initial ownership seeds by nearest force or depot with no range cap: depots sit at national centres (Moscow, Berlin, Bucharest), so the whole theatre fills from the start and the boundary between the two clusters falls naturally along the historical front. Verified: Berlin/Warsaw/Bucharest axis, Moscow/Kyiv/Leningrad/Brest Soviet — no hand-authored nationality data anywhere.
+
+**Rendering** (`provinceLayer.ts`): one texture at terrain resolution, cell → province → owner → colour. The boundary between two owners is drawn bold and opaque — that IS the front line, no separate geometry, and it can never disagree with the game state the way drawn borders did. Faint internal province seams give the familiar HOI4 mosaic.
+
+This retired the per-cell control field and its overlay entirely; the hand-drawn treaty borders survive only behind `B`, labelled approximate.
+
+**What this is NOT, yet.** Provinces are the political and territorial backbone, but movement is still continuous and units can still pass between each other — province-graph movement (a division pinned in a province it is fighting for, blocked from slipping past a held enemy province) is the next step. This commit is the foundation the "full province system" decision asked for; the gameplay layer builds on it.
+
+---
+
 ## 8. Scenarios are data
 
 A scenario is one JSON file: projection, map bounds, terrain resolution, map layers, factions, stat templates and the order of battle. Adding *Case Blue* must mean writing JSON and **zero TypeScript** — that requirement is why the projection and the theatre bounds are scenario-declared rather than global constants.

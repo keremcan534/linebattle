@@ -107,12 +107,17 @@ Measured on Barbarossa with the AI playing the Soviets: 37 divisions moving to b
 
 ---
 
-## Milestone 4 — Command and persistence
+## 🚧 Milestone 4 — Provinces
 
-**Goal: play a campaign, not a skirmish.**
+**In progress**, chosen after playtesting: the political and territorial backbone HOI4 gets its front-line behaviour from, generated to fit our theatres rather than imported.
 
-- [ ] Formation hierarchy: division → corps → army → army group
-- [ ] Orders issued to a whole formation; front assignment — the "draw the plan, the divisions execute it" layer
+- [x] Province mesh generated per theatre by multi-source Voronoi flood (4282 provinces on the Eastern Front, 84 ms at load)
+- [x] Ownership as simulation state — seizure by presence, logistics sweep behind an advance, hashed and saved
+- [x] Nearest-seed initial ownership fills the map with the front on the historical border (Berlin axis, Moscow Soviet, no hand-authored data)
+- [x] HOI4-style province rendering: crisp coloured territory, the owner boundary drawn as the front line, faint province mosaic
+- [x] Retired the per-cell control field the provinces replaced
+- [ ] **Province-graph movement**: a division pinned while fighting for a province, blocked from slipping past a held enemy province — the fix that makes it PLAY like a front, not just look like one
+- [ ] Formation hierarchy: division → corps → army; "draw the plan, the divisions execute it" orders
 - [ ] AI offensives with objectives (the current AI only defends)
 - [ ] Save / load — the World is already one serialisable object
 - [ ] Replay playback from the command stream
@@ -120,8 +125,10 @@ Measured on Barbarossa with the AI playing the Soviets: 37 divisions moving to b
 
 ---
 
-## Milestone 5 — Air, depth and presentation
+## Milestone 5 — Persistence, air and presentation
 
+- [ ] Save / load — the World is already one serialisable object
+- [ ] Replay playback from the command stream
 - [ ] Air wings, missions, and air support modifying ground combat
 - [ ] Artillery and support brigades attaching to divisions
 - [ ] Historical unit sprites replacing procedural counters

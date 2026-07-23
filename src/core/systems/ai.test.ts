@@ -160,50 +160,5 @@ describe('overrun', () => {
   });
 });
 
-describe('political control', () => {
-  function controlledWorld() {
-    const world = createTestWorld({ seed: 'control' });
-    addTestDivision(world, 'red-1', 150, 500, { faction: RED });
-    addTestDivision(world, 'blue-1', 850, 500, { faction: BLUE });
-    world.enableSupply(
-      [
-        { name: 'red-depot', alliance: 'a', position: { x: 100, y: 500 }, rangeKm: 500, capturable: false },
-        { name: 'blue-depot', alliance: 'b', position: { x: 900, y: 500 }, rangeKm: 500, capturable: false },
-      ],
-      'temperate',
-    );
-    return world;
-  }
-
-  it('seeds initial ownership by proximity', () => {
-    const world = controlledWorld();
-    const field = world.supply!;
-    const at = (x: number, y: number) => field.control[field.indexAt({ x, y })];
-    expect(at(180, 500)).toBe(field.allianceIndex('a') + 1);
-    expect(at(820, 500)).toBe(field.allianceIndex('b') + 1);
-  });
-
-  it('keeps the sea neutral', () => {
-    const world = controlledWorld();
-    const field = world.supply!;
-    expect(field.control[field.indexAt({ x: 500, y: 500 })]).toBe(0); // the lake
-  });
-
-  it('flips territory as an army advances through it', () => {
-    const world = controlledWorld();
-    const field = world.supply!;
-    const red = world.getDivision(divisionId('red-1'))!;
-    const probe = { x: 700, y: 300 }; // north of the lake, blue side at start
-
-    const engine = new GameEngine(world);
-    engine.step();
-    expect(field.control[field.indexAt(probe)]).toBe(field.allianceIndex('b') + 1);
-
-    // March red across the north and let presence + the logistics sweep work.
-    engine.issue({ type: 'move', divisions: [red.id], destination: { x: 720, y: 300 }, append: false });
-    red.speedKmh = 8; // brisk, to keep the test fast
-    for (let i = 0; i < TICKS_PER_DAY * 8; i++) engine.step();
-
-    expect(field.control[field.indexAt(probe)]).toBe(field.allianceIndex('a') + 1);
-  });
-});
+// Political control is now the province ownership map — see province.test.ts.
+// The old cell-level control field was retired when provinces replaced it.

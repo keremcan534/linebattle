@@ -101,6 +101,13 @@ export function hashWorld(world: World): number {
     }
   }
 
+  // Province ownership is the political map — simulation state that a save
+  // must reproduce and a desync must be caught by. Geometry is immutable and
+  // deterministic, so only the owner array needs hashing.
+  if (world.provinces) {
+    for (let i = 0; i < world.provinces.owner.length; i++) h.int(world.provinces.owner[i]!);
+  }
+
   return h.value;
 }
 

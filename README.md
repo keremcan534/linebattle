@@ -33,15 +33,15 @@ npm run dev
 | **Combat** | Automatic on contact — organisation-based, terrain and supply driven, retreat and pursuit, combat bubbles |
 | **Supply** | Depots and capturable rail hubs, terrain-weighted propagation, encirclement as a consequence rather than a rule, supply map mode |
 | **Enemy AI** | A command producer like the player: blocks, defends, counterattacks — a front line emerges |
-| **Political map** | Computed control wash, HOI4-style; the colour boundary is the front line |
+| **Provinces** | HOI4-style province mesh generated per theatre; territory coloured by owner, the owner boundary IS the front line |
 | **Weather** | Rasputitsa, deep winter and desert summer, derived from the date and the scenario's climate |
 | **Simulation** | Fixed 15-minute tick, deterministic, decoupled from frame rate |
 | **Randomness** | Seeded, saveable RNG; `Math.random` banned in `core/` at lint level |
 | **Scenarios** | Pure JSON — order of battle, stats, projection and map layers are all data |
-| **Tests** | 150 tests in plain Node, no DOM — determinism, combat fairness, pathfinding, projection, scenarios |
+| **Tests** | 156 tests in plain Node, no DOM — determinism, combat fairness, pathfinding, projection, scenarios |
 
 ```bash
-npm test      # 150 tests
+npm test      # 156 tests
 npm run check # lint + typecheck + tests
 ```
 

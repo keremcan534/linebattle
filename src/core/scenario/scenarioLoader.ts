@@ -158,6 +158,12 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
     );
   }
 
+  // Provinces are always generated — the political map is not optional even
+  // when logistics is. Must come after supply so ownership can seed from
+  // depots as well as divisions.
+  report('Partitioning territory', 0.9);
+  world.enableProvinces();
+
   reportDeployment(world);
 
   report('Ready', 1);

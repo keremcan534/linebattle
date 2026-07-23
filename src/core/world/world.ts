@@ -5,6 +5,8 @@ import type { TerrainGrid } from '@core/terrain/terrainGrid';
 import { GameClock } from '@core/time/gameClock';
 import { computeWeather, type Climate, type Weather } from '@core/weather/weather';
 import { SupplyField } from '@core/supply/supplyField';
+import { generateProvinces } from '@core/province/provinceGenerator';
+import type { ProvinceMap } from '@core/province/provinceMap';
 import type { Battle } from './battle';
 import type { Division } from './division';
 import type { Faction } from './faction';
@@ -70,6 +72,9 @@ export class World {
   readonly supplySources: SupplySource[] = [];
   climate: Climate = 'temperate';
 
+  /** The province mesh and its ownership. Null until enabled at load. */
+  provinces: ProvinceMap | null = null;
+
   /** Derived from the clock every tick — never stored, so it cannot drift. */
   weather: Weather;
 
@@ -97,19 +102,39 @@ export class World {
   enableSupply(sources: SupplySource[], climate: Climate): void {
     this.supplySources.push(...sources);
     this.climate = climate;
-    this.supply = new SupplyField(this.terrain, this.alliances);
+    this.supply = new SupplyField(this.terrain);
     this.weather = computeWeather(this.clock.date, climate);
+  }
 
-    // Initial political control, seeded from wherever anyone actually is.
-    // Divisions must therefore be added before supply is enabled — the loader
-    // guarantees that order.
+  /**
+   * Generates the province mesh and seeds initial ownership.
+   *
+   * Independent of supply on purpose — a scenario can have a political map
+   * without a logistics model — but it must run AFTER divisions and supply
+   * sources are placed, since those are the ownership seeds. The loader
+   * guarantees that order.
+   */
+  enableProvinces(spacingKm?: number): void {
+    const alliances = this.alliances;
+    this.provinces = generateProvinces(
+      this.terrain,
+      alliances,
+      spacingKm ? { spacingKm, seed: `provinces-${spacingKm}` } : {},
+    );
+
     const seeds: { x: number; y: number; alliance: string }[] = [];
     for (const d of this.divisions.values()) {
       const alliance = this.getFaction(d.faction)?.alliance;
       if (alliance) seeds.push({ x: d.position.x, y: d.position.y, alliance });
     }
-    for (const s of sources) seeds.push({ x: s.position.x, y: s.position.y, alliance: s.alliance });
-    this.supply.initControl(seeds);
+    for (const s of this.supplySources) {
+      seeds.push({ x: s.position.x, y: s.position.y, alliance: s.alliance });
+    }
+    // No range cap: every land province takes the nearest force's or depot's
+    // side. Depots sit at national centres (Moscow, Berlin, Bucharest), so the
+    // whole theatre fills in from the start — the HOI4 look — with the boundary
+    // between the two clusters falling naturally along the historical front.
+    this.provinces.seedOwnership(seeds, Number.POSITIVE_INFINITY);
   }
 
   /** The battle this division is committed to, if any. */

@@ -6,6 +6,7 @@ import { CombatSystem } from '@core/systems/combatSystem';
 import { ContactSystem } from '@core/systems/contactSystem';
 import { MovementSystem } from '@core/systems/movementSystem';
 import { OrderSystem } from '@core/systems/orderSystem';
+import { ProvinceSystem } from '@core/systems/provinceSystem';
 import { RecoverySystem } from '@core/systems/recoverySystem';
 import { SupplySystem } from '@core/systems/supplySystem';
 import type { System, TickContext } from '@core/systems/system';
@@ -97,6 +98,9 @@ export function createDefaultSystems(queue: CommandQueue, aiAlliances: readonly 
     new ContactSystem(),
     new CombatSystem(),
     new AttritionSystem(),
+    // Political map last among the world-changers: it reads where everyone
+    // ended up this tick, including provinces emptied by a rout or a wipeout.
+    new ProvinceSystem(),
     new RecoverySystem(),
   ];
 }

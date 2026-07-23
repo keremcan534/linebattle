@@ -34,76 +34,15 @@ export class SupplyField {
   /** Terrain cost multiplier per cell, precomputed: 0 means impassable. */
   readonly throughput: Float32Array;
 
-  /**
-   * Who holds each cell: 0 = nobody, else 1 + index into {@link controlAlliances}.
-   *
-   * This is the political map — the coloured wash whose moving boundary IS the
-   * front line, exactly as in the map animations this game imitates. It
-   * replaced the hand-drawn border lines as the primary political read: those
-   * were approximations of June 1941 that could only ever be wrong somewhere,
-   * while control is *computed from where the armies actually are*, so it can
-   * never disagree with the game state it describes. Cells keep their owner
-   * until taken, which is what makes gains stick and the front trail the
-   * armies.
-   */
-  readonly control: Uint8Array;
-  readonly controlAlliances: readonly string[];
-
   constructor(
     private readonly terrain: TerrainGrid,
-    alliances: readonly string[],
     readonly cellSize = 16,
   ) {
     this.width = Math.ceil(terrain.worldWidth / cellSize);
     this.height = Math.ceil(terrain.worldHeight / cellSize);
     this.origin = terrain.origin;
     this.throughput = new Float32Array(this.width * this.height);
-    this.control = new Uint8Array(this.width * this.height);
-    this.controlAlliances = [...alliances].sort();
     this.bakeThroughput();
-  }
-
-  allianceIndex(alliance: string): number {
-    return this.controlAlliances.indexOf(alliance);
-  }
-
-  /**
-   * Seeds initial ownership by nearest-presence Voronoi over the starting
-   * divisions and depots, capped so land far from anybody stays neutral.
-   *
-   * Approximate by construction — a cell 200 km behind the Soviet border is
-   * assigned Soviet because Soviet formations are the nearest thing to it, not
-   * because anyone surveyed a treaty line. That is the right trade: it is
-   * roughly right everywhere, it needs no hand-drawn data, and every error
-   * self-corrects the moment an army actually walks there.
-   */
-  initControl(seeds: readonly { x: number; y: number; alliance: string }[], maxRangeKm = 350): void {
-    const indexed = seeds
-      .map((s) => ({ x: s.x, y: s.y, idx: this.allianceIndex(s.alliance) }))
-      .filter((s) => s.idx >= 0);
-    const max2 = maxRangeKm * maxRangeKm;
-
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        const i = y * this.width + x;
-        if (this.throughput[i]! <= 0) continue;
-        const cx = this.origin.x + (x + 0.5) * this.cellSize;
-        const cy = this.origin.y + (y + 0.5) * this.cellSize;
-
-        let best = -1;
-        let bestD = max2;
-        for (const s of indexed) {
-          const dx = s.x - cx;
-          const dy = s.y - cy;
-          const d2 = dx * dx + dy * dy;
-          if (d2 < bestD) {
-            bestD = d2;
-            best = s.idx;
-          }
-        }
-        if (best >= 0) this.control[i] = best + 1;
-      }
-    }
   }
 
   /**

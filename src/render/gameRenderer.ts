@@ -5,7 +5,7 @@ import type { ViewStore } from '@app/viewStore';
 import { Camera } from './camera';
 import { BattleLayer } from './layers/battleLayer';
 import { BorderLayer } from './layers/borderLayer';
-import { ControlOverlay } from './layers/controlOverlay';
+import { ProvinceLayer } from './layers/provinceLayer';
 import { SupplyOverlay } from './layers/supplyOverlay';
 import { MapLayer } from './layers/mapLayer';
 import { OrderLayer } from './layers/orderLayer';
@@ -47,7 +47,7 @@ export class GameRenderer {
   private readonly orderLayer: OrderLayer;
   private readonly battleLayer: BattleLayer;
   private readonly supplyOverlay: SupplyOverlay | null;
-  private readonly controlOverlay: ControlOverlay | null;
+  private readonly provinceLayer: ProvinceLayer | null;
   private resizeObserver: ResizeObserver | null = null;
   private uiClock = 0;
   private rafHandle = 0;
@@ -69,12 +69,15 @@ export class GameRenderer {
     this.unitLayer = new UnitLayer(world);
     this.battleLayer = new BattleLayer(world);
     this.supplyOverlay = world.supply ? new SupplyOverlay(world) : null;
-    this.controlOverlay = world.supply ? new ControlOverlay(world) : null;
+    this.provinceLayer = world.provinces ? new ProvinceLayer(world) : null;
 
     // The hand-drawn period borders are approximations and the computed
-    // control wash has superseded them as the political read, so they start
+    // province map has superseded them as the political read, so they start
     // hidden; B brings them back for anyone who wants the treaty lines.
     this.borderLayer?.setVisible(false);
+    // The province wash is the default political view — the front line lives
+    // in it — so it starts on.
+    this.provinceLayer?.setVisible(true);
 
     // Draw order. Borders sit above the terrain but below anything the player
     // manipulates, so a dashed frontier can never obscure a counter. Battle
@@ -82,8 +85,8 @@ export class GameRenderer {
     // the map and must never be hidden behind a counter.
     this.worldRoot.addChild(this.mapLayer.container);
     // Washes sit directly on the terrain, under the unit layers, so they read
-    // as properties of the ground. Control first, supply mode above it.
-    if (this.controlOverlay) this.worldRoot.addChild(this.controlOverlay.container);
+    // as properties of the ground. Provinces first, supply mode above them.
+    if (this.provinceLayer) this.worldRoot.addChild(this.provinceLayer.container);
     if (this.supplyOverlay) this.worldRoot.addChild(this.supplyOverlay.container);
     if (this.borderLayer) this.worldRoot.addChild(this.borderLayer.container);
     this.worldRoot.addChild(
@@ -131,11 +134,11 @@ export class GameRenderer {
     this.supplyOverlay?.setAlliance(alliance);
   }
 
-  /** Toggles the political control wash. Returns the new visibility. */
+  /** Toggles the province political map. Returns the new visibility. */
   toggleControlOverlay(): boolean {
-    if (!this.controlOverlay) return false;
-    this.controlOverlay.setVisible(!this.controlOverlay.visible);
-    return this.controlOverlay.visible;
+    if (!this.provinceLayer) return false;
+    this.provinceLayer.setVisible(!this.provinceLayer.visible);
+    return this.provinceLayer.visible;
   }
 
   /** Toggles the supply map mode. Returns the new visibility. */
@@ -173,7 +176,7 @@ export class GameRenderer {
     this.orderLayer.destroy();
     this.battleLayer.destroy();
     this.supplyOverlay?.destroy();
-    this.controlOverlay?.destroy();
+    this.provinceLayer?.destroy();
     this.app.destroy(true, { children: true });
   }
 
@@ -199,7 +202,7 @@ export class GameRenderer {
     const alpha = this.engine.world.clock.subTickAlpha;
     this.mapLayer.update(zoom);
     this.borderLayer?.update(zoom);
-    this.controlOverlay?.update();
+    this.provinceLayer?.update();
     this.supplyOverlay?.update();
     this.orderLayer.update(zoom, this.store.selection, this.store.dragBox);
     this.unitLayer.update(zoom, alpha, this.store.selection, this.store.hovered);
