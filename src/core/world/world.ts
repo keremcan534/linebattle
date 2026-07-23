@@ -114,13 +114,17 @@ export class World {
    * sources are placed, since those are the ownership seeds. The loader
    * guarantees that order.
    */
-  enableProvinces(spacingKm?: number): void {
+  enableProvinces(opts: { confine?: Int8Array; spacingKm?: number } = {}): void {
     const alliances = this.alliances;
-    this.provinces = generateProvinces(
-      this.terrain,
-      alliances,
-      spacingKm ? { spacingKm, seed: `provinces-${spacingKm}` } : {},
-    );
+    this.provinces = generateProvinces(this.terrain, alliances, {
+      ...(opts.spacingKm ? { spacingKm: opts.spacingKm } : {}),
+      ...(opts.confine ? { confine: opts.confine } : {}),
+    });
+
+    // With a confine grid (real national territory) ownership is already set
+    // from the map and follows the true borders. Without it — the test world,
+    // or a scenario with no nations layer — fall back to nearest-force Voronoi.
+    if (opts.confine) return;
 
     const seeds: { x: number; y: number; alliance: string }[] = [];
     for (const d of this.divisions.values()) {
@@ -130,10 +134,6 @@ export class World {
     for (const s of this.supplySources) {
       seeds.push({ x: s.position.x, y: s.position.y, alliance: s.alliance });
     }
-    // No range cap: every land province takes the nearest force's or depot's
-    // side. Depots sit at national centres (Moscow, Berlin, Bucharest), so the
-    // whole theatre fills in from the start — the HOI4 look — with the boundary
-    // between the two clusters falling naturally along the historical front.
     this.provinces.seedOwnership(seeds, Number.POSITIVE_INFINITY);
   }
 

@@ -113,7 +113,7 @@ Measured on Barbarossa with the AI playing the Soviets: 37 divisions moving to b
 
 - [x] Province mesh generated per theatre by multi-source Voronoi flood (4282 provinces on the Eastern Front, 84 ms at load)
 - [x] Ownership as simulation state — seizure by presence, logistics sweep behind an advance, hashed and saved
-- [x] Nearest-seed initial ownership fills the map with the front on the historical border (Berlin axis, Moscow Soviet, no hand-authored data)
+- [x] Ownership from real Natural Earth national territory, remapped to 1941 owners — the front falls on true borders, neutrals (Turkey, Sweden) stay neutral, province edges align to frontiers
 - [x] HOI4-style province rendering: crisp coloured territory, the owner boundary drawn as the front line, faint province mosaic
 - [x] Retired the per-cell control field the provinces replaced
 - [ ] **Province-graph movement**: a division pinned while fighting for a province, blocked from slipping past a held enemy province — the fix that makes it PLAY like a front, not just look like one

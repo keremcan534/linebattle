@@ -158,4 +158,6 @@ export class ProvinceLayer {
   }
 }
 
-const NEUTRAL_RGB: [number, number, number] = [110, 110, 118];
+// A warm, desaturated tan so neutral ground reads as clearly unaligned rather
+// than being mistaken for either the blue-grey Axis or the brick-red Allies.
+const NEUTRAL_RGB: [number, number, number] = [126, 118, 96];

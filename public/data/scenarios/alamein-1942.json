@@ -25,7 +25,8 @@
       "lakes": "../geo/mediterranean/lakes.geojson",
       "rivers": "../geo/mediterranean/rivers.geojson",
       "cities": "../geo/mediterranean/cities.geojson",
-      "overlays": "../geo/mediterranean/terrain-overlays.geojson"
+      "overlays": "../geo/mediterranean/terrain-overlays.geojson",
+      "nations": "../geo/mediterranean/nations.geojson"
     }
   },
   "factions": [
@@ -513,5 +514,42 @@
         "capturable": false
       }
     ]
+  },
+  "nations": {
+    "owners": {
+      "EGY": "uk",
+      "MLT": "uk",
+      "CYP": "uk",
+      "PSE": "uk",
+      "JOR": "uk",
+      "ISR": "uk",
+      "LBN": "uk",
+      "SYR": "uk",
+      "LBY": "italy",
+      "ITA": "italy",
+      "ALB": "italy",
+      "GRC": "germany",
+      "HRV": "germany",
+      "SRB": "germany",
+      "BIH": "germany",
+      "MNE": "germany",
+      "MKD": "germany",
+      "SVN": "germany",
+      "AUT": "germany",
+      "HUN": "germany",
+      "BGR": "germany",
+      "ROU": "germany",
+      "FRA": "neutral",
+      "DZA": "neutral",
+      "MAR": "neutral",
+      "TUN": "neutral",
+      "ESP": "neutral",
+      "PRT": "neutral",
+      "TUR": "neutral",
+      "CHE": "neutral",
+      "SAU": "neutral",
+      "AND": "neutral"
+    },
+    "default": "neutral"
   }
 }

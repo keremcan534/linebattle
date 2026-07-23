@@ -33,7 +33,7 @@ npm run dev
 | **Combat** | Automatic on contact — organisation-based, terrain and supply driven, retreat and pursuit, combat bubbles |
 | **Supply** | Depots and capturable rail hubs, terrain-weighted propagation, encirclement as a consequence rather than a rule, supply map mode |
 | **Enemy AI** | A command producer like the player: blocks, defends, counterattacks — a front line emerges |
-| **Provinces** | HOI4-style province mesh generated per theatre; territory coloured by owner, the owner boundary IS the front line |
+| **Provinces** | HOI4-style province mesh per theatre; ownership from real Natural Earth borders remapped to the scenario's date — neutrals stay neutral, the front falls on true frontiers |
 | **Weather** | Rasputitsa, deep winter and desert summer, derived from the date and the scenario's climate |
 | **Simulation** | Fixed 15-minute tick, deterministic, decoupled from frame rate |
 | **Randomness** | Seeded, saveable RNG; `Math.random` banned in `core/` at lint level |

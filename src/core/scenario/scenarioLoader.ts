@@ -4,8 +4,9 @@ import type {
   FeatureCollection,
   RiverProperties,
 } from '@core/geo/geojson';
+import type { Geometry } from '@core/geo/geojson';
 import { createProjection, type Projection } from '@core/geo/projection';
-import { buildTerrainGrid, type TerrainLayerSpec } from '@core/terrain/terrainBuilder';
+import { buildOwnerGrid, buildTerrainGrid, type TerrainLayerSpec } from '@core/terrain/terrainBuilder';
 import { Terrain } from '@core/terrain/terrainTypes';
 import type { Division } from '@core/world/division';
 import { divisionId, factionId } from '@core/world/ids';
@@ -25,6 +26,69 @@ export interface LoadedScenario {
   scenario: ScenarioFile;
   world: World;
   mapData: MapData;
+}
+
+interface NationProps {
+  name?: string;
+  adm0_a3?: string;
+  iso_a3?: string;
+}
+
+/**
+ * Rasterises national territory into a per-cell owner (alliance index, −1
+ * neutral), remapping each modern country to its owner at the scenario's date.
+ *
+ * This is the "do it properly" fix: province ownership and edges come from real
+ * Natural Earth borders instead of guessing from unit proximity, so a neutral
+ * like Turkey stays neutral and the front falls on the true frontier. The
+ * modern-to-1941 remap is elegant because post-war borders largely codified the
+ * 1939–40 Soviet gains, so the modern Poland/Ukraine and Romania/Moldova
+ * borders already sit almost exactly on the 1941 front.
+ */
+function buildNationConfine(
+  scenario: ScenarioFile,
+  nations: FeatureCollection<NationProps>,
+  projection: Projection,
+  bounds: WorldBounds,
+  cellSize: number,
+  width: number,
+  height: number,
+): Int8Array {
+  const alliances = [...new Set(scenario.factions.map((f) => f.alliance))].sort();
+  const allianceIndex = (a: string) => alliances.indexOf(a);
+  const factionAlliance = new Map(scenario.factions.map((f) => [f.id, f.alliance]));
+
+  const spec = scenario.nations!;
+  const fallback = spec.default ?? 'neutral';
+
+  /** A country's owner as an alliance index, or −1 for neutral/unknown. */
+  const ownerOf = (props: NationProps): number => {
+    const key = props.adm0_a3 ?? props.iso_a3 ?? props.name ?? '';
+    const target = spec.owners[key] ?? fallback;
+    if (target === 'neutral') return -1;
+    const alliance = factionAlliance.get(target);
+    return alliance ? allianceIndex(alliance) : -1;
+  };
+
+  // Group countries by owner so each owner is painted as one mask (see
+  // buildOwnerGrid): neutral countries simply never paint, leaving −1.
+  const byOwner = new Map<number, { geometry: Geometry }[]>();
+  for (const f of nations.features) {
+    const owner = ownerOf(f.properties);
+    if (owner < 0) continue;
+    const list = byOwner.get(owner) ?? [];
+    list.push({ geometry: f.geometry });
+    byOwner.set(owner, list);
+  }
+
+  return buildOwnerGrid({
+    projection,
+    origin: { x: bounds.minX, y: bounds.minY },
+    cellSize,
+    width,
+    height,
+    owners: [...byOwner.entries()].sort((a, b) => a[0] - b[0]).map(([owner, features]) => ({ owner, features })),
+  });
 }
 
 export interface LoadProgress {
@@ -72,13 +136,14 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
 
   report('Loading map data', 0.1);
   const base = new URL(url, window.location.href);
-  const [land, lakes, rivers, cities, overlays, borders] = await Promise.all([
+  const [land, lakes, rivers, cities, overlays, borders, nations] = await Promise.all([
     fetchJson<FeatureCollection>(resolve(scenario.map.layers.land, base)),
     optionalJson<FeatureCollection>(scenario.map.layers.lakes, base),
     optionalJson<FeatureCollection<RiverProperties>>(scenario.map.layers.rivers, base),
     optionalJson<FeatureCollection<CityProperties>>(scenario.map.layers.cities, base),
     optionalJson<FeatureCollection<{ terrain?: string }>>(scenario.map.layers.overlays, base),
     optionalJson<FeatureCollection<BorderProperties>>(scenario.map.layers.borders, base),
+    optionalJson<FeatureCollection<NationProps>>(scenario.map.layers.nations, base),
   ]);
 
   report('Projecting theatre', 0.35);
@@ -159,10 +224,14 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
   }
 
   // Provinces are always generated — the political map is not optional even
-  // when logistics is. Must come after supply so ownership can seed from
-  // depots as well as divisions.
+  // when logistics is. When the scenario supplies national territory, ownership
+  // and province edges follow the real 1941 borders; otherwise they fall back
+  // to nearest-force Voronoi.
   report('Partitioning territory', 0.9);
-  world.enableProvinces();
+  const confine = nations && scenario.nations
+    ? buildNationConfine(scenario, nations, projection, bounds, terrain.cellSize, terrain.width, terrain.height)
+    : undefined;
+  world.enableProvinces(confine ? { confine } : {});
 
   reportDeployment(world);
 

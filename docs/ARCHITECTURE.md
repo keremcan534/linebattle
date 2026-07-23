@@ -256,6 +256,10 @@ The political map is a **province mesh**, not a fuzzy per-cell control field and
 
 This retired the per-cell control field and its overlay entirely; the hand-drawn treaty borders survive only behind `B`, labelled approximate.
 
+**Ownership comes from real national territory, not unit proximity.** The first version seeded ownership by nearest force/depot — which split neutral Turkey half-Axis half-Soviet and put the front on a Voronoi line rather than a real border. The fix is data-driven: Natural Earth's modern country polygons (`nations.geojson`), remapped to each country's owner at the scenario's date by a small table in the scenario JSON (`nations.owners`, keyed by `ADM0_A3`). This is historically elegant because post-war borders largely codified the 1939–40 Soviet gains, so the modern Poland/Ukraine and Romania/Moldova borders already sit almost exactly on the 1941 front — the Baltics and Bessarabia come out Soviet, Turkey and Sweden neutral, all without a hand-drawn 1940s frontier.
+
+The country grid also *confines generation*: a province may not cross an owner boundary, so every province edge along a frontier falls exactly on it and a province's initial owner is read straight off the region it sits in. The old nearest-seed path survives only as a fallback for worlds with no nations layer (the test harness). Verified across all three theatres: Berlin/Warsaw axis, Moscow/Riga/Kishinev Soviet, Ankara/Stockholm/Dublin/Algiers neutral.
+
 **What this is NOT, yet.** Provinces are the political and territorial backbone, but movement is still continuous and units can still pass between each other — province-graph movement (a division pinned in a province it is fighting for, blocked from slipping past a held enemy province) is the next step. This commit is the foundation the "full province system" decision asked for; the gameplay layer builds on it.
 
 ---

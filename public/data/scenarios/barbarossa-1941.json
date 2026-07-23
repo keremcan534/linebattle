@@ -26,7 +26,8 @@
       "rivers": "../geo/eastern-front/rivers.geojson",
       "cities": "../geo/eastern-front/cities.geojson",
       "overlays": "../geo/eastern-front/terrain-overlays.geojson",
-      "borders": "../geo/eastern-front/borders-1941.geojson"
+      "borders": "../geo/eastern-front/borders-1941.geojson",
+      "nations": "../geo/eastern-front/nations.geojson"
     }
   },
   "factions": [
@@ -1610,5 +1611,48 @@
         "capturable": true
       }
     ]
+  },
+  "nations": {
+    "owners": {
+      "DEU": "germany",
+      "POL": "germany",
+      "CZE": "germany",
+      "SVK": "germany",
+      "AUT": "germany",
+      "HUN": "germany",
+      "BGR": "germany",
+      "ITA": "germany",
+      "FRA": "germany",
+      "BEL": "germany",
+      "NLD": "germany",
+      "LUX": "germany",
+      "DNK": "germany",
+      "NOR": "germany",
+      "HRV": "germany",
+      "SRB": "germany",
+      "BIH": "germany",
+      "SVN": "germany",
+      "MNE": "germany",
+      "MKD": "germany",
+      "ALB": "germany",
+      "GRC": "germany",
+      "KOS": "germany",
+      "ROU": "romania",
+      "FIN": "finland",
+      "ALA": "finland",
+      "RUS": "soviet",
+      "UKR": "soviet",
+      "BLR": "soviet",
+      "LTU": "soviet",
+      "LVA": "soviet",
+      "EST": "soviet",
+      "MDA": "soviet",
+      "GEO": "soviet",
+      "ARM": "soviet",
+      "AZE": "soviet",
+      "KAZ": "soviet",
+      "TKM": "soviet"
+    },
+    "default": "neutral"
   }
 }

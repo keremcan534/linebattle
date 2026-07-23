@@ -33,6 +33,13 @@ export interface ScenarioFile {
    * is a legitimate choice for a short tactical scenario.
    */
   supply?: SupplySpec;
+  /**
+   * Remaps modern countries (from `map.layers.nations`) to their owner at the
+   * scenario's date, so province ownership starts on the real historical
+   * front. Keys are Natural Earth `ADM0_A3` codes; values are a faction id or
+   * `"neutral"`. Countries not listed fall to `default`.
+   */
+  nations?: NationsSpec;
   playerFaction: string;
   factions: FactionSpec[];
   /** Reusable stat blocks, referenced by `DivisionSpec.template`. */
@@ -58,7 +65,20 @@ export interface MapSpec {
      * Purely cartographic — see BorderLayer. Borders never constrain movement.
      */
     borders?: string;
+    /**
+     * National territory polygons (Natural Earth), used to set each province's
+     * starting owner from real borders. Remapped to the scenario's date by
+     * {@link ScenarioFile.nations}.
+     */
+    nations?: string;
   };
+}
+
+export interface NationsSpec {
+  /** ADM0_A3 code → faction id, or the literal "neutral". */
+  owners: Record<string, string>;
+  /** Owner for any country not listed. Defaults to "neutral". */
+  default?: string;
 }
 
 export interface SupplySpec {

@@ -77,6 +77,15 @@ const LAYERS = [
     kind: 'point',
     props: ['NAME', 'ADM0NAME', 'POP_MAX', 'SCALERANK'],
   },
+  // Modern national territory. We keep precise Natural Earth polygons and
+  // remap each country to its 1941 owner in the scenario JSON — data-driven
+  // national borders without hand-drawing a single 1940s frontier.
+  {
+    source: 'admin_0_countries',
+    out: 'nations.geojson',
+    kind: 'poly',
+    props: ['NAME', 'ISO_A2', 'ISO_A3', 'ADM0_A3'],
+  },
 ];
 
 // ---------------------------------------------------------------- fetching --

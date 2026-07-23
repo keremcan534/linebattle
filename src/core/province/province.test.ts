@@ -74,6 +74,35 @@ describe('province generation', () => {
     // The test world has a central lake, so at least one province borders it.
     expect(map.provinces.some((p) => p.coastal)).toBe(true);
   });
+
+  it('confines provinces within owner regions and reads ownership from them', () => {
+    // A confine grid splits the map: west half allies (0), east half axis (1),
+    // with a neutral column (-1) down the middle. No province may span the
+    // divide, and each takes the owner of the region it sits in.
+    const world = createTestWorld({ seed: 'confine' });
+    const t = world.terrain;
+    const confine = new Int8Array(t.width * t.height);
+    const mid = Math.floor(t.width / 2);
+    for (let y = 0; y < t.height; y++) {
+      for (let x = 0; x < t.width; x++) {
+        confine[y * t.width + x] = x < mid - 1 ? 0 : x > mid + 1 ? 1 : -1;
+      }
+    }
+
+    const map = generateProvinces(t, world.alliances, { confine });
+
+    // Every province is entirely inside one region.
+    for (const p of map.provinces) {
+      const owners = new Set<number>();
+      for (let i = 0; i < map.cellProvince.length; i++) {
+        if (map.cellProvince[i] === p.id) owners.add(confine[i]!);
+      }
+      expect(owners.size).toBe(1);
+    }
+    // Ownership matches the region: west allies, east axis, middle neutral.
+    expect(map.ownerAt({ x: t.origin.x + 60, y: t.origin.y + 500 })).toBe(0);
+    expect(map.ownerAt({ x: t.origin.x + t.worldWidth - 60, y: t.origin.y + 500 })).toBe(1);
+  });
 });
 
 describe('province ownership', () => {
