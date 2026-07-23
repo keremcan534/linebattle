@@ -31,13 +31,20 @@ import type { System, TickContext } from './system';
 /** Organisation points removed per unit of enemy power, per hour. */
 const ORG_DAMAGE_RATE = 0.0075;
 /** Men lost per point of organisation lost. */
-const CASUALTIES_PER_ORG = 26;
+const CASUALTIES_PER_ORG = 18;
 /** Per-tick damage spread. Small on purpose — see the class comment. */
 const VARIANCE = 0.12;
-/** Base organisation ratio at which a locally pressured formation breaks. */
-const BREAK_THRESHOLD = 0.16;
-/** How far a broken formation falls back, in km. */
-const RETREAT_DISTANCE_KM = 40;
+/**
+ * Organisation ratio at which a locally pressured formation breaks.
+ *
+ * Raised from 0.16: a division should give ground and reform once its
+ * cohesion is spent, not fight on to annihilation. Frontal combat is meant to
+ * push the line back, not delete the formations holding it — that is what
+ * encirclement is for.
+ */
+const BREAK_THRESHOLD = 0.26;
+/** How far a broken formation falls back, in km. Far enough to shake pursuit. */
+const RETREAT_DISTANCE_KM = 55;
 /**
  * A division can commit its combat power to one neighbouring frontage slot.
  *
@@ -53,8 +60,15 @@ const BASELINE_DEFENCE = 20;
 
 /** A pursuer this close to a router is overrunning it. */
 const OVERRUN_RANGE_KM = 10;
-/** Manpower a router loses per pursuer in range, per hour, as fraction of max. */
-const OVERRUN_MANPOWER_PER_HOUR = 0.02;
+/**
+ * Manpower a router loses per pursuer in range, per hour, as fraction of max.
+ *
+ * Lowered from 0.02: pursuit still hurts and still turns a sealed pocket into
+ * a massacre (the encircled bleed on top of this in AttritionSystem), but a
+ * formation making a fighting withdrawal on an open front now mostly escapes
+ * to reform rather than being executed on the roads.
+ */
+const OVERRUN_MANPOWER_PER_HOUR = 0.008;
 /** More than this many pursuers adds nothing — the roads are already cut. */
 const OVERRUN_MAX_PURSUERS = 4;
 /** Attacking across a major river is expensive. */
