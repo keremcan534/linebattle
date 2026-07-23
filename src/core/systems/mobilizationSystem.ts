@@ -58,9 +58,11 @@ export class MobilizationSystem implements System {
           ? frontlineReady / (frontage * desiredCoverage)
           : 1;
       // Empty sectors trigger emergency drafting and rail deployment. This is
-      // continuous operational pressure, not a scripted spawn wave.
+      // continuous operational pressure, not a scripted spawn wave. The surge
+      // is deliberately modest: at ×2 a single breakthrough summoned a flood
+      // that reversed the attacker before winter, killing the historical arc.
       const coverageSurge =
-        coverage < 1 ? 1 + (1 - coverage) * 2 : 1;
+        coverage < 1 ? 1 + (1 - coverage) * 0.8 : 1;
       const nationalMobilization =
         world.campaignModifiers(alliance).mobilization;
       const emergencyGap = Math.max(
@@ -68,7 +70,7 @@ export class MobilizationSystem implements System {
         Math.ceil(frontage * desiredCoverage - frontlineReady),
       );
       const emergencyCeiling =
-        required + Math.ceil(frontage * 0.35);
+        required + Math.ceil(frontage * 0.2);
       const operationalRequired = Math.max(
         required,
         Math.min(emergencyCeiling, current + emergencyGap),

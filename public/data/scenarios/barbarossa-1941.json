@@ -15,9 +15,9 @@
       },
       {
         "faction": "soviet",
-        "daysPerDivision": 1.5,
-        "maxForceMultiplier": 2.5,
-        "divisionsPerFrontlineSegment": 1.15
+        "daysPerDivision": 2.5,
+        "maxForceMultiplier": 2.1,
+        "divisionsPerFrontlineSegment": 1.0
       }
     ],
     "plans": [
@@ -52,10 +52,10 @@
           "recoveryMultiplier": 1
         },
         "nationalResolve": {
-          "maximumAtTerritoryLoss": 0.5,
-          "combatMultiplier": 1.2,
-          "recoveryMultiplier": 1.35,
-          "mobilizationMultiplier": 3
+          "maximumAtTerritoryLoss": 0.7,
+          "combatMultiplier": 1.15,
+          "recoveryMultiplier": 1.25,
+          "mobilizationMultiplier": 1.8
         }
       },
       {
