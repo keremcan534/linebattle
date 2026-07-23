@@ -1,4 +1,4 @@
-import { Application, Container } from 'pixi.js';
+import { Application, Container, Graphics } from 'pixi.js';
 import type { GameEngine } from '@core/engine/gameEngine';
 import type { MapData } from '@core/scenario/scenarioLoader';
 import type { ViewStore } from '@app/viewStore';
@@ -94,6 +94,17 @@ export class GameRenderer {
       this.unitLayer.container,
       this.battleLayer.container,
     );
+
+    // Clip every world layer to the playable bounds. The map DATA is clipped to
+    // a looser bbox than a scenario's playable area (so a theatre can crop the
+    // Aegean or the Sahara out of a 3000 km front), which left the map layer
+    // drawing bare, untinted land and city labels in the strip between the two.
+    // A bounds-rectangle mask hides that overflow cleanly for every theatre.
+    const b = world.bounds;
+    const mask = new Graphics().rect(b.minX, b.minY, b.maxX - b.minX, b.maxY - b.minY).fill(0xffffff);
+    this.worldRoot.addChild(mask);
+    this.worldRoot.mask = mask;
+
     app.stage.addChild(this.worldRoot);
   }
 
