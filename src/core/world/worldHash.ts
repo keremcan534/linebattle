@@ -71,7 +71,10 @@ export function hashWorld(world: World): number {
     h.float(d.supply);
     h.int(d.encircledTicks);
     h.float(d.experience);
+    h.float(d.equipmentRatio);
+    h.float(d.doctrine);
     h.text(d.stance);
+    h.text(d.state);
     if (d.frontlineSegment) h.text(d.frontlineSegment);
     else h.byte(0);
 

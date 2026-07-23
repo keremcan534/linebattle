@@ -24,6 +24,21 @@ export type Branch =
  */
 export type Stance = 'move' | 'hold' | 'entrench' | 'retreat' | 'advance';
 
+/**
+ * Tactical lifecycle, deliberately separate from player/AI stance.
+ *
+ * Stance says what the formation is trying to do. State says where it is in
+ * the contact/displacement flow, so a broken unit cannot silently jump from
+ * combat to deletion or be retasked before it has re-formed.
+ */
+export type DivisionState =
+  | 'MOVING'
+  | 'CONTACT'
+  | 'FIGHTING'
+  | 'FALLING_BACK'
+  | 'RECOVERING'
+  | 'FRONTLINE';
+
 export interface PostCombatAdvance {
   /** The position occupied by the defender when it broke. */
   target: Vec2;
@@ -89,6 +104,7 @@ export interface Division {
 
   order: Order | null;
   stance: Stance;
+  state: DivisionState;
   /** Present only during the post-combat ADVANCE transition. */
   advance: PostCombatAdvance | null;
   /** Operational sector this formation must hold; only frontline AI reassigns it. */
@@ -114,6 +130,10 @@ export interface Division {
   encircledTicks: number;
   /** 0..1 — veterancy. */
   experience: number;
+  /** 0..1, serviceable weapons and vehicles versus establishment. */
+  equipmentRatio: number;
+  /** Relative tactical proficiency; 1 is the scenario-template baseline. */
+  doctrine: number;
 
   /** Unopposed road speed in km/h, before terrain and supply modifiers. */
   speedKmh: number;

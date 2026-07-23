@@ -172,6 +172,10 @@ export interface DivisionTemplate {
   hardAttack: number;
   defence: number;
   hardness: number;
+  /** Serviceable weapons and vehicles versus establishment; defaults to 1. */
+  equipmentRatio?: number;
+  /** Relative tactical proficiency; defaults to 1. */
+  doctrine?: number;
   /** Defaults applied when a division does not override them. */
   experience?: number;
   morale?: number;
@@ -194,4 +198,6 @@ export interface DivisionSpec {
   experience?: number;
   morale?: number;
   supply?: number;
+  equipmentRatio?: number;
+  doctrine?: number;
 }

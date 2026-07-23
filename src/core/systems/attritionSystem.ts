@@ -1,6 +1,7 @@
 import { TERRAIN_PROFILES } from '@core/terrain/terrainTypes';
 import { TICKS_PER_DAY } from '@core/time/gameClock';
 import { organisationRatio } from '@core/world/division';
+import { hasValidRetreatRoute } from './retreat';
 import type { System, TickContext } from './system';
 
 /** Extra daily losses for a division with no supply at all. */
@@ -76,10 +77,12 @@ export class AttritionSystem implements System {
       }
 
       const surrendered =
+        d.encircled &&
         pocketDays >= POCKET_SURRENDER_DAYS &&
         d.supply <= 0.08 &&
-        organisationRatio(d) <= 0.12;
-      if (surrendered || d.manpower <= d.maxManpower * 0.08) {
+        organisationRatio(d) <= 0.12 &&
+        !hasValidRetreatRoute(d, world);
+      if (surrendered) {
         world.divisions.delete(d.id);
         ctx.events.emit({ type: 'divisionDestroyed', division: d.id, position: { ...d.position } });
       }

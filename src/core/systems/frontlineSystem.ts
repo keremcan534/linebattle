@@ -345,7 +345,12 @@ export class FrontlineSystem implements System {
       for (const d of world.divisions.values()) {
         if (world.getFaction(d.faction)?.alliance !== alliance) continue;
         if (!d.frontlineSegment) continue;
-        if (d.encircled || d.stance === 'retreat' || d.stance === 'advance') continue;
+        if (
+          d.encircled ||
+          d.stance === 'retreat' ||
+          d.stance === 'advance' ||
+          d.state === 'RECOVERING'
+        ) continue;
         const list = occupants.get(d.frontlineSegment);
         if (list) list.push(d);
         else occupants.set(d.frontlineSegment, [d]);

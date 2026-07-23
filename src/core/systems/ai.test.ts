@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { GameEngine } from '@core/engine/gameEngine';
-import { distanceSq } from '@core/math/vec2';
 import { addTestDivision, createTestWorld } from '@core/testing/testWorld';
 import { TICKS_PER_DAY } from '@core/time/gameClock';
 import { battleId, divisionId, factionId } from '@core/world/ids';
@@ -180,7 +179,7 @@ describe('AiSystem', () => {
     expect(tank.order).toBeNull();
   });
 
-  it('orders a newly encircled formation to break toward its capital-linked network', () => {
+  it('does not issue an impossible move through a sealed encirclement', () => {
     const world = createTestWorld({ seed: 'pocket-breakout' });
     const trapped = addTestDivision(world, 'trapped', 700, 700, {
       faction: RED,
@@ -217,11 +216,7 @@ describe('AiSystem', () => {
     for (let tick = 0; tick <= 3 * 4; tick++) engine.step();
 
     expect(trapped.encircled).toBe(true);
-    const destination = trapped.order?.waypoints.at(-1);
-    expect(destination).toBeDefined();
-    expect(distanceSq(destination!, root)).toBeLessThan(
-      distanceSq({ x: 700, y: 700 }, root),
-    );
+    expect(trapped.order).toBeNull();
   });
 
   it('keeps an opening-shock army in separate assigned sectors', () => {
@@ -355,9 +350,9 @@ describe('overrun', () => {
     for (let i = 0; i < TICKS_PER_DAY; i++) engine.step();
 
     const after = world.getDivision(divisionId('router'));
-    // Either it bled hard while escaping or it was destroyed outright —
-    // what it can no longer do is stroll away untouched.
-    expect(!after || after.manpower < before * 0.85).toBe(true);
+    // It may bleed while escaping, but ordinary pursuit cannot delete it.
+    expect(after).toBeDefined();
+    expect(after!.manpower).toBeLessThan(before * 0.85);
     // And crucially, it never fought a battle to suffer this.
     expect(world.battles.size).toBe(0);
   });

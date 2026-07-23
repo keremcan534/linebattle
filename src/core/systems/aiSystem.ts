@@ -90,7 +90,11 @@ export class AiSystem implements System {
     for (const d of own) {
       // Post-combat RETREAT and ADVANCE own their transitions; operational AI
       // must not overwrite either with a fresh strategic order mid-sequence.
-      if (d.stance === 'retreat' || d.stance === 'advance') continue;
+      if (
+        d.stance === 'retreat' ||
+        d.stance === 'advance' ||
+        d.state === 'RECOVERING'
+      ) continue;
 
       const alliance = world.getFaction(d.faction)?.alliance;
       if (!alliance) continue;
