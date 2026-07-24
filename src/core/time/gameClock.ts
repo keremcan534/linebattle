@@ -7,7 +7,7 @@
  * timestep would make results depend on the player's frame rate, which kills
  * replays, saves, deterministic AI and any future multiplayer.
  */
-export const MINUTES_PER_TICK = 12 * 60;
+export const MINUTES_PER_TICK = 6 * 60;
 export const TICKS_PER_HOUR = 60 / MINUTES_PER_TICK;
 export const TICKS_PER_DAY = 24 * TICKS_PER_HOUR;
 
@@ -16,14 +16,20 @@ export function ticksForHours(hours: number): number {
   return Math.max(1, Math.ceil(hours * TICKS_PER_HOUR));
 }
 
-/** Real seconds per tick at each speed setting. Index = speed level. */
+/**
+ * Real seconds per tick at each speed setting. Index = speed level.
+ *
+ * Halved when the tick dropped from 12h to 6h so each speed still advances the
+ * same amount of game-time per real second — the finer tick buys smoother
+ * movement and collision, not a slower game.
+ */
 export const SPEED_TABLE: readonly number[] = [
   Infinity, // 0 — paused
-  4.0, //     1 — one twelve-hour tick every four real seconds
-  2.0,
+  2.0, //     1 — one six-hour tick every two real seconds
   1.0,
-  0.4,
-  0.16, //    5 — roughly three game-days per real second
+  0.5,
+  0.2,
+  0.08, //    5 — roughly three game-days per real second
 ];
 
 export const MAX_SPEED = SPEED_TABLE.length - 1;

@@ -71,7 +71,7 @@ export class FrontlineSystem implements System {
     // that stretched or tore between rebalances left empty sectors open for
     // hours, and the attacker poured through the seam and pocketed the
     // defenders. Surplus formations slide into any gap continuously.
-    this.fillEmptySegments(world);
+    this.balanceFrontline(world);
     this.lastObjectiveRevision = world.objectiveRevision;
   }
 
@@ -331,57 +331,72 @@ export class FrontlineSystem implements System {
   }
 
   /**
-   * Slides surplus formations into uncovered sectors every update.
+   * Evens formations across the whole friendly frontage every update.
    *
-   * {@link assignDivisions} only reshuffles held formations on the daily
-   * rebalance, so a gap that opened between passes stayed empty for hours.
-   * This lighter pass keeps the line continuous: for each empty sector it
-   * pulls the nearest spare formation from a sector that already has more than
-   * one, without disturbing sectors that are only just covered.
+   * assignDivisions stacks surplus onto the nearest sector, so reinforcements
+   * piled up wherever they were drafted — a huge cluster on one flank while the
+   * other thinned to a thread. This pass moves the excess from over-manned
+   * sectors down to the emptiest ones (rail redeployment carries them there),
+   * keeping the line evenly held from end to end instead of lumped in a corner.
    */
-  private fillEmptySegments(world: World): void {
+  private balanceFrontline(world: World): void {
     for (const alliance of world.alliances) {
+      const segments = [...world.frontlineSegments.values()].filter((segment) =>
+        segment.alliances.includes(alliance),
+      );
+      if (!segments.length) continue;
+
       const occupants = new Map<FrontlineSegmentId, Division[]>();
+      for (const segment of segments) occupants.set(segment.id, []);
+      let total = 0;
       for (const d of world.divisions.values()) {
         if (world.getFaction(d.faction)?.alliance !== alliance) continue;
-        if (!d.frontlineSegment) continue;
-        if (d.encircled || d.stance === 'retreat' || d.stance === 'advance') continue;
+        if (!d.frontlineSegment || d.encircled) continue;
+        if (d.stance === 'retreat' || d.stance === 'advance') continue;
         const list = occupants.get(d.frontlineSegment);
-        if (list) list.push(d);
-        else occupants.set(d.frontlineSegment, [d]);
+        if (!list) continue;
+        list.push(d);
+        total++;
       }
+      if (total === 0) continue;
 
-      const empties: FrontlineSegment[] = [];
-      for (const segment of world.frontlineSegments.values()) {
-        if (!segment.alliances.includes(alliance)) continue;
-        if (!occupants.get(segment.id)?.length) empties.push(segment);
-      }
-      if (!empties.length) continue;
+      // The even-coverage target, rounded to whole divisions per sector.
+      const balancePoint = Math.max(1, Math.round(total / segments.length));
 
+      // Anything beyond the balance point on an over-manned sector is surplus.
       const donors: Division[] = [];
       for (const list of occupants.values()) {
-        if (list.length < 2) continue;
+        if (list.length <= balancePoint) continue;
         list.sort((a, b) => (a.id < b.id ? -1 : 1));
-        donors.push(...list.slice(1));
+        donors.push(...list.slice(balancePoint));
       }
       if (!donors.length) continue;
 
-      empties.sort((a, b) => (a.id < b.id ? -1 : 1));
+      // Fill the thinnest sectors first; ties resolved by id for determinism.
+      const needy = segments
+        .filter((segment) => occupants.get(segment.id)!.length < balancePoint)
+        .sort(
+          (a, b) =>
+            occupants.get(a.id)!.length - occupants.get(b.id)!.length ||
+            (a.id < b.id ? -1 : 1),
+        );
+
       const moved = new Set<DivisionId>();
-      for (const empty of empties) {
+      for (const segment of needy) {
         let best: Division | null = null;
         let bestDistance = Infinity;
         for (const donor of donors) {
           if (moved.has(donor.id)) continue;
-          const d = distanceSq(donor.position, empty.position);
-          if (d < bestDistance) {
-            bestDistance = d;
+          const dd = distanceSq(donor.position, segment.position);
+          if (dd < bestDistance) {
+            bestDistance = dd;
             best = donor;
           }
         }
         if (!best) break;
-        best.frontlineSegment = empty.id;
+        best.frontlineSegment = segment.id;
         moved.add(best.id);
+        occupants.get(segment.id)!.push(best);
       }
     }
   }

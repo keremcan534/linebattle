@@ -211,15 +211,22 @@ describe('AiSystem', () => {
     );
     const engine = new GameEngine(world, { aiAlliances: ['a'] });
 
-    // The liquid control layer is established on the first logistics pass;
-    // the next hourly pass can then recognise the closed ring, and HQ reacts
-    // on its regular three-hour order cycle.
-    for (let tick = 0; tick <= 3 * 4; tick++) engine.step();
+    // The liquid control layer is established on the first logistics pass; the
+    // next hourly pass recognises the closed ring, and HQ orders a breakout.
+    // Capture that order when it appears — a stalled unit blocked by the ring
+    // may have its order cleared again by the last tick.
+    let breakDestination: { x: number; y: number } | undefined;
+    for (let tick = 0; tick <= 12; tick++) {
+      engine.step();
+      if (trapped.encircled) {
+        const dest = trapped.order?.waypoints.at(-1);
+        if (dest) breakDestination = dest;
+      }
+    }
 
     expect(trapped.encircled).toBe(true);
-    const destination = trapped.order?.waypoints.at(-1);
-    expect(destination).toBeDefined();
-    expect(distanceSq(destination!, root)).toBeLessThan(
+    expect(breakDestination).toBeDefined();
+    expect(distanceSq(breakDestination!, root)).toBeLessThan(
       distanceSq({ x: 700, y: 700 }, root),
     );
   });

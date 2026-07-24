@@ -121,7 +121,9 @@ describe('strategic objectives', () => {
       position: { x: 500, y: 100 },
     });
     engine.step(); // objective enters world after this review
-    while (world.clock.tick <= 12) engine.step();
+    // Same game-time as before regardless of tick size: run a full day-count
+    // of six-hour ticks so the sector has time to push toward the objective.
+    while (world.clock.tick <= 24) engine.step();
 
     expect(division.position.x).toBeGreaterThan(300);
   });
