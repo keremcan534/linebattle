@@ -202,9 +202,14 @@ export class MobilizationSystem implements System {
     for (const segment of segments) {
       const direction = directionForAlliance(segment, alliance);
       if (direction === null) continue;
+      // Deploy well behind the encirclement-scan depth (ZOC x3 = 66 km), so a
+      // fresh, half-organised formation forms up in the rear and rails forward
+      // to its sector rather than spawning under the enemy's guns and being
+      // destroyed before it can dig in.
+      const REAR_DEPLOY_KM = 90;
       const rear = {
-        x: segment.position.x - segment.normal.x * direction * 42,
-        y: segment.position.y - segment.normal.y * direction * 42,
+        x: segment.position.x - segment.normal.x * direction * REAR_DEPLOY_KM,
+        y: segment.position.y - segment.normal.y * direction * REAR_DEPLOY_KM,
       };
       const connected = field.nearestNetworkPoint(alliance, rear);
       if (

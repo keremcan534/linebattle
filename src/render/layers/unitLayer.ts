@@ -3,6 +3,7 @@ import { lerp } from '@core/math/vec2';
 import { organisationRatio, strengthRatio, type Division } from '@core/world/division';
 import type { DivisionId } from '@core/world/ids';
 import type { World } from '@core/world/world';
+import { FORMED_ENEMY_MIN_SEPARATION_KM } from '@core/systems/movementSystem';
 import { drawEchelon, drawUnitCounter } from '../symbols/natoSymbol';
 import { theme } from '../theme';
 
@@ -11,6 +12,8 @@ interface UnitView {
   counter: Graphics;
   bars: Graphics;
   selection: Graphics;
+  /** World-scale zone-of-control ring, shown only while the unit is selected. */
+  zoc: Graphics;
   label: Text;
   /** Cached so we only redraw the bars when the numbers actually move. */
   lastStrength: number;
@@ -29,10 +32,13 @@ interface UnitView {
  */
 export class UnitLayer {
   readonly container = new Container();
+  /** Sits behind the counters so ZOC rings never obscure the symbols. */
+  private readonly zocLayer = new Container();
   private readonly views = new Map<DivisionId, UnitView>();
   private readonly labelStyle: TextStyle;
 
   constructor(private readonly world: World) {
+    this.container.addChild(this.zocLayer);
     this.labelStyle = new TextStyle({
       fontFamily: 'Consolas, "SF Mono", monospace',
       fontSize: 10,
@@ -56,6 +62,7 @@ export class UnitLayer {
 
       view.node.position.set(p.x, p.y);
       view.node.scale.set(inverse);
+      view.zoc.position.set(p.x, p.y);
       view.label.visible = showLabels;
 
       const isSelected = selected.has(division.id);
@@ -63,6 +70,7 @@ export class UnitLayer {
       if (isSelected !== view.lastSelected || isHovered !== view.lastHovered) {
         view.lastSelected = isSelected;
         view.lastHovered = isHovered;
+        view.zoc.visible = isSelected;
         this.drawSelection(view, isSelected, isHovered);
       }
 
@@ -79,6 +87,7 @@ export class UnitLayer {
     for (const [id, view] of this.views) {
       if (!this.world.divisions.has(id)) {
         view.node.destroy({ children: true });
+        view.zoc.destroy();
         this.views.delete(id);
       }
     }
@@ -97,6 +106,16 @@ export class UnitLayer {
     const ink = faction?.accentColor ?? 0xffffff;
 
     const node = new Container();
+
+    // World-scale so it grows with the map: the ring is the real separation an
+    // enemy formation cannot cross, in kilometres, not a fixed screen circle.
+    const zoc = new Graphics();
+    zoc
+      .circle(0, 0, FORMED_ENEMY_MIN_SEPARATION_KM)
+      .fill({ color: theme.unit.selectedOutline, alpha: 0.07 })
+      .stroke({ width: 0.5, color: theme.unit.selectedOutline, alpha: 0.55 });
+    zoc.visible = false;
+    this.zocLayer.addChild(zoc);
 
     const selection = new Graphics();
     const counter = new Graphics();
@@ -118,6 +137,7 @@ export class UnitLayer {
       counter,
       bars,
       selection,
+      zoc,
       label,
       lastStrength: -1,
       lastOrg: -1,
