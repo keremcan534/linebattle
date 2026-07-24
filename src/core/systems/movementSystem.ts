@@ -40,6 +40,13 @@ const PROGRESS_EPSILON_KM = 0.05;
  */
 const STALL_LIMIT_TICKS = ticksForHours(2);
 
+/** How much faster a formation redeploys by rail through its own secure rear. */
+const RAIL_SPEED_MULTIPLIER = 3.5;
+/** Only a genuinely distant reassignment is a rail movement, not a sector nudge. */
+const RAIL_MIN_REMAINING_KM = 90;
+/** Within this range of the enemy a formation detrains and moves at combat pace. */
+const RAIL_ENEMY_CLEAR_KM = 55;
+
 /**
  * Continuous movement across the map.
  *
@@ -67,6 +74,11 @@ export class MovementSystem implements System {
 
       let budgetKm = effectiveSpeedKmh(d, world.weather.movement) * hours;
       if (budgetKm <= 0) continue;
+      // Strategic rail redeployment: a formation crossing its own secure rear
+      // to a distant sector covers ground far faster than it could march or
+      // fight across it. This is what actually refills an emptying flank — a
+      // reassignment alone never arrives on foot before the enemy exploits it.
+      if (this.railRedeploying(d, world)) budgetKm *= RAIL_SPEED_MULTIPLIER;
       let enemyBlocked = false;
 
       while (budgetKm > 0 && order.cursor < order.waypoints.length) {
@@ -149,6 +161,27 @@ export class MovementSystem implements System {
         }
       }
     }
+  }
+
+  /**
+   * True when a formation is redeploying by rail: ordered to a distant sector,
+   * moving through its own capital-linked rear, with no enemy close enough to
+   * force it off the trains. Adjacent sector adjustments and any movement near
+   * contact stay at ordinary march pace.
+   */
+  private railRedeploying(d: Division, world: World): boolean {
+    if (d.stance !== 'move' || d.encircled) return false;
+    const order = d.order;
+    if (!order) return false;
+    const destination = order.waypoints[order.waypoints.length - 1];
+    if (!destination || distance(d.position, destination) < RAIL_MIN_REMAINING_KM) {
+      return false;
+    }
+    const alliance = world.getFaction(d.faction)?.alliance;
+    if (!alliance || !world.supply?.networkAt(alliance, d.position)) return false;
+    return !world
+      .divisionsNear(d.position.x, d.position.y, RAIL_ENEMY_CLEAR_KM)
+      .some((o) => o.stance !== 'retreat' && world.hostile(d.faction, o.faction));
   }
 
   /**
