@@ -1,6 +1,7 @@
 import { TERRAIN_PROFILES } from '@core/terrain/terrainTypes';
 import { TICKS_PER_DAY } from '@core/time/gameClock';
-import { organisationRatio } from '@core/world/division';
+import { organisationRatio, type Division } from '@core/world/division';
+import type { World } from '@core/world/world';
 import type { System, TickContext } from './system';
 
 /** Extra daily losses for a division with no supply at all. */
@@ -17,6 +18,15 @@ const POCKET_COLLAPSE_PER_DAY = 0.12;
 const POCKET_ORG_COLLAPSE_PER_DAY = 0.3;
 /** A continuously sealed, broken pocket surrenders after this many days. */
 export const POCKET_SURRENDER_DAYS = 7;
+/**
+ * A cut-off formation is only doomed inside a genuine cauldron. If at least
+ * this many encircled friendly divisions are clustered together, the pocket
+ * collapses and its formations eventually surrender; a lone or small cut-off
+ * is merely pinned and unsupplied, and can still fight its way out.
+ */
+const CAULDRON_MIN_DIVISIONS = 5;
+/** Radius within which encircled friendly divisions count as one cauldron. */
+const CAULDRON_CLUSTER_KM = 120;
 
 /**
  * Losses that are nobody's fault.
@@ -42,14 +52,20 @@ export class AttritionSystem implements System {
     for (const d of [...world.divisions.values()]) {
       const terrain = TERRAIN_PROFILES[world.terrain.sample(d.position)];
 
+      // A lone or small cut-off is pinned and hungry, but not doomed: only a
+      // genuine cauldron collapses and surrenders. This stops formations from
+      // quietly dissolving in one-division "pixel pockets" every time an enemy
+      // slips behind the line.
+      const inCauldron = d.encircled && this.inCauldron(world, d);
+
       // Terrain and weather bite everyone; hunger only the badly supplied.
       let rate = terrain.attritionPerDay * weather.attrition;
       const starvation = Math.max(0, 1 - d.supply / 0.5);
       if (starvation > 0) {
-        rate += STARVATION_PER_DAY * starvation * (d.encircled ? ENCIRCLEMENT_MULTIPLIER : 1);
+        rate += STARVATION_PER_DAY * starvation * (inCauldron ? ENCIRCLEMENT_MULTIPLIER : 1);
       }
       const pocketDays = d.encircledTicks / TICKS_PER_DAY;
-      const collapse = d.encircled
+      const collapse = inCauldron
         ? Math.max(0, Math.min(1, (pocketDays - POCKET_GRACE_DAYS) / 3))
         : 0;
       rate += POCKET_COLLAPSE_PER_DAY * collapse;
@@ -76,6 +92,7 @@ export class AttritionSystem implements System {
       }
 
       const surrendered =
+        inCauldron &&
         pocketDays >= POCKET_SURRENDER_DAYS &&
         d.supply <= 0.08 &&
         organisationRatio(d) <= 0.12;
@@ -84,5 +101,27 @@ export class AttritionSystem implements System {
         ctx.events.emit({ type: 'divisionDestroyed', division: d.id, position: { ...d.position } });
       }
     }
+  }
+
+  /**
+   * True when a cut-off formation is part of a real cauldron: at least
+   * {@link CAULDRON_MIN_DIVISIONS} encircled friendly divisions packed within
+   * {@link CAULDRON_CLUSTER_KM}. Counts the formation itself.
+   */
+  private inCauldron(world: World, d: Division): boolean {
+    const alliance = world.getFaction(d.faction)?.alliance;
+    if (!alliance) return false;
+    let count = 0;
+    for (const other of world.divisionsNear(
+      d.position.x,
+      d.position.y,
+      CAULDRON_CLUSTER_KM,
+    )) {
+      if (other.encircled && world.getFaction(other.faction)?.alliance === alliance) {
+        count++;
+        if (count >= CAULDRON_MIN_DIVISIONS) return true;
+      }
+    }
+    return false;
   }
 }

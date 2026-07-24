@@ -163,8 +163,37 @@ describe('encirclement', () => {
     expect(events).toContain('divisionEncircled');
   });
 
+  function cauldron(): World {
+    const world = connectedWorld();
+    // A genuine cauldron: several divisions trapped together, not a lone unit.
+    const trapped: [number, number][] = [
+      [700, 700],
+      [685, 690],
+      [715, 690],
+      [690, 715],
+      [712, 712],
+    ];
+    trapped.forEach(([x, y], i) =>
+      addTestDivision(world, i === 0 ? 'trapped' : `trapped-${i}`, x, y, {
+        faction: RED,
+        supply: 1,
+      }),
+    );
+    let n = 0;
+    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 10) {
+      addTestDivision(
+        world,
+        `ring-${n++}`,
+        700 + Math.cos(angle) * 55,
+        700 + Math.sin(angle) * 55,
+        { faction: BLUE },
+      );
+    }
+    return world;
+  }
+
   it('destroys a sealed pocket after sustained isolation', () => {
-    const world = pocket();
+    const world = cauldron();
     const engine = new GameEngine(world);
     let destroyed = false;
     engine.events.on('divisionDestroyed', () => {
