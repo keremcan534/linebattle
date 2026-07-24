@@ -1,11 +1,10 @@
-import { distance, type Vec2 } from '@core/math/vec2';
+import { distance, normalize, type Vec2 } from '@core/math/vec2';
 import { TERRAIN_PROFILES } from '@core/terrain/terrainTypes';
 import type { Battle } from '@core/world/battle';
 import { organisationRatio, strengthRatio, type Division } from '@core/world/division';
 import type { DivisionId } from '@core/world/ids';
 import type { World } from '@core/world/world';
 import { ENGAGEMENT_RANGE_KM } from './contactSystem';
-import { findRetreatRoute } from './retreat';
 import type { System, TickContext } from './system';
 
 /**
@@ -30,11 +29,9 @@ import type { System, TickContext } from './system';
  */
 
 /** Organisation points removed per unit of enemy power, per hour. */
-const ORG_DAMAGE_RATE = 0.0025;
+const ORG_DAMAGE_RATE = 0.0075;
 /** Men lost per point of organisation lost. */
-const CASUALTIES_PER_ORG = 12;
-/** Ordinary combat cannot consume the final remnant of a formation. */
-const COMBAT_MANPOWER_FLOOR = 0.08;
+const CASUALTIES_PER_ORG = 18;
 /** Per-tick damage spread. Small on purpose — see the class comment. */
 const VARIANCE = 0.12;
 /**
@@ -46,6 +43,8 @@ const VARIANCE = 0.12;
  * encirclement is for.
  */
 const BREAK_THRESHOLD = 0.26;
+/** How far a broken formation falls back, in km. Far enough to shake pursuit. */
+const RETREAT_DISTANCE_KM = 55;
 /**
  * A division can commit its combat power to one neighbouring frontage slot.
  *
@@ -58,16 +57,14 @@ const FRONTAGE_RANGE_KM = ENGAGEMENT_RANGE_KM * 1.5;
 const MAX_TARGETS_PER_DIVISION = 1;
 /** Defence 20 is the neutral point used by the common test/template stats. */
 const BASELINE_DEFENCE = 20;
-/** Below this local pressure ratio neither side can move the contact line. */
-const STALEMATE_PRESSURE_RATIO = 1.12;
 
 /** A pursuer this close to a router is overrunning it. */
 const OVERRUN_RANGE_KM = 10;
 /**
  * Manpower a router loses per pursuer in range, per hour, as fraction of max.
  *
- * Lowered from 0.02: pursuit still hurts (with sealed-pocket collapse handled
- * separately in AttritionSystem), but a
+ * Lowered from 0.02: pursuit still hurts and still turns a sealed pocket into
+ * a massacre (the encircled bleed on top of this in AttritionSystem), but a
  * formation making a fighting withdrawal on an open front now mostly escapes
  * to reform rather than being executed on the roads.
  */
@@ -113,11 +110,12 @@ export class CombatSystem implements System {
    *
    * So a router caught within {@link OVERRUN_RANGE_KM} of a formed enemy
    * takes one-sided losses, scaling with how many pursuers are on top of it.
-   * Pursuit can bleed and further disorganise a retreat, but it still cannot
-   * delete the formation; only a sealed, isolated pocket may surrender.
+   * This is where pockets become massacres and why pursuit is worth doing:
+   * catching a broken enemy destroys it far faster than fighting it ever did.
+   * Historically most of a beaten army's losses happened exactly here.
    */
   private resolveOverruns(ctx: TickContext, hours: number): void {
-    const { world } = ctx;
+    const { world, events } = ctx;
 
     for (const d of [...world.divisions.values()]) {
       if (d.stance !== 'retreat') continue;
@@ -131,11 +129,16 @@ export class CombatSystem implements System {
       const roll = world.rng.variance(VARIANCE);
 
       d.manpower = Math.max(
-        d.maxManpower * COMBAT_MANPOWER_FLOOR,
+        0,
         d.manpower - d.maxManpower * OVERRUN_MANPOWER_PER_HOUR * pressure * roll * hours,
       );
       d.organisation = Math.max(0, d.organisation - d.maxOrganisation * 0.04 * pressure * hours);
       d.morale = Math.max(0, d.morale - 0.03 * pressure * hours);
+
+      if (d.manpower <= d.maxManpower * 0.08) {
+        world.divisions.delete(d.id);
+        events.emit({ type: 'divisionDestroyed', division: d.id, position: { ...d.position } });
+      }
     }
   }
 
@@ -162,26 +165,8 @@ export class CombatSystem implements System {
     // creates a real breakthrough instead of merely nudging a global average.
     const ontoB = this.allocatePressure(unitsA, unitsB, powersA);
     const ontoA = this.allocatePressure(unitsB, unitsA, powersB);
-    // Both sides experience the same battle-tempo roll. Randomness changes
-    // how quickly a fight develops without manufacturing a winner between
-    // otherwise identical formations.
-    const battleTempoRoll = world.rng.variance(VARIANCE);
-    this.applyDamage(
-      unitsB,
-      ontoB.incoming,
-      powersB,
-      battleTempoRoll,
-      hours,
-      ctx,
-    );
-    this.applyDamage(
-      unitsA,
-      ontoA.incoming,
-      powersA,
-      battleTempoRoll,
-      hours,
-      ctx,
-    );
+    this.applyDamage(unitsB, ontoB.incoming, hours, ctx);
+    this.applyDamage(unitsA, ontoA.incoming, hours, ctx);
 
     // Progress is the balance of remaining cohesion, smoothed so the bubble
     // does not jitter. 1 means side A is winning outright.
@@ -240,8 +225,6 @@ export class CombatSystem implements System {
       // logistics, and a game where that is a rounding error is telling a lie.
       const supplied = 0.25 + 0.75 * d.supply;
       const veterancy = 1 + 0.5 * d.experience;
-      const equipped = clamp(d.equipmentRatio, 0.05, 1);
-      const doctrine = clamp(d.doctrine, 0.5, 1.5);
 
       const alliance = world.getFaction(d.faction)?.alliance;
       const campaign = alliance
@@ -254,8 +237,6 @@ export class CombatSystem implements System {
         willing *
         supplied *
         veterancy *
-        equipped *
-        doctrine *
         weather *
         campaign;
 
@@ -347,8 +328,6 @@ export class CombatSystem implements System {
   private applyDamage(
     units: Division[],
     incoming: ReadonlyMap<DivisionId, number>,
-    ownPower: ReadonlyMap<DivisionId, number>,
-    battleTempoRoll: number,
     hours: number,
     ctx: TickContext,
   ): void {
@@ -357,16 +336,9 @@ export class CombatSystem implements System {
       if (pressure <= 0) continue;
 
       const resilience = this.resilience(d, ctx.world);
-      const localOdds =
-        pressure / Math.max(1e-6, ownPower.get(d.id) ?? 0);
-      // Similar pressure mostly exhausts both sides without walking the line.
-      // Moderate superiority spends cohesion steadily; overwhelming pressure
-      // reaches full tempo but still has to break and displace the defender.
-      const tempo = clamp((localOdds - 0.9) / 0.8, 0.06, 1);
       const damage =
         (pressure / resilience) *
-        tempo *
-        battleTempoRoll *
+        ctx.world.rng.variance(VARIANCE) *
         hours *
         ORG_DAMAGE_RATE *
         d.maxOrganisation *
@@ -374,15 +346,16 @@ export class CombatSystem implements System {
       const orgLost = Math.min(d.organisation, damage);
       d.organisation -= orgLost;
 
-      const casualties = Math.min(
-        Math.max(0, d.manpower - d.maxManpower * COMBAT_MANPOWER_FLOOR),
-        orgLost * CASUALTIES_PER_ORG,
-      );
+      const casualties = Math.min(d.manpower, orgLost * CASUALTIES_PER_ORG);
       d.manpower -= casualties;
 
       // Bleeding men costs the will to keep going, slowly.
       d.morale = Math.max(0, d.morale - (casualties / d.maxManpower) * 0.5);
 
+      if (d.manpower <= d.maxManpower * 0.08) {
+        ctx.world.divisions.delete(d.id);
+        ctx.events.emit({ type: 'divisionDestroyed', division: d.id, position: { ...d.position } });
+      }
     }
   }
 
@@ -417,7 +390,6 @@ export class CombatSystem implements System {
       // Numerical concentration causes an earlier loss of cohesion; a unit
       // with local support can hold below the nominal threshold for longer.
       const localOdds = incoming / Math.max(1e-6, powers.get(d.id) ?? 0);
-      if (localOdds < STALEMATE_PRESSURE_RATIO) continue;
       const threshold = BREAK_THRESHOLD * clamp(Math.sqrt(localOdds), 0.75, 1.5);
       if (organisationRatio(d) < threshold) out.push({ division: d, threats });
     }
@@ -438,30 +410,29 @@ export class CombatSystem implements System {
    * no reason the player can see.
    */
   private breakOff(d: Division, winners: Division[], ctx: TickContext): void {
-    const route = findRetreatRoute(d, winners, ctx.world);
-    // A broken formation with no physical exit remains trapped in contact.
-    // AttritionSystem is the only place that may later surrender it, after
-    // supply isolation and encirclement are independently confirmed.
-    if (!route) {
-      d.organisation = 0;
-      d.order = null;
-      d.advance = null;
-      d.stance = 'hold';
-      d.state = 'FIGHTING';
-      return;
-    }
-
     const vacated = { ...d.position };
-    d.order = {
-      kind: 'move',
-      waypoints: route,
-      cursor: 0,
-      bestDistance: Infinity,
-      stalledTicks: 0,
+    const centre = { x: 0, y: 0 };
+    for (const w of winners) {
+      centre.x += w.position.x;
+      centre.y += w.position.y;
+    }
+    centre.x /= winners.length;
+    centre.y /= winners.length;
+
+    let away = normalize({ x: d.position.x - centre.x, y: d.position.y - centre.y });
+    if (away.x === 0 && away.y === 0) {
+      const attackHeading = winners[0]?.heading ?? 0;
+      away = { x: Math.cos(attackHeading), y: Math.sin(attackHeading) };
+    }
+    const target: Vec2 = {
+      x: d.position.x + away.x * RETREAT_DISTANCE_KM,
+      y: d.position.y + away.y * RETREAT_DISTANCE_KM,
     };
+    const safe = ctx.world.terrain.nearestPassable(target, 60) ?? d.position;
+
+    d.order = { kind: 'move', waypoints: [safe], cursor: 0, bestDistance: Infinity, stalledTicks: 0 };
     d.advance = null;
     d.stance = 'retreat';
-    d.state = 'FALLING_BACK';
     ctx.events.emit({ type: 'divisionRetreating', division: d.id });
 
     // Winning attackers do not resume the strategic order that brought them
@@ -481,7 +452,6 @@ export class CombatSystem implements System {
         phase: 'waiting',
       };
       winner.stance = 'advance';
-      winner.state = 'FIGHTING';
     }
   }
 

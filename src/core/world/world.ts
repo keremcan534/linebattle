@@ -66,8 +66,6 @@ export type MobilizationCadre = Pick<
   | 'maxOrganisation'
   | 'morale'
   | 'experience'
-  | 'equipmentRatio'
-  | 'doctrine'
   | 'speedKmh'
   | 'softAttack'
   | 'hardAttack'
@@ -260,8 +258,6 @@ export class World {
         maxOrganisation: d.maxOrganisation,
         morale: d.morale,
         experience: d.experience,
-        equipmentRatio: d.equipmentRatio,
-        doctrine: d.doctrine,
         speedKmh: d.speedKmh,
         softAttack: d.softAttack,
         hardAttack: d.hardAttack,

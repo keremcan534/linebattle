@@ -58,7 +58,6 @@ export class AdvanceSystem implements System {
         stalledTicks: 0,
       };
       advance.phase = 'moving';
-      d.state = 'MOVING';
     }
   }
 }

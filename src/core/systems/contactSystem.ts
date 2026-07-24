@@ -58,40 +58,11 @@ export class ContactSystem implements System {
     // value objects; carrying identity across ticks would mean reconciling
     // splits and merges every time a division steps 500 metres.
     const previous = new Map(world.battles);
-    const previouslyFighting = new Set<DivisionId>();
-    for (const battle of previous.values()) {
-      for (const side of battle.sides) {
-        for (const id of side.divisions) previouslyFighting.add(id);
-      }
-    }
     world.battles.clear();
 
     for (const cluster of clusters) {
       const battle = this.formBattle(cluster, ctx, previous);
       if (battle) world.battles.set(battle.id, battle);
-    }
-
-    const fightingNow = new Set<DivisionId>();
-    for (const battle of world.battles.values()) {
-      for (const side of battle.sides) {
-        for (const id of side.divisions) {
-          fightingNow.add(id);
-          const d = world.getDivision(id);
-          if (!d || d.state === 'FALLING_BACK') continue;
-          d.state = previouslyFighting.has(id) ? 'FIGHTING' : 'CONTACT';
-        }
-      }
-    }
-    for (const d of world.divisions.values()) {
-      if (
-        !fightingNow.has(d.id) &&
-        (d.state === 'CONTACT' || d.state === 'FIGHTING')
-      ) {
-        d.state =
-          d.stance === 'move' || d.stance === 'advance'
-            ? 'MOVING'
-            : 'FRONTLINE';
-      }
     }
 
     for (const [id, battle] of previous) {

@@ -241,10 +241,8 @@ describe('MovementSystem', () => {
       branch: 'armoured',
       speedKmh: 200,
     });
-    // Seventy kilometres centre-to-centre exceeds the configured frontage
-    // link distance, leaving a real gap around y=100.
-    addTestDivision(world, 'north', 150, 65, { faction: factionId('blue') });
-    addTestDivision(world, 'south', 150, 135, { faction: factionId('blue') });
+    addTestDivision(world, 'north', 150, 80, { faction: factionId('blue') });
+    addTestDivision(world, 'south', 150, 120, { faction: factionId('blue') });
     attacker.order = {
       kind: 'move',
       waypoints: [{ x: 200, y: 100 }],

@@ -462,21 +462,24 @@ describe('CombatSystem', () => {
     expect(world.battles.size).toBe(0);
   });
 
-  it('does not remove a low-strength remnant in ordinary frontal combat', () => {
-    // Ordinary combat respects a hard manpower remnant floor. Only the
-    // isolated-pocket surrender path may remove the formation.
+  it('removes a division whose manpower finally runs out', () => {
+    // A single battle CANNOT annihilate a division, by design: organisation
+    // breaks at 16% and a full bar of organisation is worth only ~13% of a
+    // division's men, so the loser always retreats first. Destruction is the
+    // end of a long campaign of maulings — or, from Milestone 3, of
+    // encirclement. So this tests the floor directly rather than pretending
+    // one engagement can reach it.
     const { world, events } = fight((w) => {
       for (let i = 0; i < 4; i++) {
         addTestDivision(w, `red-${i}`, 200, 196 + i * 3, { faction: RED, softAttack: 60, defence: 50 });
       }
       addTestDivision(w, 'remnant', 206, 200, {
-        faction: BLUE, softAttack: 4, defence: 4, morale: 0.2, supply: 1,
+        faction: BLUE, softAttack: 4, defence: 4, morale: 0.2, supply: 0.1,
         manpower: 900, // 9% of maxManpower — one bad hour from gone
       });
     }, 20);
 
-    expect(events).not.toContain('divisionDestroyed');
-    expect(world.getDivision(divisionId('remnant'))).toBeDefined();
-    expect(world.getDivision(divisionId('remnant'))!.manpower).toBeGreaterThanOrEqual(800);
+    expect(events).toContain('divisionDestroyed');
+    expect(world.getDivision(divisionId('remnant'))).toBeUndefined();
   });
 });

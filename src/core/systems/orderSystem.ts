@@ -1,6 +1,5 @@
 import type { Command, CommandQueue } from '@core/commands/commands';
 import type { Vec2 } from '@core/math/vec2';
-import type { Division } from '@core/world/division';
 import {
   MAX_OBJECTIVES_PER_KIND,
   strategicObjectiveId,
@@ -30,12 +29,7 @@ export class OrderSystem implements System {
       case 'move': {
         const formations = cmd.divisions
           .map((id) => world.getDivision(id))
-          .filter(
-            (d): d is Division =>
-              d !== undefined &&
-              d.stance !== 'retreat' &&
-              d.stance !== 'advance',
-          );
+          .filter((d) => d !== undefined);
         if (!formations.length) break;
 
         // A frontline assignment belongs to operational HQ, not to the
@@ -115,9 +109,6 @@ export class OrderSystem implements System {
           // it never resumes the pre-combat route hidden underneath it.
           d.advance = null;
           d.stance = 'move';
-          if (d.state !== 'CONTACT' && d.state !== 'FIGHTING') {
-            d.state = 'MOVING';
-          }
           events.emit({ type: 'orderIssued', division: d.id });
         }
         break;
@@ -130,10 +121,6 @@ export class OrderSystem implements System {
           d.order = null;
           d.advance = null;
           d.stance = 'hold';
-          if (d.state !== 'CONTACT' && d.state !== 'FIGHTING') {
-            d.state =
-              d.state === 'RECOVERING' ? 'RECOVERING' : 'FRONTLINE';
-          }
         }
         break;
       }
@@ -145,9 +132,6 @@ export class OrderSystem implements System {
           d.advance = null;
           d.stance = cmd.stance;
           if (cmd.stance !== 'move') d.order = null;
-          if (d.state !== 'CONTACT' && d.state !== 'FIGHTING') {
-            d.state = cmd.stance === 'move' ? 'MOVING' : 'FRONTLINE';
-          }
         }
         break;
       }

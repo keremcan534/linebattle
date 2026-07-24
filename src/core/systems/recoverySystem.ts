@@ -61,13 +61,6 @@ export class RecoverySystem implements System {
         );
       }
 
-      if (
-        d.state === 'RECOVERING' &&
-        organisationRatio(d) >= 0.55
-      ) {
-        d.state = 'FRONTLINE';
-      }
-
       const target = 0.4 + 0.6 * organisationRatio(d);
       d.morale += (target - d.morale) * 0.02 * hours;
       d.morale = Math.max(0, Math.min(1, d.morale));
