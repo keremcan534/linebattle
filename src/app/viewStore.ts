@@ -292,7 +292,10 @@ export class ViewStore {
       zoom,
       cursor,
       divisionCount: world.divisions.size,
-      frontlineSegmentCount: world.frontlineSegments.size,
+      // The sector model owns the front when it is active; the emergent
+      // segment map is only used by scenarios that have not adopted it.
+      frontlineSegmentCount:
+        world.front?.sectors.length ?? world.frontlineSegments.size,
       objectives,
       objectivePlacement: this.objectivePlacement,
       battles,

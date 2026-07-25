@@ -148,6 +148,15 @@ export class MobilizationSystem implements System {
       stance: 'hold',
       advance: null,
       frontlineSegment: deployment?.segment.id ?? null,
+      sector: null,
+      // Freshly raised formations enter the reserve pool; the operational
+      // allocator decides which sector needs them.
+      deployment: 'reserve',
+      transfer: null,
+      reassignCooldown: 0,
+      equipmentRatio: 0.8,
+      readiness: 0.5,
+      reinforcementPriority: 1,
       manpower: cadre.maxManpower * 0.75,
       maxManpower: cadre.maxManpower,
       // Rapidly deployed emergency formations fill frontage immediately but

@@ -78,6 +78,25 @@
         }
       }
     ],
+    "front": {
+      "sectors": 34,
+      "west": "germany",
+      "east": "soviet",
+      "line": [
+        { "lon": 21.0, "lat": 56.3 },
+        { "lon": 22.4, "lat": 55.1 },
+        { "lon": 22.9, "lat": 54.3 },
+        { "lon": 23.5, "lat": 53.2 },
+        { "lon": 23.7, "lat": 52.1 },
+        { "lon": 23.6, "lat": 51.2 },
+        { "lon": 24.0, "lat": 50.4 },
+        { "lon": 24.6, "lat": 49.3 },
+        { "lon": 25.3, "lat": 48.4 },
+        { "lon": 26.6, "lat": 47.8 },
+        { "lon": 27.8, "lat": 46.9 },
+        { "lon": 28.4, "lat": 45.8 }
+      ]
+    },
     "scriptedFront": {
       "looseness": 0.15,
       "east": "soviet",

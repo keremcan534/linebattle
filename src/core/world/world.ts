@@ -11,6 +11,7 @@ import {
 import type { Battle } from './battle';
 import type { Division } from './division';
 import type { Faction } from './faction';
+import type { FrontState } from '@core/front/frontSector';
 import type { FrontlineSegment, FrontlineSegmentId } from './frontline';
 import type { BattleId, DivisionId, FactionId } from './ids';
 import type { StrategicObjective, StrategicObjectiveId } from './strategicObjective';
@@ -117,6 +118,14 @@ export class World {
   readonly campaignPlans = new Map<string, AllianceCampaignPlan>();
   /** Optional scripted historical front; null lets the front stay emergent. */
   scriptedFront: ScriptedFront | null = null;
+  /**
+   * The authoritative frontline, when the scenario uses the sector model.
+   *
+   * When set, divisions are data entities assigned to sectors rather than
+   * free-moving agents: sector pressure moves the line and counter positions
+   * are derived from it.
+   */
+  front: FrontState | null = null;
   /** Immutable opening control used to measure occupied homeland. */
   private initialControl: Uint8Array | null = null;
   private territoryLossCacheTick = -1;

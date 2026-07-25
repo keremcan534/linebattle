@@ -62,6 +62,23 @@ export interface MoveOrder {
 export type Order = MoveOrder;
 
 /**
+ * Operational state in the sector model.
+ *
+ * `transferring` is a real state with a cost, not a cosmetic one: a formation
+ * moving between sectors contributes only a fraction of its combat power until
+ * it arrives, which is what stops the allocator from shuffling the front for
+ * free.
+ */
+export type DeploymentState = 'frontline' | 'reserve' | 'transferring';
+
+export interface SectorTransfer {
+  readonly from: number | null;
+  readonly to: number;
+  /** Whole simulation ticks left before the formation is in line. */
+  ticksRemaining: number;
+}
+
+/**
  * A single division — the atomic manoeuvre unit of the game.
  *
  * Mutable plain object rather than a class: systems own the behaviour, the
@@ -93,6 +110,25 @@ export interface Division {
   advance: PostCombatAdvance | null;
   /** Operational sector this formation must hold; only frontline AI reassigns it. */
   frontlineSegment: FrontlineSegmentId | null;
+
+  // --- Front-sector model ---------------------------------------------------
+  // In the sector model a division is a data entity, not a physics agent: it is
+  // assigned to a sector, contributes power to it, and has its counter position
+  // derived from where that sector's line ends up.
+  /** Index into `world.front.sectors`, or null while held in reserve. */
+  sector: number | null;
+  /** Where the formation stands in the operational scheme. */
+  deployment: DeploymentState;
+  /** Set while `deployment` is `transferring`; counts down in whole ticks. */
+  transfer: SectorTransfer | null;
+  /** Ticks before this formation may be reassigned again; stops oscillation. */
+  reassignCooldown: number;
+  /** 0..1 — share of establishment equipment actually on hand. */
+  equipmentRatio: number;
+  /** 0..1 — rest, training and cohesion of command, distinct from organisation. */
+  readiness: number;
+  /** Higher means replacements and fresh equipment arrive here first. */
+  reinforcementPriority: number;
 
   // --- Fighting power -------------------------------------------------------
   /** Current men under arms. */

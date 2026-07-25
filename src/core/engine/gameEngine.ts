@@ -5,6 +5,9 @@ import { AdvanceSystem } from '@core/systems/advanceSystem';
 import { AttritionSystem } from '@core/systems/attritionSystem';
 import { CombatSystem } from '@core/systems/combatSystem';
 import { ContactSystem } from '@core/systems/contactSystem';
+import { FrontAllocatorSystem } from '@core/systems/frontAllocatorSystem';
+import { FrontFormationSystem } from '@core/systems/frontFormationSystem';
+import { FrontPressureSystem } from '@core/systems/frontPressureSystem';
 import { FrontlineSystem } from '@core/systems/frontlineSystem';
 import { MovementSystem } from '@core/systems/movementSystem';
 import { MobilizationSystem } from '@core/systems/mobilizationSystem';
@@ -41,7 +44,7 @@ export class GameEngine {
     // Scenario initialization is the one pre-tick mutation boundary. Build
     // the initial operational front here so the paused opening state already
     // has every deployed formation assigned to a sector.
-    if (!options.systems && world.supply) {
+    if (!options.systems && !world.front && world.supply) {
       new FrontlineSystem().update({
         world,
         events: this.events,
@@ -49,7 +52,11 @@ export class GameEngine {
         tick: world.clock.tick,
       });
     }
-    this.systems = options.systems ?? createDefaultSystems(this.commands, options.aiAlliances ?? []);
+    this.systems =
+      options.systems ??
+      (world.front
+        ? createFrontSystems(this.commands)
+        : createDefaultSystems(this.commands, options.aiAlliances ?? []));
   }
 
   /** Convenience so callers never touch the queue directly. */
@@ -138,5 +145,30 @@ export function createDefaultSystems(queue: CommandQueue, aiAlliances: readonly 
     new AttritionSystem(),
     new ReinforcementSystem(),
     new RecoverySystem(),
+  ];
+}
+
+/**
+ * The sector model's tick.
+ *
+ * The frontline is the simulation object here. Nothing in this list moves a
+ * division through world space, so there is no pathfinding, no collision
+ * resolution and no enemy chasing: pressure moves the line, the allocator
+ * decides which sector a formation belongs to, and the formation layer derives
+ * counter positions from the result — in that order, once per tick.
+ *
+ * Logistics still runs first: divisions have real positions (derived ones), so
+ * supply, the political map and encirclement keep working unchanged.
+ */
+export function createFrontSystems(queue: CommandQueue): System[] {
+  return [
+    new SupplySystem(),
+    new OrderSystem(queue),
+    new FrontPressureSystem(),
+    new FrontAllocatorSystem(),
+    new AttritionSystem(),
+    new ReinforcementSystem(),
+    new RecoverySystem(),
+    new FrontFormationSystem(),
   ];
 }

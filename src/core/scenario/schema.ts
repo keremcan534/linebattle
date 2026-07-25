@@ -46,6 +46,20 @@ export interface CampaignSpec {
   mobilization?: MobilizationPolicySpec[];
   plans?: AllianceCampaignPlanSpec[];
   scriptedFront?: ScriptedFrontSpec;
+  /** Opting into the sector model: the frontline becomes the simulation object. */
+  front?: FrontSpec;
+}
+
+/**
+ * The authoritative frontline: an ordered polyline cut into `sectors` slices.
+ * `west`/`east` name the faction standing on each side, which fixes on which
+ * side of the line every counter is drawn.
+ */
+export interface FrontSpec {
+  sectors: number;
+  west: string;
+  east: string;
+  line: { lon: number; lat: number }[];
 }
 
 /**
@@ -209,4 +223,10 @@ export interface DivisionSpec {
   experience?: number;
   morale?: number;
   supply?: number;
+  /** 0..1 share of establishment equipment on hand. */
+  equipmentRatio?: number;
+  /** 0..1 rest and training state. */
+  readiness?: number;
+  /** Higher means replacements reach this formation first. */
+  reinforcementPriority?: number;
 }

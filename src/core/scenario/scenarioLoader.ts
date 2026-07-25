@@ -4,6 +4,8 @@ import type {
   FeatureCollection,
   RiverProperties,
 } from '@core/geo/geojson';
+import { deriveFrontPositions } from '@core/front/frontFormation';
+import { buildFrontSectors, nearestSectorIndex } from '@core/front/frontSector';
 import { createProjection, type Projection } from '@core/geo/projection';
 import {
   CONTROL_CELL_SIZE_KM,
@@ -231,6 +233,39 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
       })),
     );
 
+    if (scenario.campaign.front) {
+      const spec = scenario.campaign.front;
+      const line = spec.line.map((p) => projection.project(p.lon, p.lat));
+      // Local "east" in world space: the projection is not axis-aligned, so ask
+      // it rather than assuming +x. This orients every sector normal.
+      const mid = spec.line[Math.floor(spec.line.length / 2)]!;
+      const here = projection.project(mid.lon, mid.lat);
+      const oneDegreeEast = projection.project(mid.lon + 1, mid.lat);
+      const eastward = {
+        x: oneDegreeEast.x - here.x,
+        y: oneDegreeEast.y - here.y,
+      };
+      world.front = buildFrontSectors(
+        line,
+        spec.sectors,
+        eastward,
+        allianceOf(spec.west),
+        allianceOf(spec.east),
+      );
+
+      // Seat the scenario's historical deployment: each division joins the
+      // sector nearest to where the author placed it, then never moves in world
+      // space again — the allocator reassigns sectors, the formation layer
+      // derives positions.
+      for (const d of world.divisions.values()) {
+        d.sector = nearestSectorIndex(world.front, d.position);
+        d.deployment = 'frontline';
+      }
+      deriveFrontPositions(world.front, world.divisions.values(), (division) =>
+        world.getFaction(division.faction)?.alliance,
+      );
+    }
+
     if (scenario.campaign.scriptedFront) {
       const sf = scenario.campaign.scriptedFront;
       const bands = sf.latitudes.map((lat, i) => {
@@ -393,6 +428,13 @@ function instantiate(
     stance: 'hold',
     advance: null,
     frontlineSegment: null,
+    sector: null,
+    deployment: 'frontline',
+    transfer: null,
+    reassignCooldown: 0,
+    equipmentRatio: spec.equipmentRatio ?? 1,
+    readiness: spec.readiness ?? 1,
+    reinforcementPriority: spec.reinforcementPriority ?? 1,
     manpower,
     maxManpower: t.maxManpower,
     organisation,
