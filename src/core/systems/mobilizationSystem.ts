@@ -41,10 +41,13 @@ export class MobilizationSystem implements System {
         segment.alliances.includes(alliance),
       ).length;
       const initial = world.initialDivisionCounts.get(alliance) ?? current;
-      const required = Math.max(
-        Math.ceil(initial * forceMultiplier),
-        Math.ceil(frontage * frontageDensity),
-      );
+      // maxForceMultiplier alone sets the order of battle an alliance grows to
+      // and never exceeds. Frontage length deliberately does NOT inflate it:
+      // it used to be max()'d in, so a long or jagged front demanded unlimited
+      // divisions — 180 sectors asked for 207 Soviet divisions over a 133
+      // ceiling, and the surplus piled up in one enormous blob behind the line.
+      // Frontage still drives *where* and *how fast* they are raised below.
+      const required = Math.ceil(initial * forceMultiplier);
       const frontlineReady = [...world.divisions.values()].filter(
         (d) =>
           world.getFaction(d.faction)?.alliance === alliance &&
@@ -69,8 +72,9 @@ export class MobilizationSystem implements System {
         0,
         Math.ceil(frontage * desiredCoverage - frontlineReady),
       );
-      const emergencyCeiling =
-        required + Math.ceil(frontage * 0.2);
+      // Emergency drafting may overshoot the target slightly to plug gaps, but
+      // by a bounded fraction — never by the raw length of the front.
+      const emergencyCeiling = Math.ceil(required * 1.1);
       const operationalRequired = Math.max(
         required,
         Math.min(emergencyCeiling, current + emergencyGap),
@@ -191,13 +195,35 @@ export class MobilizationSystem implements System {
       );
     }
 
-    const segments = [...world.frontlineSegments.values()]
+    const sorted = [...world.frontlineSegments.values()]
       .filter((segment) => segment.alliances.includes(alliance))
       .sort(
         (a, b) =>
           (loads.get(a.id) ?? 0) - (loads.get(b.id) ?? 0) ||
           (a.id < b.id ? -1 : 1),
       );
+
+    // Spread successive drafts along the whole front. Sorting by load and then
+    // by id meant every equally-empty sector lost the tie to the same
+    // lexicographically-first bucket, so every reinforcement in the theatre
+    // detrained in one corner (all Soviet drafts appeared in the Baltic).
+    // Rotating through the least-loaded sectors by the mobilization serial
+    // stays fully deterministic while distributing them end to end.
+    const minLoad = sorted.length ? (loads.get(sorted[0]!.id) ?? 0) : 0;
+    const leastLoaded = sorted.filter(
+      (segment) => (loads.get(segment.id) ?? 0) === minLoad,
+    );
+    const rest = sorted.filter(
+      (segment) => (loads.get(segment.id) ?? 0) !== minLoad,
+    );
+    const offset = leastLoaded.length
+      ? world.nextMobilizationSerial % leastLoaded.length
+      : 0;
+    const segments = [
+      ...leastLoaded.slice(offset),
+      ...leastLoaded.slice(0, offset),
+      ...rest,
+    ];
 
     for (const segment of segments) {
       const direction = directionForAlliance(segment, alliance);

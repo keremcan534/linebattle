@@ -201,17 +201,20 @@ describe('MovementSystem', () => {
   it('treats every enemy as a solid circle and never crosses its centre', () => {
     // Use a coarse grid and a very fast mover so one tick could otherwise
     // tunnel completely through the defender.
+    // The pair starts outside the formed zone of control, so this exercises
+    // approach-blocking. (Formations that begin inside each other's zone are a
+    // separate matter: nothing actively pushes them apart yet.)
     const world = createTestWorld({ cellSize: 100 });
     const attacker = addTestDivision(world, 'attacker', 100, 100, {
       faction: factionId('red'),
       speedKmh: 200,
     });
-    const defender = addTestDivision(world, 'defender', 125, 100, {
+    const defender = addTestDivision(world, 'defender', 300, 100, {
       faction: factionId('blue'),
     });
     attacker.order = {
       kind: 'move',
-      waypoints: [{ x: 200, y: 100 }],
+      waypoints: [{ x: 500, y: 100 }],
       cursor: 0,
       bestDistance: Infinity,
       stalledTicks: 0,
@@ -241,8 +244,11 @@ describe('MovementSystem', () => {
       branch: 'armoured',
       speedKmh: 200,
     });
-    addTestDivision(world, 'north', 150, 80, { faction: factionId('blue') });
-    addTestDivision(world, 'south', 150, 120, { faction: factionId('blue') });
+    // A real gap means one wider than the two 21 km zones that flank it: at
+    // this scale neighbouring divisions have to be genuinely far apart before
+    // armour can slip between them.
+    addTestDivision(world, 'north', 150, 10, { faction: factionId('blue') });
+    addTestDivision(world, 'south', 150, 190, { faction: factionId('blue') });
     attacker.order = {
       kind: 'move',
       waypoints: [{ x: 200, y: 100 }],

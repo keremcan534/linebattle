@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { GameEngine } from '@core/engine/gameEngine';
-import { distanceSq } from '@core/math/vec2';
 import { addTestDivision, createTestWorld } from '@core/testing/testWorld';
 import { TICKS_PER_DAY } from '@core/time/gameClock';
 import { battleId, divisionId, factionId } from '@core/world/ids';
@@ -186,6 +185,9 @@ describe('AiSystem', () => {
       faction: RED,
       supply: 0.2,
     });
+    // Ring radius stays inside ENCIRCLEMENT_CHECK_KM so the pocket is actually
+    // flagged: the "enemy nearby" test is what turns a cut supply route into an
+    // encirclement.
     let n = 0;
     for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 10) {
       addTestDivision(
@@ -215,10 +217,15 @@ describe('AiSystem', () => {
     // next hourly pass recognises the closed ring, and HQ orders a breakout.
     // Capture that order when it appears — a stalled unit blocked by the ring
     // may have its order cleared again by the last tick.
+    // The intent is "break toward our own supply network" — the *nearest*
+    // friendly network point, not necessarily the one toward the capital, so
+    // assert the destination actually lands on the network. Capture the first
+    // such order: the ring grinds the pocket down, and once the formation
+    // breaks in combat its retreat replaces the breakout order.
     let breakDestination: { x: number; y: number } | undefined;
     for (let tick = 0; tick <= 12; tick++) {
       engine.step();
-      if (trapped.encircled) {
+      if (trapped.encircled && trapped.stance !== 'retreat' && !breakDestination) {
         const dest = trapped.order?.waypoints.at(-1);
         if (dest) breakDestination = dest;
       }
@@ -226,9 +233,7 @@ describe('AiSystem', () => {
 
     expect(trapped.encircled).toBe(true);
     expect(breakDestination).toBeDefined();
-    expect(distanceSq(breakDestination!, root)).toBeLessThan(
-      distanceSq({ x: 700, y: 700 }, root),
-    );
+    expect(world.supply!.networkAt('a', breakDestination!)).toBe(true);
   });
 
   it('keeps an opening-shock army in separate assigned sectors', () => {

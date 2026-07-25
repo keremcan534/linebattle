@@ -20,12 +20,17 @@ export const ENEMY_MIN_SEPARATION_KM = UNIT_COLLISION_RADIUS_KM * 2;
 /**
  * A formed division controls more than the footprint of its counter.
  *
- * Two 7 km operational zones make a coherent 14 km frontage while leaving
- * genuine gaps for mobile formations to exploit. A routed or shattered unit
- * falls back to the smaller solid collision circle: it can be pursued, but it
- * can still never be crossed.
+ * Tripled from 7 km: two 21 km operational zones make a 42 km frontage, about
+ * the width of one HOI4-style province. At the old radius a division held so
+ * little ground that enemies threaded between neighbours and the line never
+ * felt like it pushed back. Now formations genuinely hold each other apart —
+ * the balloon that has to be squeezed before the front gives way.
+ *
+ * ENGAGEMENT_RANGE_KM is derived from this, so combat range scales with it.
+ * A routed or shattered unit falls back to the smaller solid collision circle:
+ * it can be pursued closely, but it can still never be crossed.
  */
-export const FORMED_UNIT_ZOC_RADIUS_KM = 7;
+export const FORMED_UNIT_ZOC_RADIUS_KM = 21;
 export const FORMED_ENEMY_MIN_SEPARATION_KM = FORMED_UNIT_ZOC_RADIUS_KM * 2;
 const COLLISION_EPSILON_KM = 0.01;
 
