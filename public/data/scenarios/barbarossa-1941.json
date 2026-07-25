@@ -60,6 +60,11 @@
       },
       {
         "faction": "germany",
+        "openingShock": {
+          "until": "1941-12-01T00:00:00Z",
+          "combatMultiplier": 1.25,
+          "recoveryMultiplier": 1.15
+        },
         "halt": {
           "from": "1941-12-01T00:00:00Z",
           "until": "1942-05-15T00:00:00Z",
