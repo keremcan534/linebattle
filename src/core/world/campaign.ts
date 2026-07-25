@@ -133,3 +133,54 @@ export function activeOffensive(
   const offensive = plan?.offensive;
   return offensive && date.getTime() >= offensive.from ? offensive : null;
 }
+
+/**
+ * A scripted historical front.
+ *
+ * The front is a function x(latitude, time): at each latitude band the line's
+ * world-x follows a dated schedule, so it advances east exactly like the real
+ * 1941 maps. Both armies are guided onto it — one just east, one just west —
+ * and `looseness` widens the tolerance band inside which local combat is left
+ * to the emergent AI. At looseness 0 the front is history to the kilometre; at
+ * 1 the script is ignored entirely.
+ */
+export interface ScriptedFront {
+  looseness: number;
+  /** Alliance that holds the eastern (higher world-x) side of the line. */
+  eastAlliance: string;
+  /** One entry per latitude band: the band's world-y and its x(time) schedule. */
+  bands: { y: number; frames: { time: number; x: number }[] }[];
+}
+
+/** World-x of the scripted front at a world-y and date, or null if undefined. */
+export function scriptedFrontX(
+  front: ScriptedFront,
+  y: number,
+  date: Date,
+): number | null {
+  let band: ScriptedFront['bands'][number] | null = null;
+  let best = Infinity;
+  for (const candidate of front.bands) {
+    const d = Math.abs(candidate.y - y);
+    if (d < best) {
+      best = d;
+      band = candidate;
+    }
+  }
+  if (!band || !band.frames.length) return null;
+
+  const t = date.getTime();
+  const frames = band.frames;
+  if (t <= frames[0]!.time) return frames[0]!.x;
+  const last = frames[frames.length - 1]!;
+  if (t >= last.time) return last.x;
+  for (let i = 1; i < frames.length; i++) {
+    const a = frames[i - 1]!;
+    const b = frames[i]!;
+    if (t <= b.time) {
+      const f = (t - a.time) / (b.time - a.time);
+      return a.x + (b.x - a.x) * f;
+    }
+  }
+  return last.x;
+}

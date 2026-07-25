@@ -45,6 +45,21 @@ export interface ScenarioFile {
 export interface CampaignSpec {
   mobilization?: MobilizationPolicySpec[];
   plans?: AllianceCampaignPlanSpec[];
+  scriptedFront?: ScriptedFrontSpec;
+}
+
+/**
+ * A dated historical front. `latitudes` names the bands north-to-south; each
+ * keyframe gives the front's longitude at every band on a date. The line is
+ * interpolated between keyframes so it advances exactly like the real maps.
+ */
+export interface ScriptedFrontSpec {
+  /** 0 = follow the script to the kilometre; 1 = ignore it. */
+  looseness: number;
+  /** Faction on the eastern side of the line (its rear is to higher longitude). */
+  east: string;
+  latitudes: number[];
+  keyframes: { date: string; lons: number[] }[];
 }
 
 export interface MobilizationPolicySpec {

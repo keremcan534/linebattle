@@ -20,6 +20,7 @@ import {
   type AllianceCampaignPlan,
   type CampaignModifiers,
   type MobilizationPolicy,
+  type ScriptedFront,
 } from './campaign';
 
 /** A depot, railhead or port that supply flows out of. */
@@ -114,6 +115,8 @@ export class World {
   readonly mobilizationCadres = new Map<string, MobilizationCadre>();
   readonly mobilizationPolicies = new Map<string, MobilizationPolicy>();
   readonly campaignPlans = new Map<string, AllianceCampaignPlan>();
+  /** Optional scripted historical front; null lets the front stay emergent. */
+  scriptedFront: ScriptedFront | null = null;
   /** Immutable opening control used to measure occupied homeland. */
   private initialControl: Uint8Array | null = null;
   private territoryLossCacheTick = -1;

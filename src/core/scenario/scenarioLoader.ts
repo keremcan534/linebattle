@@ -230,6 +230,23 @@ export async function loadScenario(url: string, onProgress?: LoadProgress): Prom
           : {}),
       })),
     );
+
+    if (scenario.campaign.scriptedFront) {
+      const sf = scenario.campaign.scriptedFront;
+      const bands = sf.latitudes.map((lat, i) => {
+        const frames = sf.keyframes.map((kf) => {
+          const p = projection.project(kf.lons[i]!, lat);
+          return { time: Date.parse(kf.date), x: p.x, y: p.y };
+        });
+        const y = frames.reduce((sum, f) => sum + f.y, 0) / frames.length;
+        return { y, frames: frames.map((f) => ({ time: f.time, x: f.x })) };
+      });
+      world.scriptedFront = {
+        looseness: sf.looseness,
+        eastAlliance: allianceOf(sf.east),
+        bands,
+      };
+    }
   }
 
   if (scenario.supply) {

@@ -11,6 +11,7 @@ import {
   activeFallback,
   activeHalt,
   activeOffensive,
+  scriptedFrontX,
 } from '@core/world/campaign';
 
 /** One order review every three game-hours, independent of tick granularity. */
@@ -36,6 +37,12 @@ const ADVANCE_POWER_RATIO = 1.3;
 const OBJECTIVE_INFLUENCE_KM = 900;
 const POCKET_CLEANUP_RADIUS_KM = 220;
 const POCKET_CLEANERS_PER_TARGET = 2;
+/** Where each army sits relative to the scripted historical line, in km. */
+const SCRIPT_REAR_KM = 12;
+/** Base tolerance around the scripted position before HQ pulls a unit back. */
+const SCRIPT_TOLERANCE_BASE_KM = 28;
+/** How much a scenario's looseness widens that tolerance. */
+const SCRIPT_LOOSE_KM = 140;
 /** How far to look for an enemy that has worked around toward our rear. */
 const ENVELOPMENT_SCAN_KM = 70;
 /**
@@ -113,6 +120,11 @@ export class AiSystem implements System {
       if (this.envelopmentThreatened(d, alliance, world)) {
         if (this.withdrawToNetwork(d, alliance, world)) continue;
       }
+
+      // Scripted historical front: pull the formation onto the real dated line
+      // before any emergent behaviour. Inside the tolerance band local combat
+      // is left alone, so the front still breathes at the chosen looseness.
+      if (this.followScriptedFront(d, alliance, world)) continue;
 
       // Scenario-level operational phases sit above tactical contact. During
       // the Soviet withdrawal, a division disengages toward the prepared line
@@ -229,6 +241,33 @@ export class AiSystem implements System {
     if (!target) return null;
     claims.set(target.id, (claims.get(target.id) ?? 0) + 1);
     return target;
+  }
+
+  /**
+   * Guides a formation onto its side of the scripted historical line for the
+   * current date. Returns true when it issued a move, so the caller skips
+   * emergent behaviour; returns false when the unit is already within the
+   * looseness tolerance, leaving local combat to the ordinary AI.
+   */
+  private followScriptedFront(
+    d: Division,
+    alliance: string,
+    world: World,
+  ): boolean {
+    const front = world.scriptedFront;
+    if (!front) return false;
+    const frontX = scriptedFrontX(front, d.position.y, world.clock.date);
+    if (frontX === null) return false;
+
+    const rear = alliance === front.eastAlliance ? SCRIPT_REAR_KM : -SCRIPT_REAR_KM;
+    const targetX = frontX + rear;
+    const tolerance = SCRIPT_TOLERANCE_BASE_KM + front.looseness * SCRIPT_LOOSE_KM;
+    if (Math.abs(targetX - d.position.x) <= tolerance) return false;
+
+    const goal = { x: targetX, y: d.position.y };
+    const passable = world.terrain.nearestPassable(goal, 40) ?? goal;
+    this.orderToward(d, passable);
+    return true;
   }
 
   /**
